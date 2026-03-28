@@ -6,7 +6,7 @@ I write here occasionally.
 
 ## Posts
 
-- [The Seahorse Emoji](./2026-03-28-seahorse-emoji.md) - March 27, 2026
+- [The Seahorse Emoji](./seahorse-emoji.md) - March 27, 2026
 
 ## Resume
 
