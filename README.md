@@ -40,4 +40,6 @@ Minor in Mathematics, Minor in Music Theory. Recipient of the Dr. Anthony J. Mar
 
 ## Contact
 
-[LinkedIn](https://linkedin.com/in/matt-horn-718611197) | matt@matthorn.io
+[LinkedIn](https://www.linkedin.com/in/matt-h-718611197) | matt@matthorn.io
+
+
