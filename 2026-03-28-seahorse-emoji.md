@@ -1,6 +1,6 @@
 ### The Seahorse Emoji
 
-*Matt Horn*
+*Matt Horn ([About](./README.md))*
 
 *published March 27, 2026*
 
