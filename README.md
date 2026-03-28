@@ -4,6 +4,10 @@ I'm Matt Horn. I've worked in software and security engineering for about fiftee
 
 I write here occasionally.
 
+## Posts
+
+- [The Seahorse Emoji](./2026-03-28-seahorse-emoji.md) - March 27, 2026
+
 ## Resume
 
 **Software Engineer** | Google | July 2025 - Present
