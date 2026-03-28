@@ -1,9 +1,8 @@
 ### The Seahorse Emoji
 
-*Matt Horn (matt@matthorn.io)*
+*Matt Horn*
 
 *published March 27, 2026*
-
 
 The year is 2028 and Claude Opus 10.0, a groundbreaking new model was just released. Sarah, an excited 12-year-old somewhere in Nebraska is super excited to try it out. She types her go-to prompt whenever a new AI model is released: "Show me the seahorse emoji". Send. 
 
