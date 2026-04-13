@@ -1,13 +1,13 @@
 # About
 
-I'm Matt Horn. I've worked in software and security engineering for about fifteen years. Most of that time has been spent on identity, access management, and cloud infrastructure at various companies you've probably heard of. More recently I've been focused on AI/ML infrastructure and the security problems that come with it.
+I'm Matt H. I've worked in software and security engineering for about fifteen years. Most of that time has been spent on identity, access management, and cloud infrastructure at various companies you've probably heard of. More recently I've been focused on AI/ML infrastructure and the security problems that come with it.
 
 I write here occasionally.
 
 ## Posts (Newer to Old)
 
 - [Security Is Becoming an Epidemiology Problem](./2026-04-11-mythos.md) - April 11, 2026
-- [The Seahorse Emoji](./seahorse-emoji.md) - March 27, 2026
+- [The Seahorse Emoji](./2026-03-27-seahorse-emoji.md) - March 27, 2026
 
 ## Resume
 
@@ -41,6 +41,6 @@ Minor in Mathematics, Minor in Music Theory. Recipient of the Dr. Anthony J. Mar
 
 ## Contact
 
-[LinkedIn](https://www.linkedin.com/in/matt-h-718611197) | matt@matthorn.io
+matt [at] matthorn [dot] io
 
 
