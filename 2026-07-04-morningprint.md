@@ -27,7 +27,7 @@ The printer and the Pi were already on my network from earlier experiments. I ha
 
 ## How a language model draws on a receipt
 
-Every morning the script builds a small brief: the date, the season, the current weather, and one-line notes on the last fourteen pieces it printed. That goes to Claude with a system prompt describing the medium — a 48-column monospace grid, one-bit black, and only the characters in CP437, the IBM PC character set from 1981. It can run a couple of web searches to feel out the day, and it has to come back with one committed idea.
+Every morning the script builds a small brief: the date, the season, the current weather, and one-line notes on the last fourteen pieces it printed. That goes to Claude with a system prompt describing the medium: a 48-column monospace grid, one-bit black, and only the characters in CP437, the IBM PC character set from 1981. It can run a couple of web searches to feel out the day, and it has to come back with one committed idea.
 
 It doesn't emit printer bytes. It returns a spec, forced through structured output so it can't return anything else:
 
@@ -46,13 +46,13 @@ A renderer of about fifty lines turns the ops into raw ESC/POS commands. No driv
 
 The one thing that needed real calibration: by default the printer leaves a thin white seam between text lines, which ruins block art. ESC/POS lets you set the line spacing directly, and there's a value where rows of `█` fuse into a continuous field. I found it with a test page, and ended up writing the whole byte-level protocol into the repo docs while I was at it.
 
-One more detail, because I do security for a living: the renderer treats the model's spec as untrusted input. Sizes are clamped, rows are truncated to the column budget, control characters are stripped so they can't turn into printer commands, and output is capped at 150 rows — about 45 cm of paper. I wasn't going to let a language model send unfiltered bytes at hardware, even a receipt printer.
+One more detail, because I do security for a living: the renderer treats the model's spec as untrusted input. Sizes are clamped, rows are truncated to the column budget, control characters are stripped so they can't turn into printer commands, and output is capped at 150 rows, about 45 cm of paper. I wasn't going to let a language model send unfiltered bytes at hardware, even a receipt printer.
 
 ## Keeping it from printing the same sunset every day
 
 The failure mode of a daily generative loop is convergence. Left alone, it will happily print a nice sunset every morning forever. So every piece's title and a one-line style note go into a rolling fourteen-day history, and the prompt requires each new piece to differ sharply from everything in it. That pressure alone produces a surprising range: landscapes, geometric abstraction, giant-type posters, constellation maps, diagrams.
 
-There's one deliberate exception. On a day that earns it — a holiday after its eve, an event still unfolding — the model may answer an earlier piece instead, and it records the link. Those links show up as markers in the history it reads on later days, and a fresh marker raises the bar for the next one. There are no dice rolls or cooldowns in code; the model sees its own record and judges. That's where the fireworks came from. On the 3rd it printed the eve; this morning it decided the Fourth had earned a sequel and answered it.
+There's one deliberate exception. On a day that earns it (a holiday after its eve, an event still unfolding) the model may answer an earlier piece instead, and it records the link. Those links show up as markers in the history it reads on later days, and a fresh marker raises the bar for the next one. There are no dice rolls or cooldowns in code; the model sees its own record and judges. That's where the fireworks came from. On the 3rd it printed the eve; this morning it decided the Fourth had earned a sequel and answered it.
 
 ## The boring reliability parts
 

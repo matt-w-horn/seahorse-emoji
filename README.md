@@ -46,7 +46,7 @@ matt [at] matthorn [dot] io
 
 ## Provenance
 
-Everything here — the posts, the resume, all of it — is my personal work,
+Everything here (the posts, the resume, all of it) is my personal work,
 written on personal time using personal equipment and personal accounts. It is
 not affiliated with, sponsored by, or endorsed by Google, Anthropic, or any
 past or present employer. Views are my own. Copyright (c) 2026 Matt Horn. See
