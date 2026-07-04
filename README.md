@@ -1,11 +1,12 @@
 # About
 
-I'm Matt H. I've worked in software and security engineering for about fifteen years. Most of that time has been spent on identity, access management, and cloud infrastructure at various companies you've probably heard of. More recently I've been focused on AI/ML infrastructure and the security problems that come with it.
+I'm Matt Horn. I've worked in software and security engineering for about fifteen years. Most of that time went to identity, access management, and cloud infrastructure at companies you've probably heard of; the resume below has the list. More recently I've been focused on AI/ML infrastructure and the security problems that come with it.
 
-I write here occasionally.
+I write here occasionally: essays on security and AI, and once in a while some very short fiction.
 
-## Posts (Newer to Old)
+## Posts (newest first)
 
+- [My receipt printer prints an original artwork every morning](./2026-07-04-morningprint.md) - July 4, 2026
 - [Security Is Becoming an Epidemiology Problem](./2026-04-11-mythos.md) - April 11, 2026
 - [The Seahorse Emoji](./2026-03-27-seahorse-emoji.md) - March 27, 2026
 
@@ -37,10 +38,18 @@ W. E. Wong, T. Gidvani, A. Lopez, R. Gao, and M. Horn, "Evaluating Software Safe
 
 **Bachelor of Science, Computer Science** | Muhlenberg College | 2010 - 2014
 
-Minor in Mathematics, Minor in Music Theory. Recipient of the Dr. Anthony J. Marino Jr. Award in Computing Science (2013).
+Minors in Mathematics and Music Theory. Recipient of the Dr. Anthony J. Marino Jr. Award in Computing Science (2013).
 
 ## Contact
 
 matt [at] matthorn [dot] io
+
+## Provenance
+
+Everything here — the posts, the resume, all of it — is my personal work,
+written on personal time using personal equipment and personal accounts. It is
+not affiliated with, sponsored by, or endorsed by Google, Anthropic, or any
+past or present employer. Views are my own. Copyright (c) 2026 Matt Horn. See
+[NOTICE](NOTICE).
 
 
