@@ -27,7 +27,7 @@
 {{- end }}
 {{- /* critical CSS inlined: zero render-blocking requests, no chain.
       Order matters: palette vars, one-size headings, then the TUI layer. */}}
-{{ $tuiCss := resources.Get "css/tui.css" | minify }}
+{{ $tuiCss := resources.Get "tui.css" | minify }}
 <style>{{ os.ReadFile "static/terminal.css" | safeCSS }}{{ os.ReadFile "static/style.css" | safeCSS }}{{ $tuiCss.Content | safeCSS }}</style>
 <noscript><style>#promptline, #echoline, .chip { display: none; }</style></noscript>
 </head>
