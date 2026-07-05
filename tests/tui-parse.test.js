@@ -13,11 +13,23 @@ const POSTS = [
 test('normalize strips the decorations people type', () => {
   assert.equal(normalize('~/posts/'), 'posts');
   assert.equal(normalize('/posts'), 'posts');
+  assert.equal(normalize('./posts'), 'posts');
+  assert.equal(normalize('././posts'), 'posts');
+  assert.equal(normalize('~/./posts'), 'posts');
   assert.equal(normalize('posts//'), 'posts');
   assert.equal(normalize('  posts '), 'posts');
   assert.equal(normalize('~'), '~');
+  assert.equal(normalize('.'), '~');
   assert.equal(normalize(''), '');
   assert.equal(normalize(undefined), '');
+});
+
+test('ls/cd/cat accept ./ paths (the report that prompted this suite)', () => {
+  assert.deepEqual(resolve('ls', './posts', POSTS), { kind: 'posts' });
+  assert.deepEqual(resolve('cd', './posts/', POSTS), { kind: 'posts' });
+  assert.deepEqual(resolve('cat', './resume.md', POSTS), { kind: 'resume' });
+  assert.equal(resolve('cat', './posts/2026-03-27-seahorse-emoji.md', POSTS).slug, '2026-03-27-seahorse-emoji');
+  assert.deepEqual(resolve('ls', '.', POSTS), { kind: 'home' });
 });
 
 test('ls: bare, ~, home, and .. all land at the home listing', () => {

@@ -8,9 +8,8 @@
   // trailing slashes, surrounding whitespace
   function normalize(raw) {
     var t = String(raw == null ? '' : raw).trim();
-    if (t === '~') return '~';
-    t = t.replace(/^~\/+/, '');
-    t = t.replace(/^\/+/, '');
+    if (t === '~' || t === '.') return '~';
+    t = t.replace(/^(?:~\/|\.\/|\/)+/, '');   // any mix of ~/ ./ / prefixes
     t = t.replace(/\/+$/, '');
     return t;
   }
