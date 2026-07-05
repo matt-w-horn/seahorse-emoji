@@ -104,7 +104,10 @@
 
   /* ---------- chrome ---------- */
 
+  var activeGame = null;   // running engine handle; stopped on any repaint
+
   function clearScreen() {
+    if (activeGame) { activeGame.stop(); activeGame = null; }
     while (screen.firstChild) screen.removeChild(screen.firstChild);
     screen.classList.remove('lock');
     screen.scrollTop = 0;
@@ -304,23 +307,28 @@
   }
 
   function paintPlay() {
-    view = { name: 'game' }; menu = null;
+    view = { name: 'game', ownsKeys: true }; menu = null;
     clearScreen();
     screen.classList.add('lock');
     setPath([{ text: '~', go: goHome }, { text: 'play' }]);
-    setKeys('arrows: rotate and thrust · space: fire · esc: back');
+    input.value = '';
+    input.blur();
+    if (!window.TUIGame) {
+      view = { name: 'game' };   // no engine: keyboard back to the shell
+      setKeys('esc: back');
+      setPage('');
+      screen.appendChild(rowEl('the game failed to load; esc goes back', 'err'));
+      return;
+    }
+    setKeys('arrows steer · space fires · esc: back');
     setPage('no coins needed');
     var canvas = document.createElement('canvas');
     canvas.id = 'gamecanvas';
     screen.appendChild(canvas);
-    if (window.TUIGame) {
-      TUIGame.start(canvas, {
-        reduced: reduced,
-        isActive: function () { return view.name === 'game' && canvas.isConnected; }
-      });
-    } else {
-      screen.appendChild(rowEl('the game failed to load; esc goes back', 'err'));
-    }
+    activeGame = TUIGame.start(canvas, {
+      reduced: reduced,
+      isActive: function () { return view.name === 'game' && canvas.isConnected; }
+    });
   }
 
   /* doc captured in a closure so back-navigation can never dangle */
@@ -355,6 +363,8 @@
     screen.appendChild(rowEl('(end) · esc goes back', 'dim'));
 
     setKeys('scroll to read · space: a screenful · esc: back');
+    chipLast = '';
+    setPage('');
     updateScrollChip();
   }
 
@@ -414,6 +424,7 @@
     cat: { desc: 'read a file (cat about.txt)', fn: function (args) {
       var r = TUIParse.resolve('cat', args[0], POSTS);
       if (r.kind === 'usage') { echo('usage: cat <file>', 'err'); return; }
+      if (r.kind === 'home') { goHome(); return; }
       if (r.kind === 'about') { goTo(paintAbout); return; }
       if (r.kind === 'resume') { openDoc(RESUME); return; }
       if (r.kind === 'posts') { goTo(paintPosts); return; }
@@ -471,9 +482,11 @@
 
   function navKey(e, focused) {
     if (view.name === 'boot') { bootSkip(); return e.key !== 'Tab'; }   // any key skips; Tab still moves focus
-    if (view.name === 'game') {
+    if (view.ownsKeys) {
+      // the view (the game) owns the keyboard: its own window listeners act;
+      // we swallow everything except Tab so nothing types into the prompt
       if (e.key === 'Escape') { goBack(); return true; }
-      return ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ', 'Enter'].indexOf(e.key) >= 0;
+      return e.key !== 'Tab';
     }
     if (menu) {
       if (e.key === 'ArrowDown') { moveMenuSel(1); return true; }
@@ -493,7 +506,7 @@
   }
 
   input.addEventListener('keydown', function (e) {
-    if (input.value === '' && navKey(e, true)) { e.preventDefault(); return; }
+    if ((view.ownsKeys || input.value === '') && navKey(e, true)) { e.preventDefault(); return; }
     if (e.key === 'Escape') { input.value = ''; e.preventDefault(); return; }
     if (e.key === 'Enter') {
       var v = input.value; input.value = ''; run(v);
@@ -510,12 +523,13 @@
       var v = input.value;
       var m = v.match(/^(\S+)\s+(\S*)$/);
       if (m && (m[1] === 'cat' || m[1] === 'ls' || m[1] === 'cd')) {
-        // completion offers only what the command will accept
-        var targets = m[1] === 'cat'
-          ? POSTS.map(function (p) { return p.slug; }).concat(['about.txt', 'resume.md', 'posts/'])
-          : ['posts/'];
-        var hit = targets.filter(function (t) { return t.indexOf(m[2]) === 0; })[0];
-        if (hit) input.value = m[1] + ' ' + hit;
+        // match on the last path segment so './po', '~/po', 'posts/20' all complete
+        var slash = m[2].lastIndexOf('/');
+        var head = slash >= 0 ? m[2].slice(0, slash + 1) : '';
+        var frag = slash >= 0 ? m[2].slice(slash + 1) : m[2];
+        var hit = TUIParse.completions(m[1], POSTS)
+          .filter(function (t) { return frag && t.indexOf(frag) === 0; })[0];
+        if (hit) input.value = m[1] + ' ' + head + hit;
       } else if (!/\s/.test(v)) {
         var names = Object.keys(commands).filter(function (n) { return n.indexOf(v.toLowerCase()) === 0; });
         if (names.length === 1) input.value = names[0] + ' ';
@@ -529,6 +543,7 @@
       if (e.key === 'Enter' || e.key === ' ') return;   // let focused controls activate
     }
     if (navKey(e, false)) { e.preventDefault(); return; }
+    if (view.ownsKeys) return;
     if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
       input.focus();
       input.value += e.key;

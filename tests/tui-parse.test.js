@@ -1,8 +1,8 @@
-// Lightweight tests for the terminal's path/command resolution.
-// Run: node --test tests/
+// Tests for the terminal's segment-based path resolution.
+// Run: node --test tests/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
-const { resolve, normalize } = require('../static/js/tui-parse.js');
+const { segments, normalize, resolve, completions } = require('../static/js/tui-parse.js');
 
 const POSTS = [
   { slug: '2026-07-04-morningprint', title: 'My receipt printer prints an original artwork every morning' },
@@ -10,94 +10,102 @@ const POSTS = [
   { slug: '2026-03-27-seahorse-emoji', title: 'The Seahorse Emoji' },
 ];
 
-test('normalize strips the decorations people type', () => {
+test('segments: decorations collapse; .. pops; leading .. underflows', () => {
+  assert.deepEqual(segments('~/posts//./x.md'), { segs: ['posts', 'x.md'], underflow: false });
+  assert.deepEqual(segments('posts/..'), { segs: [], underflow: false });
+  assert.deepEqual(segments('posts/../resume'), { segs: ['resume'], underflow: false });
+  assert.deepEqual(segments('..'), { segs: [], underflow: true });
+  assert.deepEqual(segments('../posts'), { segs: ['posts'], underflow: true });
+  assert.deepEqual(segments('a/~/b'), { segs: ['b'], underflow: false }); // ~ re-anchors
+  assert.deepEqual(segments(''), { segs: [], underflow: false });
+  assert.deepEqual(segments(undefined), { segs: [], underflow: false });
+});
+
+test('normalize: canonical display form', () => {
   assert.equal(normalize('~/posts/'), 'posts');
-  assert.equal(normalize('/posts'), 'posts');
-  assert.equal(normalize('./posts'), 'posts');
-  assert.equal(normalize('././posts'), 'posts');
-  assert.equal(normalize('~/./posts'), 'posts');
-  assert.equal(normalize('posts//'), 'posts');
-  assert.equal(normalize('  posts '), 'posts');
-  assert.equal(normalize('~'), '~');
   assert.equal(normalize('.'), '~');
-  assert.equal(normalize(''), '');
-  assert.equal(normalize(undefined), '');
+  assert.equal(normalize('~'), '~');
+  assert.equal(normalize('posts//x'), 'posts/x');
 });
 
-test('ls/cd/cat accept ./ paths (the report that prompted this suite)', () => {
-  assert.deepEqual(resolve('ls', './posts', POSTS), { kind: 'posts' });
-  assert.deepEqual(resolve('cd', './posts/', POSTS), { kind: 'posts' });
-  assert.deepEqual(resolve('cat', './resume.md', POSTS), { kind: 'resume' });
-  assert.equal(resolve('cat', './posts/2026-03-27-seahorse-emoji.md', POSTS).slug, '2026-03-27-seahorse-emoji');
-  assert.deepEqual(resolve('ls', '.', POSTS), { kind: 'home' });
-});
+// ---- parameterized spelling tables: one home per destination ----
 
-test('ls: bare, ~, home, and .. all land at the home listing', () => {
-  for (const arg of ['', '~', 'home', '..', '~/']) {
-    assert.deepEqual(resolve('ls', arg, POSTS), { kind: 'home' }, `ls ${JSON.stringify(arg)}`);
+const HOME_ARGS = ['', '~', '~/', '.', './', './.', '~/.', '/.', 'home', '..' /* ls only */];
+const POSTS_ARGS = ['posts', 'posts/', '~/posts', '/posts', './posts', '././posts',
+  '~/./posts', 'POSTS', 'posts//', 'posts/.', '~/posts/../posts'];
+
+test('ls: every home spelling lands home', () => {
+  for (const a of HOME_ARGS) {
+    assert.deepEqual(resolve('ls', a, POSTS), { kind: 'home' }, `ls ${JSON.stringify(a)}`);
   }
 });
 
-test('ls: posts in every spelling', () => {
-  for (const arg of ['posts', 'posts/', '~/posts', '/posts', 'POSTS']) {
-    assert.deepEqual(resolve('ls', arg, POSTS), { kind: 'posts' }, `ls ${JSON.stringify(arg)}`);
+test('ls/cd: every posts spelling lands posts', () => {
+  for (const a of POSTS_ARGS) {
+    assert.deepEqual(resolve('ls', a, POSTS), { kind: 'posts' }, `ls ${JSON.stringify(a)}`);
+    assert.deepEqual(resolve('cd', a, POSTS), { kind: 'posts' }, `cd ${JSON.stringify(a)}`);
   }
 });
 
-test('ls: unknown directory errors, and files are not directories', () => {
-  assert.deepEqual(resolve('ls', 'bogus', POSTS), { kind: 'missing', what: 'directory', name: 'bogus' });
-  assert.equal(resolve('ls', 'about.txt', POSTS).kind, 'missing');
-});
-
-test('cd: home, .., posts, unknown', () => {
-  assert.deepEqual(resolve('cd', '', POSTS), { kind: 'home' });
-  assert.deepEqual(resolve('cd', '~', POSTS), { kind: 'home' });
+test('cd: .. means back (stateless resolver defers to the nav stack); posts/.. means home', () => {
   assert.deepEqual(resolve('cd', '..', POSTS), { kind: 'back' });
-  assert.deepEqual(resolve('cd', 'posts/', POSTS), { kind: 'posts' });
-  assert.deepEqual(resolve('cd', '~/posts', POSTS), { kind: 'posts' });
-  assert.equal(resolve('cd', 'nope', POSTS).kind, 'missing');
+  assert.deepEqual(resolve('cd', '../', POSTS), { kind: 'back' });
+  assert.deepEqual(resolve('cd', 'posts/..', POSTS), { kind: 'home' });
+  assert.deepEqual(resolve('ls', 'posts/..', POSTS), { kind: 'home' });
 });
 
-test('cat: about and resume in every spelling, case-insensitive', () => {
-  for (const arg of ['about.txt', 'about', 'About.txt', 'ABOUT.TXT', '~/about.txt']) {
-    assert.deepEqual(resolve('cat', arg, POSTS), { kind: 'about' }, `cat ${arg}`);
+test('unknown directories error with the RAW typed name', () => {
+  assert.deepEqual(resolve('ls', './bogus/', POSTS), { kind: 'missing', what: 'directory', name: './bogus/' });
+  assert.deepEqual(resolve('cd', 'nope', POSTS), { kind: 'missing', what: 'directory', name: 'nope' });
+  assert.deepEqual(resolve('ls', 'about.txt', POSTS), { kind: 'missing', what: 'directory', name: 'about.txt' });
+});
+
+test('cat: about and resume in every spelling, case-insensitive, under posts/../ too', () => {
+  for (const a of ['about.txt', 'about', 'About.txt', 'ABOUT.TXT', '~/about.txt', './about.txt']) {
+    assert.deepEqual(resolve('cat', a, POSTS), { kind: 'about' }, `cat ${a}`);
   }
-  for (const arg of ['resume', 'resume.md', 'Resume.md', '~/resume.md', 'posts/../resume']) {
-    const r = resolve('cat', arg, POSTS);
-    if (arg === 'posts/../resume') continue; // .. inside paths is out of scope
-    assert.deepEqual(r, { kind: 'resume' }, `cat ${arg}`);
+  for (const a of ['resume', 'resume.md', 'Resume.md', '~/resume.md', './resume.md',
+                   'posts/../resume', 'posts/../resume.md' /* formerly skipped as out of scope */]) {
+    assert.deepEqual(resolve('cat', a, POSTS), { kind: 'resume' }, `cat ${a}`);
   }
 });
 
-test('cat: full slugs, posts/ prefixes, .md suffixes, and mixed case', () => {
-  for (const arg of [
+test('cat: slugs with every decoration, including interior // and /./', () => {
+  for (const a of [
     '2026-07-04-morningprint',
     '2026-07-04-morningprint.md',
     'posts/2026-07-04-morningprint.md',
     '~/posts/2026-07-04-morningprint',
+    'posts//2026-07-04-morningprint.md',
+    'posts/./2026-07-04-morningprint.md',
+    './posts/./2026-07-04-morningprint.md',
     '2026-07-04-MORNINGPRINT.md',
   ]) {
-    assert.deepEqual(resolve('cat', arg, POSTS), { kind: 'post', slug: '2026-07-04-morningprint' }, `cat ${arg}`);
+    assert.deepEqual(resolve('cat', a, POSTS), { kind: 'post', slug: '2026-07-04-morningprint' }, `cat ${a}`);
   }
 });
 
-test('cat: fragment matching on slug and title', () => {
-  assert.equal(resolve('cat', 'morningprint', POSTS).slug, '2026-07-04-morningprint');
+test('cat: fragments match slug and title; exact slug beats substring', () => {
   assert.equal(resolve('cat', 'seahorse', POSTS).slug, '2026-03-27-seahorse-emoji');
   assert.equal(resolve('cat', 'epidemiology', POSTS).slug, '2026-04-11-mythos');
-  assert.equal(resolve('cat', 'MYTHOS', POSTS).slug, '2026-04-11-mythos');
+  const dup = [{ slug: 'notes', title: 'Notes' }, { slug: 'notes-2', title: 'More notes' }];
+  assert.equal(resolve('cat', 'notes', dup).slug, 'notes');
 });
 
-test('cat: a directory argument shows the directory; empty shows usage; junk errors', () => {
+test('cat: directories render as listings; empty is usage; junk errors with raw name', () => {
   assert.deepEqual(resolve('cat', 'posts/', POSTS), { kind: 'posts' });
+  assert.deepEqual(resolve('cat', '.', POSTS), { kind: 'home' });
+  assert.deepEqual(resolve('cat', '~', POSTS), { kind: 'home' });
   assert.deepEqual(resolve('cat', '', POSTS), { kind: 'usage' });
-  assert.deepEqual(resolve('cat', 'nope.txt', POSTS), { kind: 'missing', what: 'file', name: 'nope.txt' });
+  assert.deepEqual(resolve('cat', './nope.txt', POSTS), { kind: 'missing', what: 'file', name: './nope.txt' });
+  assert.deepEqual(resolve('cat', '../x', POSTS), { kind: 'missing', what: 'file', name: '../x' });
 });
 
-test('exact slug wins over substring when both could match', () => {
-  const posts = [
-    { slug: 'notes', title: 'Notes' },
-    { slug: 'notes-2', title: 'More notes' },
-  ];
-  assert.equal(resolve('cat', 'notes', posts).slug, 'notes');
+test('completions: one source of truth per command', () => {
+  const c = completions('cat', POSTS);
+  assert.ok(c.includes('about.txt') && c.includes('resume.md') && c.includes('posts/'));
+  assert.ok(c.includes('2026-07-04-morningprint'));
+  assert.deepEqual(completions('ls', POSTS), ['posts/']);
+  assert.deepEqual(completions('cd', POSTS), ['posts/']);
+  assert.deepEqual(completions('play', POSTS), []);
 });
