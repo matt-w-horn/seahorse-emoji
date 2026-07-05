@@ -123,6 +123,11 @@ async function main() {
   check('game script fetched on demand', netUrls.some((u) => /tui-game\..*\.js/.test(u)));
   check('canvas mounted', (await evalJs('!!document.getElementById("gamecanvas")')) === true);
   check('game engine started (canvas sized by fit())', (await evalJs('(function(){var c=document.getElementById("gamecanvas");return !!c && c.width>0;})()')) === true);
+  // the prompt must still be editable while the game owns the keyboard: a
+  // focused input should NOT have its backspace/typing swallowed.
+  await evalJs('var i=document.getElementById("in"); i.value="ab"; i.focus();');
+  const bsPrevented = await evalJs('(function(){var e=new KeyboardEvent("keydown",{key:"Backspace",bubbles:true,cancelable:true});document.getElementById("in").dispatchEvent(e);return e.defaultPrevented;})()');
+  check('backspace works in the prompt while game active', bsPrevented === false);
 
   console.log('\n[5] block cursor');
   await evalJs('history.back()'); await sleep(400);
