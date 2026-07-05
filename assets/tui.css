@@ -412,6 +412,9 @@ a:hover { color: var(--foreground); }
 #screen.lock { overflow: hidden; touch-action: none; }
 
 .row { white-space: pre-wrap; word-break: break-word; margin: 0; }
+/* help/commands rows: hang wrapped description text under the description
+   column (14ch = 2 lead + 12 name field) instead of the far-left margin. */
+.row.cmd { padding-left: 14ch; text-indent: -14ch; }
 .gap { height: var(--line-height); }
 .dim { color: var(--dim); }
 .err { color: var(--err); }
@@ -486,11 +489,13 @@ html.plain #promptline, html.plain #echoline, html.plain .chip { display: none; 
   #screen { padding: 4px 10px 2px; }
   #echoline { padding: 2px 10px 0; }
   #promptline { padding: 8px 10px 0; }
-  /* the breadcrumb prompt can be wider than a phone; let it wrap and drop the
-     input onto its own full-width line below, instead of forcing the frame
-     wider than the viewport. */
+  /* the breadcrumb prompt can be wider than a phone; let it wrap instead of
+     forcing the frame wider than the viewport. Keep the input beside a short
+     prompt (home = ~$); it only drops to its own full-width line when the
+     breadcrumb is long enough to crowd it (a deep post path), via flex-wrap
+     once the input can't keep its min-width beside the prompt. */
   #ps1 { white-space: normal; overflow-wrap: anywhere; }
-  #in { flex-basis: 100%; }
+  #in { min-width: 14ch; }
   #title-chip { left: 10px; } #acc-chip { right: 10px; }
   #keys-chip { left: 10px; } #page-chip { right: 10px; }
   .art { font-size: 10px; }

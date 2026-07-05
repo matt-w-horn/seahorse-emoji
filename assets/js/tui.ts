@@ -443,7 +443,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     screen.appendChild(rowEl('commands', 't-title'));
     screen.appendChild(gapEl());
     Object.keys(commands).forEach(function (name) {
-      screen.appendChild(rowEl(['  ', { text: name, click: makeRun(name) }, Array(Math.max(1, 12 - name.length)).join(' ') + ' ' + commands[name].desc]));
+      screen.appendChild(rowEl(['  ', { text: name, click: makeRun(name) }, Array(Math.max(1, 12 - name.length)).join(' ') + ' ' + commands[name].desc], 'cmd'));
     });
     screen.appendChild(gapEl());
     screen.appendChild(rowEl('anywhere: esc goes back, the path above the prompt is tappable.', 'dim'));
