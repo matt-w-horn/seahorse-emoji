@@ -25,15 +25,15 @@
 {{ with .OutputFormats.Get "rss" -}}
 <link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ site.Title }}">
 {{- end }}
-<link rel="stylesheet" href="{{ "terminal.css" | relURL }}">
-<link rel="stylesheet" href="{{ "style.css" | relURL }}">
-{{ $tuiCss := resources.Get "css/tui.css" | minify | fingerprint }}
-<link rel="stylesheet" href="{{ $tuiCss.RelPermalink }}">
+{{- /* critical CSS inlined: zero render-blocking requests, no chain.
+      Order matters: palette vars, one-size headings, then the TUI layer. */}}
+{{ $tuiCss := resources.Get "css/tui.css" | minify }}
+<style>{{ os.ReadFile "static/terminal.css" | safeCSS }}{{ os.ReadFile "static/style.css" | safeCSS }}{{ $tuiCss.Content | safeCSS }}</style>
 <noscript><style>#promptline, #echoline, .chip { display: none; }</style></noscript>
 </head>
 <body>
 
-<div id="wrap">
+<main id="wrap">
   <div id="frame">
     <span class="chip" id="title-chip"><span class="site">matthorn.io</span> <span class="stripe">▍ ▍ ▍ ▍ ▍ ▍ ▍ ▍ ▍ ▍</span></span>
     <span class="chip" id="acc-chip" title="cycle color theme">theme: pistachio</span>
@@ -65,7 +65,7 @@
     <span class="chip" id="keys-chip"></span>
     <span class="chip" id="page-chip"></span>
   </div>
-</div>
+</main>
 
 <script>
   {{ $m := slice }}

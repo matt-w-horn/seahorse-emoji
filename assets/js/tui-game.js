@@ -366,12 +366,16 @@
       ctx.strokeStyle = pal.fg;
       ctx.beginPath();
       bullets.forEach(function (bl) {
+        var base = project(bl.x - cam.x, bl.y - cam.y, bl.z, FOCAL);
         var tip = project(bl.x - cam.x, bl.y - cam.y, bl.z + 40, FOCAL);
-        if (!tip) return;
+        if (!base || !tip) return;
+        // spread decays with depth and is anchored to the bullet's own
+        // projected position, so steering after firing moves the whole
+        // tracer instead of stretching it from the reticle
         var prog = Math.min(1, (bl.z - Z_NEAR) / 500);
         var spread = 26 * (1 - prog), drop = 16 * (1 - prog);
         [-1, 1].forEach(function (sgn) {
-          ctx.moveTo(cx + sgn * spread, cy + drop);
+          ctx.moveTo(cx + base.x + sgn * spread, cy + base.y + drop);
           ctx.lineTo(cx + tip.x, cy + tip.y);
         });
       });
