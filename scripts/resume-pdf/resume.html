@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Matt Horn — Resume</title>
+<style>
+  @page { size: letter; margin: 0.75in 0.85in; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    color: #1a1a1a;
+  }
+  header { text-align: center; margin-bottom: 14pt; }
+  h1 { font-size: 20pt; font-weight: normal; letter-spacing: 1px; }
+  .contact { font-size: 9.5pt; color: #444; margin-top: 2pt; }
+  h2 {
+    font-size: 11pt;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border-bottom: 0.75pt solid #999;
+    margin: 12pt 0 6pt;
+    padding-bottom: 2pt;
+    font-weight: normal;
+  }
+  .role { margin-bottom: 8pt; break-inside: avoid; }
+  .role-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .role-title { font-weight: bold; }
+  .role-org { font-style: italic; }
+  .role-dates { font-size: 9.5pt; color: #444; white-space: nowrap; padding-left: 12pt; }
+  ul { margin: 2pt 0 0 14pt; }
+  li { margin-bottom: 1.5pt; }
+  .note { font-size: 9pt; color: #555; font-style: italic; }
+  a { color: #1a1a1a; }
+  p.pub { margin-bottom: 4pt; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Matt Horn</h1>
+  <div class="contact">matthorn.io &nbsp;·&nbsp; matt [at] matthorn [dot] io</div>
+</header>
+
+<h2>Experience</h2>
+
+<div class="role">
+  <div class="role-head">
+    <span><span class="role-title">Software Engineer</span>, <span class="role-org">Google</span></span>
+    <span class="role-dates">July 2025 – Present</span>
+  </div>
+  <ul>
+    <li>Google Cloud AI: improving reliability, scaling, security, and error handling for the infrastructure serving Gemini and other models.</li>
+    <li>Previous project: supporting Google Cloud Dedicated, Google's sovereign cloud offering for European customers, including reliability-monitoring infrastructure adopted by peer teams.</li>
+    <li>Java readability mentor.</li>
+  </ul>
+</div>
+
+<div class="role">
+  <div class="role-head">
+    <span><span class="role-title">Member of Technical Staff</span>, <span class="role-org">OpenAI</span></span>
+    <span class="role-dates">August 2024 – April 2025</span>
+  </div>
+  <ul>
+    <li>Security engineering on the internal access-management platform: observability, reliability, and performance.</li>
+    <li>Automated identity-hygiene and compliance checks; intermittent on-call for company-wide security support.</li>
+  </ul>
+</div>
+
+<div class="role">
+  <div class="role-head">
+    <span><span class="role-title">Senior Software Engineer (L6 / SDE III)</span>, <span class="role-org">Amazon Web Services</span></span>
+    <span class="role-dates">November 2022 – August 2024</span>
+  </div>
+  <ul>
+    <li>Led strategy and guided implementation for attribute-based access control (ABAC) across the AWS Identity platform, serving 600+ integrating teams.</li>
+    <li>Used an early version of Claude on Bedrock to find integration errors across consumer teams at a scale static analysis couldn't reach, before LLM code analysis was a product category.</li>
+    <li>Cut on-call load by automating issue resolution and moving configuration to code; contributed to identifying and resolving zero-day exploits.</li>
+  </ul>
+</div>
+
+<div class="role">
+  <div class="role-head">
+    <span><span class="role-title">Staff Software Engineer (IC4)</span>, <span class="role-org">Twilio</span></span>
+    <span class="role-dates">July 2021 – October 2022</span>
+  </div>
+  <ul>
+    <li>Led the organization-wide modernization of Twilio's core billing and usage platform, including its migration to Amazon Aurora MySQL — written up on the <a href="https://aws.amazon.com/blogs/database/how-twilio-modernized-its-billing-platform-on-amazon-aurora-mysql/">AWS Database Blog</a>.</li>
+    <li>Tightened internal access controls around highly sensitive billing data to reduce insider risk, and kept PCI-DSS compliance intact through the migration.</li>
+  </ul>
+</div>
+
+<div class="role">
+  <div class="role-head">
+    <span><span class="role-title">Software Development Engineer (L5 / SDE II)</span>, <span class="role-org">Amazon</span></span>
+    <span class="role-dates">July 2019 – July 2021</span>
+  </div>
+  <ul>
+    <li>Designed and built microservices on the Amazon.com retail stack, focused on protecting customer PII and staying available through peak events (Prime Day, holiday traffic).</li>
+  </ul>
+</div>
+
+<div class="role">
+  <div class="role-head">
+    <span><span class="role-title">Software Engineer (L3, promoted to L4)</span>, <span class="role-org">Google</span></span>
+    <span class="role-dates">December 2015 – June 2019</span>
+  </div>
+  <ul>
+    <li>Payments compliance engineering: sanctions screening, AML risk scoring that unblocked product launches in new markets, and a customer-tiering service designed as an L3 that is still in production a decade later.</li>
+    <li>Automated document requests for sanctions reviews, cutting manual review volume by more than half and raising customer response rates by double digits.</li>
+    <li>Took over a Street View imagery quality-control tool mid-project when its tech lead departed; built the entire frontend solo and launched it to the global operations team reviewing incoming imagery.</li>
+    <li>Java readability granter (65+ reviews granted).</li>
+  </ul>
+</div>
+
+<div class="role">
+  <div class="role-head">
+    <span><span class="role-title">Software Developer</span>, <span class="role-org">Trifecta Technologies</span></span>
+    <span class="role-dates">December 2014 – December 2015</span>
+  </div>
+  <ul>
+    <li>Salesforce consulting: full-stack e-commerce and operations systems (Apex, Lightning, SOQL) for enterprise clients on tight deadlines.</li>
+  </ul>
+</div>
+
+<div class="role">
+  <div class="role-head">
+    <span><span class="role-title">Software Developer</span>, <span class="role-org">Right Reason Technologies</span> <span class="note">(part-time through college, full-time in 2014)</span></span>
+    <span class="role-dates">2011 – December 2014</span>
+  </div>
+  <ul>
+    <li>eLearning platform: built a drag-and-drop workflow editor for automated grading, maintained reporting subsystems, improved database query performance.</li>
+  </ul>
+</div>
+
+<div class="role">
+  <div class="role-head">
+    <span><span class="role-title">Research Assistant</span>, <span class="role-org">The University of Texas at Dallas</span></span>
+    <span class="role-dates">June 2012 – August 2012</span>
+  </div>
+</div>
+
+<h2>Publications</h2>
+
+<p class="pub">W. E. Wong, T. Gidvani, A. Lopez, R. Gao, and M. Horn, "Evaluating Software Safety Standards: A Systematic Review and Comparison," in <em>2014 IEEE Eighth International Conference on Software Security and Reliability-Companion</em>, San Jose, CA, 2014, pp. 78–87. <a href="https://doi.org/10.1109/SERE-C.2014.25">doi.org/10.1109/SERE-C.2014.25</a></p>
+
+<h2>Education</h2>
+
+<div class="role">
+  <div class="role-head">
+    <span><span class="role-title">Bachelor of Science, Computer Science</span>, <span class="role-org">Muhlenberg College</span></span>
+    <span class="role-dates">2010 – 2014</span>
+  </div>
+  <ul>
+    <li>Minors in Mathematics and Music Theory. Recipient of the Dr. Anthony J. Marino Jr. Award in Computing Science (2013).</li>
+  </ul>
+</div>
+
+</body>
+</html>
