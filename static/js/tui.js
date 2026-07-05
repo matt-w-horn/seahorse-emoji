@@ -356,15 +356,7 @@
 
   /* ---------- commands ---------- */
 
-  function findPost(arg) {
-    var q = (arg || '').toLowerCase();
-    if (!q) return null;
-    for (var i = 0; i < POSTS.length; i++) {
-      var p = POSTS[i];
-      if (p.slug.toLowerCase().indexOf(q) !== -1 || p.title.toLowerCase().indexOf(q) !== -1) return p;
-    }
-    return null;
-  }
+  function findPost(arg) { return TUIParse.matchPost(String(arg || '').toLowerCase(), POSTS); }
 
   var ACCENTS = [
     { cls: '', name: 'pistachio' },
@@ -385,35 +377,29 @@
   var commands = {
     help: { desc: 'this list', fn: function () { goTo(paintHelp); } },
     ls: { desc: 'list a directory (ls posts/)', fn: function (args) {
-      var t = (args[0] || '').replace(/\/$/, '');
-      if (!t || t === '~') {
-        goHome();
-        echo('~: posts/  resume.md  about.txt  help');
-        return;
-      }
-      if (t === 'posts') {
-        goTo(paintPosts);
-        echo('~/posts: ' + POSTS.length + ' files, listed on screen');
-        return;
-      }
-      echo('ls: ' + t + ': no such directory', 'err');
+      var r = TUIParse.resolve('ls', args[0], POSTS);
+      if (r.kind === 'home') { goHome(); echo('~: posts/  resume.md  about.txt  help'); return; }
+      if (r.kind === 'posts') { goTo(paintPosts); echo('~/posts: ' + POSTS.length + ' files, listed on screen'); return; }
+      echo('ls: ' + r.name + ': no such directory', 'err');
     } },
     cd: { desc: 'move around (cd posts, cd ..)', fn: function (args) {
-      var t = (args[0] || '~').replace(/\/$/, '');
-      if (t === '~' || t === '') { goHome(); echo('-> ~'); return; }
-      if (t === '..') { goBack(); echo('-> back'); return; }
-      if (t === 'posts') { goTo(paintPosts); echo('-> ~/posts'); return; }
-      echo('cd: ' + t + ': no such directory', 'err');
+      var r = TUIParse.resolve('cd', args[0], POSTS);
+      if (r.kind === 'home') { goHome(); echo('-> ~'); return; }
+      if (r.kind === 'back') { goBack(); echo('-> back'); return; }
+      if (r.kind === 'posts') { goTo(paintPosts); echo('-> ~/posts'); return; }
+      echo('cd: ' + r.name + ': no such directory', 'err');
     } },
     cat: { desc: 'read a file (cat about.txt)', fn: function (args) {
-      var t = (args[0] || '').replace(/\.md$/, '').replace(/\/$/, '');
-      if (!t) { echo('usage: cat <file>', 'err'); return; }
-      if (t === 'about.txt' || t === 'about') { goTo(paintAbout); return; }
-      if (t === 'resume') { openDoc(RESUME); return; }
-      if (t === 'posts') { goTo(paintPosts); return; }
-      var p = findPost(t);
-      if (p) { openDoc(p); return; }
-      echo('cat: ' + t + ': no such file', 'err');
+      var r = TUIParse.resolve('cat', args[0], POSTS);
+      if (r.kind === 'usage') { echo('usage: cat <file>', 'err'); return; }
+      if (r.kind === 'about') { goTo(paintAbout); return; }
+      if (r.kind === 'resume') { openDoc(RESUME); return; }
+      if (r.kind === 'posts') { goTo(paintPosts); return; }
+      if (r.kind === 'post') {
+        var p = POSTS.filter(function (x) { return x.slug === r.slug; })[0];
+        if (p) { openDoc(p); return; }
+      }
+      echo('cat: ' + r.name + ': no such file', 'err');
     } },
     resume: { desc: 'read the resume', fn: function () { openDoc(RESUME); } },
     posts: { desc: 'the posts directory', fn: function () { goTo(paintPosts); echo('-> ~/posts'); } },

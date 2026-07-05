@@ -13,3 +13,12 @@ h1, h2, h3, h4, h5, h6 {
   font-size: calc(var(--font-size) * 1.1);
   letter-spacing: 0.04em;
 }
+
+/* system monospace only: with no rule naming the Fira Code family, the
+   ~250KB of woff2 the theme ships is never downloaded, on any page */
+body {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Ubuntu Mono", monospace;
+}
+code, kbd, pre {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Ubuntu Mono", monospace !important;
+}
