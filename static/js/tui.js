@@ -41,6 +41,7 @@
     'mount /posts ......... ' + POSTS.length + ' files',
     'mount /resume.md ..... ' + (RESUME ? 'ok' : 'missing'),
     'mount /about.txt ..... ok',
+    'attach /dev/arcade ... ok',
     'starting shell'
   ];
 
@@ -215,6 +216,7 @@
         { label: 'posts/', note: POSTS.length + ' pieces of writing', href: DATA.postsUrl, run: function () { goTo(paintPosts); } },
         { label: 'resume.md', note: 'fifteen years of jobs', href: DATA.resumeUrl || undefined, run: function () { openDoc(RESUME); } },
         { label: 'about.txt', note: 'who lives here', run: function () { goTo(paintAbout); } },
+        { label: 'play', note: 'wireframe asteroids', run: function () { goTo(paintPlay); } },
         { label: 'help', note: 'all the commands', run: function () { goTo(paintHelp); } }
       ].filter(function (it) { return it.label !== 'resume.md' || RESUME; })
     });
@@ -299,6 +301,26 @@
     var post = findPost('morningprint');
     if (post) screen.appendChild(rowEl(['the full story:  ', { text: post.slug + '.md', click: function () { openDoc(post); } }]));
     screen.appendChild(rowEl(['the code:        ', { text: 'github.com/matt-w-horn/morningprint', href: 'https://github.com/matt-w-horn/morningprint' }]));
+  }
+
+  function paintPlay() {
+    view = { name: 'game' }; menu = null;
+    clearScreen();
+    screen.classList.add('lock');
+    setPath([{ text: '~', go: goHome }, { text: 'play' }]);
+    setKeys('arrows: rotate and thrust · space: fire · esc: back');
+    setPage('no coins needed');
+    var canvas = document.createElement('canvas');
+    canvas.id = 'gamecanvas';
+    screen.appendChild(canvas);
+    if (window.TUIGame) {
+      TUIGame.start(canvas, {
+        reduced: reduced,
+        isActive: function () { return view.name === 'game' && canvas.isConnected; }
+      });
+    } else {
+      screen.appendChild(rowEl('the game failed to load; esc goes back', 'err'));
+    }
   }
 
   /* doc captured in a closure so back-navigation can never dangle */
@@ -405,6 +427,7 @@
     posts: { desc: 'the posts directory', fn: function () { goTo(paintPosts); echo('-> ~/posts'); } },
     home: { desc: 'back to ~', fn: function () { goHome(); echo('-> ~'); } },
     back: { desc: 'go back one screen', fn: goBack },
+    play: { desc: 'wireframe asteroids', fn: function () { goTo(paintPlay); } },
     motd: { desc: 'a note from my receipt printer', fn: function () { goTo(paintMotd); } },
     theme: { desc: 'cycle color theme', fn: cycleTheme },
     plain: { desc: 'the ordinary website (same pages, no terminal)', fn: function () { window.location.href = DATA.postsUrl; } },
@@ -448,6 +471,10 @@
 
   function navKey(e, focused) {
     if (view.name === 'boot') { bootSkip(); return e.key !== 'Tab'; }   // any key skips; Tab still moves focus
+    if (view.name === 'game') {
+      if (e.key === 'Escape') { goBack(); return true; }
+      return ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ', 'Enter'].indexOf(e.key) >= 0;
+    }
     if (menu) {
       if (e.key === 'ArrowDown') { moveMenuSel(1); return true; }
       if (e.key === 'ArrowUp') { moveMenuSel(-1); return true; }

@@ -484,3 +484,5 @@ a:hover { color: var(--foreground); }
 body {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Ubuntu Mono", monospace;
 }
+
+#gamecanvas { display: block; }
