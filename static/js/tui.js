@@ -386,15 +386,23 @@
     help: { desc: 'this list', fn: function () { goTo(paintHelp); } },
     ls: { desc: 'list a directory (ls posts/)', fn: function (args) {
       var t = (args[0] || '').replace(/\/$/, '');
-      if (!t || t === '~') { goHome(); return; }
-      if (t === 'posts') { goTo(paintPosts); return; }
+      if (!t || t === '~') {
+        goHome();
+        echo('~: posts/  resume.md  about.txt  help');
+        return;
+      }
+      if (t === 'posts') {
+        goTo(paintPosts);
+        echo('~/posts: ' + POSTS.length + ' files, listed on screen');
+        return;
+      }
       echo('ls: ' + t + ': no such directory', 'err');
     } },
     cd: { desc: 'move around (cd posts, cd ..)', fn: function (args) {
       var t = (args[0] || '~').replace(/\/$/, '');
-      if (t === '~' || t === '') { goHome(); return; }
-      if (t === '..') { goBack(); return; }
-      if (t === 'posts') { goTo(paintPosts); return; }
+      if (t === '~' || t === '') { goHome(); echo('-> ~'); return; }
+      if (t === '..') { goBack(); echo('-> back'); return; }
+      if (t === 'posts') { goTo(paintPosts); echo('-> ~/posts'); return; }
       echo('cd: ' + t + ': no such directory', 'err');
     } },
     cat: { desc: 'read a file (cat about.txt)', fn: function (args) {
@@ -408,8 +416,8 @@
       echo('cat: ' + t + ': no such file', 'err');
     } },
     resume: { desc: 'read the resume', fn: function () { openDoc(RESUME); } },
-    posts: { desc: 'the posts directory', fn: function () { goTo(paintPosts); } },
-    home: { desc: 'back to ~', fn: goHome },
+    posts: { desc: 'the posts directory', fn: function () { goTo(paintPosts); echo('-> ~/posts'); } },
+    home: { desc: 'back to ~', fn: function () { goHome(); echo('-> ~'); } },
     back: { desc: 'go back one screen', fn: goBack },
     motd: { desc: 'a note from my receipt printer', fn: function () { goTo(paintMotd); } },
     theme: { desc: 'cycle color theme', fn: cycleTheme },
@@ -432,7 +440,15 @@
     var name = parts[0].toLowerCase();
     var cmd = commands[name];
     var suffix = '', cls = '';
-    if (cmd) { echo('$ ' + text); cmd.fn(parts.slice(1)); return; }
+    if (cmd) {
+      echo('$ ' + text);
+      cmd.fn(parts.slice(1));
+      // prefix the command's own feedback so cause and effect read together
+      if (echoEl.textContent && echoEl.textContent.indexOf('$ ') !== 0) {
+        echoEl.textContent = '$ ' + text + '   ' + echoEl.textContent;
+      }
+      return;
+    }
     if (name === 'q') { echo('$ ' + text); goBack(); return; }
     if (name === 'sudo') { suffix = 'nice try.'; cls = 'err'; }
     else if (name === 'exit') { suffix = 'there is no escape; try plain for the ordinary site.'; }
