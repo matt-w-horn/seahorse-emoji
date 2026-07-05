@@ -7,7 +7,9 @@
 (function () {
   'use strict';
 
-  var DATA = window.__TUI;
+  var dataEl = document.getElementById('tui-data');
+  var DATA = null;
+  try { DATA = dataEl && JSON.parse(dataEl.textContent); } catch (e) { /* boot aborts below */ }
   var screen = document.getElementById('screen');
   var input = document.getElementById('in');
   var ps1 = document.getElementById('ps1');
