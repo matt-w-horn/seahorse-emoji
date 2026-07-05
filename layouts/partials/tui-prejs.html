@@ -1,0 +1,50 @@
+{{- /* Server-rendered fallback: real links + content for crawlers, no-JS
+      visitors, and failed script loads. Also the console's zero-fetch initial
+      paint source. Boot clears it before painting. Branches on page kind; each
+      page emits ONLY its own content (never all docs). Context (.) is the page.
+      $posts/$resume are passed in via dict from tui-shell.html. */ -}}
+{{- $posts := .posts -}}
+{{- $resume := .resume -}}
+{{- $page := .page -}}
+<div class="prejs">
+{{- if $page.IsHome -}}
+  <h1>{{ site.Title }}</h1>
+  <p class="dim">{{ site.Params.subtitle }}. This page is an interactive
+  terminal when JavaScript runs; either way, everything is an ordinary
+  page you can open directly.</p>
+  {{ $page.Content }}
+  <h2>Posts</h2>
+  <ul>
+    {{ range $posts }}
+    <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> <span class="dim">{{ .Date.Format "2006-01-02" }}</span></li>
+    {{ end }}
+    {{ with $resume }}<li><a href="{{ .RelPermalink }}">Resume</a></li>{{ end }}
+  </ul>
+  <p class="dim">{{ site.Copyright }}</p>
+{{- else if eq $page.Type "posts" -}}
+  {{- if $page.IsPage -}}
+    <article>
+      <h1>{{ $page.Title }}</h1>
+      <p class="dim"><time datetime="{{ $page.Date.Format "2006-01-02" }}">{{ $page.Date.Format "2006-01-02" }}</time>{{ with $page.Params.Author }} · {{ . }}{{ end }}</p>
+      {{ $page.Content }}
+      <p class="dim"><a href="{{ "/posts/" | relURL }}">All posts</a> · <a href="{{ "/" | relURL }}">Home</a></p>
+    </article>
+  {{- else -}}
+    <h1>Posts</h1>
+    <ul>
+      {{ range $posts }}
+      <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> <span class="dim">{{ .Date.Format "2006-01-02" }}</span></li>
+      {{ end }}
+      {{ with $resume }}<li><a href="{{ .RelPermalink }}">Resume</a></li>{{ end }}
+    </ul>
+    <p class="dim"><a href="{{ "/" | relURL }}">Home</a></p>
+  {{- end -}}
+{{- else -}}
+  {{- /* a standalone page, e.g. /resume/ */ -}}
+  <article>
+    <h1>{{ $page.Title }}</h1>
+    {{ $page.Content }}
+    <p class="dim"><a href="{{ "/" | relURL }}">Home</a></p>
+  </article>
+{{- end -}}
+</div>

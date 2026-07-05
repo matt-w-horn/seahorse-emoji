@@ -1,0 +1,109 @@
+{{- /* The standalone TUI document, shared by every page (home, posts list,
+      each post, resume). Deliberately a full <!doctype> doc that bypasses the
+      theme baseof so the terminal owns the viewport. Per-page differences:
+      <head> metadata, the .prejs fallback, and the single current-doc
+      <template>. Site-global metadata ($posts/$resume/#tui-data) is identical
+      everywhere. Context (.) is the page. */ -}}
+{{- $posts := (where site.RegularPages "Type" "posts").ByDate.Reverse -}}
+{{- $resume := site.GetPage "/resume" -}}
+{{- $desc := "" -}}
+{{- if .IsHome -}}
+  {{- $desc = site.Params.subtitle -}}
+{{- else -}}
+  {{- $desc = or .Description (.Summary | plainify) -}}
+  {{- if not $desc }}{{ $desc = site.Params.subtitle }}{{ end -}}
+{{- end -}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} :: {{ site.Title }}{{ end }}</title>
+<meta name="description" content="{{ $desc }}">
+<link rel="canonical" href="{{ .Permalink }}">
+{{ partial "extended_head.html" . }}
+<meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+<meta property="og:title" content="{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}">
+<meta property="og:description" content="{{ $desc }}">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta property="og:image" content="{{ "og-image.png" | absURL }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta name="twitter:card" content="summary_large_image">
+{{ if .IsPage }}{{ with .Date }}<meta property="article:published_time" content="{{ .Format "2006-01-02T15:04:05Z07:00" }}">{{ end }}{{ end }}
+{{ with .OutputFormats.Get "rss" -}}
+<link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ site.Title }}">
+{{- end }}
+{{- /* critical CSS inlined: zero render-blocking requests, no chain.
+      Order matters: palette vars, one-size headings, then the TUI layer. */}}
+{{ $tuiCss := resources.Get "tui.css" | minify }}
+<style>{{ os.ReadFile "static/terminal.css" | safeCSS }}{{ os.ReadFile "static/style.css" | safeCSS }}{{ $tuiCss.Content | safeCSS }}</style>
+<noscript><style>#promptline, #echoline, .chip { display: none; }</style></noscript>
+</head>
+<body>
+
+<main id="wrap">
+  <div id="frame">
+    <span class="chip" id="title-chip"><span class="site">matthorn.io</span> <span class="stripe">▍ ▍ ▍ ▍ ▍ ▍ ▍ ▍ ▍ ▍</span></span>
+    <span class="chip" id="acc-chip" title="cycle color theme">theme: pistachio</span>
+    <div id="screen">
+      {{ partial "tui-prejs.html" (dict "page" . "posts" $posts "resume" $resume) }}
+    </div>
+    <div id="echoline" aria-live="polite"></div>
+    <div id="promptline">
+      <span id="ps1"></span>
+      <input id="in" type="text" autocomplete="off" autocapitalize="none"
+             spellcheck="false" aria-label="terminal input" />
+      <span id="caret" aria-hidden="true"></span>
+    </div>
+    <span class="chip" id="keys-chip"></span>
+    <span class="chip" id="page-chip"></span>
+  </div>
+</main>
+
+{{- /* Non-executable data block: lets the CSP stay at script-src 'self'
+      with no inline-script hash to maintain. tui.ts parses #tui-data.
+      Identical on every page, so the shell can be truly shared. */ -}}
+{{ $m := slice }}
+{{- range $posts -}}
+  {{- $cu := "" -}}
+  {{- with .OutputFormats.Get "fragment" }}{{ $cu = .RelPermalink }}{{ end -}}
+  {{- $m = $m | append (dict
+        "slug" .File.ContentBaseName
+        "date" (.Date.Format "2006-01-02")
+        "title" .Title
+        "url" .RelPermalink
+        "contentUrl" $cu) -}}
+{{- end }}
+{{- $resumeUrl := "" }}{{ $resumeCU := "" -}}
+{{- with $resume }}{{ $resumeUrl = .RelPermalink }}{{ with .OutputFormats.Get "fragment" }}{{ $resumeCU = .RelPermalink }}{{ end }}{{ end -}}
+{{- $aboutCU := "" }}{{ with site.Home.OutputFormats.Get "fragment" }}{{ $aboutCU = .RelPermalink }}{{ end -}}
+{{- /* Game: standalone ESM chunk, loaded on demand by tui.ts via import(). */ -}}
+{{- $game := resources.Get "js/tui-game.ts" | js.Build (dict "minify" true "format" "esm" "target" "es2020") | fingerprint -}}
+<script type="application/json" id="tui-data">{{ dict
+    "posts" $m
+    "postsUrl" ("/posts/" | relURL)
+    "homeUrl" ("/" | relURL)
+    "resumeUrl" $resumeUrl
+    "resumeContentUrl" $resumeCU
+    "aboutContentUrl" $aboutCU
+    "gameScriptUrl" $game.RelPermalink
+    "siteTitle" site.Title
+    "subtitle" site.Params.subtitle
+    "copyright" site.Copyright
+  | jsonify | safeJS }}</script>
+
+{{- /* Only the CURRENT doc is inlined (zero-fetch initial paint); all other
+      docs load lazily via fetch. */ -}}
+{{ if .IsHome }}<template id="tpl-about">{{ .Content }}</template>
+{{ else if .IsPage }}<template id="tpl-{{ .File.ContentBaseName }}">{{ .Content }}</template>
+{{ end }}
+
+{{- /* Core: esbuild bundles tui.ts + its static import of tui-parse.ts into
+      one classic (iife) script; the dynamic import(gameScriptUrl) stays a
+      runtime import. */ -}}
+{{ $core := resources.Get "js/tui.ts" | js.Build (dict "minify" true "format" "iife" "target" "es2020") | fingerprint }}
+<script src="{{ $core.RelPermalink }}" defer></script>
+</body>
+</html>

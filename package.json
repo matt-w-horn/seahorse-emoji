@@ -1,0 +1,16 @@
+{
+  "name": "matthorn-io",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Source for matthorn.io (Hugo). TypeScript is type-checked with tsc; Hugo/esbuild does the actual build.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "e2e": "node tests/e2e/console.e2e.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "typescript": "^5.7.3"
+  }
+}

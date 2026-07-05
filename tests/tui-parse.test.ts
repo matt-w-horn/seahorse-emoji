@@ -1,8 +1,8 @@
 // Tests for the terminal's segment-based path resolution.
-// Run: node --test tests/*.test.js
-const test = require('node:test');
-const assert = require('node:assert');
-const { segments, normalize, resolve, completions } = require('../assets/js/tui-parse.js');
+// Run: node --experimental-strip-types --test tests/*.test.ts
+import test from 'node:test';
+import assert from 'node:assert';
+import { segments, normalize, resolve, completions } from '../assets/js/tui-parse.ts';
 
 const POSTS = [
   { slug: '2026-07-04-morningprint', title: 'My receipt printer prints an original artwork every morning' },
@@ -86,10 +86,13 @@ test('cat: slugs with every decoration, including interior // and /./', () => {
 });
 
 test('cat: fragments match slug and title; exact slug beats substring', () => {
-  assert.equal(resolve('cat', 'seahorse', POSTS).slug, '2026-03-27-seahorse-emoji');
-  assert.equal(resolve('cat', 'epidemiology', POSTS).slug, '2026-04-11-mythos');
+  const seahorse = resolve('cat', 'seahorse', POSTS);
+  assert.equal(seahorse.kind === 'post' && seahorse.slug, '2026-03-27-seahorse-emoji');
+  const epi = resolve('cat', 'epidemiology', POSTS);
+  assert.equal(epi.kind === 'post' && epi.slug, '2026-04-11-mythos');
   const dup = [{ slug: 'notes', title: 'Notes' }, { slug: 'notes-2', title: 'More notes' }];
-  assert.equal(resolve('cat', 'notes', dup).slug, 'notes');
+  const notes = resolve('cat', 'notes', dup);
+  assert.equal(notes.kind === 'post' && notes.slug, 'notes');
 });
 
 test('cat: directories render as listings; empty is usage; junk errors with raw name', () => {

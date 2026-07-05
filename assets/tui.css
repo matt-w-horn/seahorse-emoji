@@ -446,7 +446,7 @@ a:hover { color: var(--foreground); }
 #echoline.err { color: var(--err); }
 
 #promptline {
-  display: flex; align-items: baseline; gap: 8px;
+  display: flex; align-items: baseline; gap: 8px; position: relative;
   border-top: 1px dashed color-mix(in srgb, var(--foreground) 20%, transparent);
   padding: 10px 16px 0; margin-top: 4px;
 }
@@ -456,9 +456,24 @@ a:hover { color: var(--foreground); }
 #ps1 .tail { color: var(--accent); }
 #in {
   flex: 1; min-width: 0; background: transparent; border: none; outline: none;
-  color: var(--foreground); font: inherit; padding: 0; caret-color: var(--accent);
+  color: var(--foreground); font: inherit; padding: 0; caret-color: transparent;
 }
 #in:focus-visible, #in:active { border: none; outline: none; box-shadow: none; }
+
+/* Full-width block cursor tracking the caret. JS sets left/top/width/height;
+   this is the look. mix-blend keeps the glyph under the block legible mid-line.
+   Blink is CSS so the reduced-motion reset below turns it into a solid block. */
+#caret {
+  position: absolute; width: 1ch; background: var(--accent);
+  pointer-events: none; mix-blend-mode: difference;
+  animation: tui-caret-blink 1.06s steps(1) infinite;
+}
+#caret.hidden { display: none; }
+@keyframes tui-caret-blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+/* `plain` reading mode (the `plain` command reloads with ?plain): tui.js skips
+   booting, so hide the terminal chrome and leave the server-rendered .prejs. */
+html.plain #promptline, html.plain #echoline, html.plain .chip { display: none; }
 
 .prejs { max-width: 72ch; }
 .prejs h1 { color: var(--accent); }
