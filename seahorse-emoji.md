@@ -1,1 +1,1 @@
-[Moved here](./2026-03-27-seahorse-emoji.md)
+[Moved here](./content/posts/2026-03-27-seahorse-emoji.md)

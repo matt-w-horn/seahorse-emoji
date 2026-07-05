@@ -1,8 +1,8 @@
-### The Seahorse Emoji
-
-*Matt Horn ([About](./README.md))*
-
-*published March 27, 2026*
++++
+title = "The Seahorse Emoji"
+date = 2026-03-27
+author = "Matt Horn"
++++
 
 *Written in a personal capacity. Views are my own, not those of any employer.*
 

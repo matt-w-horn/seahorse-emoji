@@ -1,18 +1,9 @@
-# About
++++
+title = "Resume"
+author = "Matt Horn"
++++
 
-I'm Matt Horn. I've worked in software and security engineering for about fifteen years. Most of that time went to identity, access management, and cloud infrastructure at companies you've probably heard of; the resume below has the list. More recently I've been focused on AI/ML infrastructure and the security problems that come with it.
-
-I write here occasionally: essays on security and AI, and once in a while some very short fiction.
-
-## Posts (newest first)
-
-Also published at [matthorn.io](https://matthorn.io).
-
-- [My receipt printer prints an original artwork every morning](./content/posts/2026-07-04-morningprint.md) - July 4, 2026
-- [Security Is Becoming an Epidemiology Problem](./content/posts/2026-04-11-mythos.md) - April 11, 2026
-- [The Seahorse Emoji](./content/posts/2026-03-27-seahorse-emoji.md) - March 27, 2026
-
-## Resume
+*Written in a personal capacity.*
 
 **Software Engineer** | Google | July 2025 - Present
 
@@ -45,13 +36,3 @@ Minors in Mathematics and Music Theory. Recipient of the Dr. Anthony J. Marino J
 ## Contact
 
 matt [at] matthorn [dot] io
-
-## Provenance
-
-Everything here (the posts, the resume, all of it) is my personal work,
-written on personal time using personal equipment and personal accounts. It is
-not affiliated with, sponsored by, or endorsed by Google, Anthropic, or any
-past or present employer. Views are my own. Copyright (c) 2026 Matt Horn. See
-[NOTICE](NOTICE).
-
-

@@ -1,8 +1,8 @@
-### My receipt printer prints an original artwork every morning
-
-*Matt Horn ([About](./README.md))*
-
-*published July 4, 2026*
++++
+title = "My receipt printer prints an original artwork every morning"
+date = 2026-07-04
+author = "Matt Horn"
++++
 
 *Written in a personal capacity. Views are my own, not those of any employer.*
 

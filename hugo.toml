@@ -1,0 +1,38 @@
+baseURL = "https://matthorn.io/"
+languageCode = "en-us"
+title = "Matt Horn"
+theme = "terminal"
+copyright = "Personal site; views are my own, not any employer's. © 2026 Matt Horn · CC BY-ND 4.0"
+enableRobotsTXT = true
+pagination.pagerSize = 10
+
+[markup.goldmark.renderer]
+  # posts embed raw HTML (centered <img> blocks)
+  unsafe = true
+
+[params]
+  contentTypeName = "posts"
+  showMenuItems = 2
+  fullWidthTheme = false
+  centerTheme = true
+
+[languages]
+  [languages.en]
+    title = "Matt Horn"
+    [languages.en.params]
+      subtitle = "Software and security engineering"
+      keywords = "security, AI, infrastructure"
+      readMore = "Read more"
+      readOtherPosts = "Read other posts"
+      [languages.en.params.logo]
+        logoText = "matthorn.io"
+        logoHomeLink = "/"
+    [languages.en.menu]
+      [[languages.en.menu.main]]
+        identifier = "posts"
+        name = "Posts"
+        url = "/posts"
+      [[languages.en.menu.main]]
+        identifier = "resume"
+        name = "Resume"
+        url = "/resume"
