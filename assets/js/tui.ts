@@ -676,9 +676,12 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
   function navKey(e: KeyboardEvent, focused: boolean) {
     if (view.name === 'boot') { bootSkip(); return e.key !== 'Tab'; }   // any key skips; Tab still moves focus
     if (view.ownsKeys) {
-      // the view (the game) owns the keyboard: its own window listeners act;
-      // we swallow everything except Tab so nothing types into the prompt
+      // the view (the game) owns the keyboard: its own window listeners act.
+      // Escape leaves it. When the prompt is focused, let normal editing/commands
+      // through (backspace, typing, enter); only swallow when it's blurred so
+      // gameplay keys don't scroll the page or type into the prompt.
       if (e.key === 'Escape') { goBack(); return true; }
+      if (focused) return false;
       return e.key !== 'Tab';
     }
     if (menu) {

@@ -381,13 +381,14 @@ button {
 
 /* ---- TUI layout layer ---- */
 
+html, body { overscroll-behavior: none; }   /* no rubber-band that scrolls the frame off-screen */
 body { overflow: hidden; }
 a { text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 a:hover { color: var(--foreground); }
 
 #wrap { height: 100dvh; box-sizing: border-box; padding: 12px; display: flex; }
 #frame {
-  position: relative; flex: 1; display: flex; flex-direction: column;
+  position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column;
   border: 2px solid var(--line); border-radius: var(--radius);
   padding: 12px 0 12px;
 }
@@ -405,7 +406,7 @@ a:hover { color: var(--foreground); }
 #page-chip.err { color: var(--err); }
 #page-chip.acc { color: var(--accent); }
 
-#screen { flex: 1; overflow-y: auto; padding: 6px 16px 2px; touch-action: pan-y; scrollbar-color: var(--line) transparent; }
+#screen { flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px 16px 2px; touch-action: pan-y; scrollbar-color: var(--line) transparent; }
 #screen::-webkit-scrollbar { width: 8px; }
 #screen::-webkit-scrollbar-thumb { background: var(--line); }
 #screen.lock { overflow: hidden; touch-action: none; }
@@ -446,11 +447,11 @@ a:hover { color: var(--foreground); }
 #echoline.err { color: var(--err); }
 
 #promptline {
-  display: flex; align-items: baseline; gap: 8px; position: relative;
+  display: flex; align-items: baseline; gap: 8px; position: relative; flex-wrap: wrap;
   border-top: 1px dashed color-mix(in srgb, var(--foreground) 20%, transparent);
   padding: 10px 16px 0; margin-top: 4px;
 }
-#ps1 { white-space: nowrap; color: var(--dim); }
+#ps1 { white-space: nowrap; min-width: 0; color: var(--dim); }
 #ps1 a { color: var(--dim); }
 #ps1 a:hover { color: var(--accent); }
 #ps1 .tail { color: var(--accent); }
@@ -485,6 +486,11 @@ html.plain #promptline, html.plain #echoline, html.plain .chip { display: none; 
   #screen { padding: 4px 10px 2px; }
   #echoline { padding: 2px 10px 0; }
   #promptline { padding: 8px 10px 0; }
+  /* the breadcrumb prompt can be wider than a phone; let it wrap and drop the
+     input onto its own full-width line below, instead of forcing the frame
+     wider than the viewport. */
+  #ps1 { white-space: normal; overflow-wrap: anywhere; }
+  #in { flex-basis: 100%; }
   #title-chip { left: 10px; } #acc-chip { right: 10px; }
   #keys-chip { left: 10px; } #page-chip { right: 10px; }
   .art { font-size: 10px; }
