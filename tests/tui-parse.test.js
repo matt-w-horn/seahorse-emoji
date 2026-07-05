@@ -2,7 +2,7 @@
 // Run: node --test tests/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
-const { segments, normalize, resolve, completions } = require('../static/js/tui-parse.js');
+const { segments, normalize, resolve, completions } = require('../assets/js/tui-parse.js');
 
 const POSTS = [
   { slug: '2026-07-04-morningprint', title: 'My receipt printer prints an original artwork every morning' },

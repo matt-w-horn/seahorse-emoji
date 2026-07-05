@@ -119,6 +119,7 @@
     var cam, rocks, bullets, stars;
     var keys = {};
     var fireCool = 0, invuln = 0, attractT = 0, flash = 0;
+    var sparks = [];
     var ignoreUntil = performance.now() + 250;
     var lastT = performance.now();
     var raf = 0, stopped = false;
@@ -176,7 +177,7 @@
     function resetCam() { cam = { x: 0, y: 0, vx: 0, vy: 0 }; invuln = 2.2; }
     function startRun() {
       mode = 'playing'; score = 0; lives = 3; level = 1;
-      rocks = []; bullets = []; keys = {};
+      rocks = []; bullets = []; keys = {}; sparks = [];
       for (var i = 0; i < 3 + level; i++) rocks.push(spawnRock(level, 0, rng));
       resetCam();
       ensureLoop();
@@ -266,6 +267,7 @@
           if (hitBullet(rk, bullets[i])) {
             bullets.splice(i, 1);
             score += SCORES[rk.size];
+            sparks.push({ x: rk.x, y: rk.y, z: rk.z, t: 0.3 });
             spawned.push.apply(spawned, splitRock(rk, rng));
             return false;
           }
@@ -281,6 +283,7 @@
         return true;
       });
       rocks = rocks.concat(spawned);
+      sparks = sparks.filter(function (sp) { sp.t -= dt; return sp.t > 0; });
       if (rocks.length === 0) nextLevel();
     }
 
@@ -358,17 +361,47 @@
         drawPoly(cx, cy, rk);
       });
 
-      // bullets: short receding streaks
+      // bullets: dual tracers that start beside the reticle and converge
+      // with depth, so a stationary shot is clearly visible
       ctx.strokeStyle = pal.fg;
       ctx.beginPath();
       bullets.forEach(function (bl) {
-        var p1 = project(bl.x - cam.x, bl.y - cam.y, bl.z, FOCAL);
-        var p2 = project(bl.x - cam.x, bl.y - cam.y, bl.z + 40, FOCAL);
-        if (!p1 || !p2) return;
-        ctx.moveTo(cx + p1.x, cy + p1.y);
-        ctx.lineTo(cx + p2.x, cy + p2.y);
+        var tip = project(bl.x - cam.x, bl.y - cam.y, bl.z + 40, FOCAL);
+        if (!tip) return;
+        var prog = Math.min(1, (bl.z - Z_NEAR) / 500);
+        var spread = 26 * (1 - prog), drop = 16 * (1 - prog);
+        [-1, 1].forEach(function (sgn) {
+          ctx.moveTo(cx + sgn * spread, cy + drop);
+          ctx.lineTo(cx + tip.x, cy + tip.y);
+        });
       });
       ctx.stroke();
+
+      // muzzle flash right after firing
+      if (fireCool > 0.14) {
+        ctx.strokeStyle = pal.fg;
+        ctx.beginPath();
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (d) {
+          ctx.moveTo(cx + d[0] * 8, cy + d[1] * 8);
+          ctx.lineTo(cx + d[0] * 15, cy + d[1] * 15);
+        });
+        ctx.stroke();
+      }
+
+      // hit sparks: four expanding rays where a rock died
+      sparks.forEach(function (sp) {
+        var p = project(sp.x - cam.x, sp.y - cam.y, sp.z, FOCAL);
+        if (!p) return;
+        var grow = (0.3 - sp.t) / 0.3;
+        var len = (6 + 26 * grow) * p.s * 3;
+        ctx.strokeStyle = pal.accent;
+        ctx.beginPath();
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (d) {
+          ctx.moveTo(cx + p.x + d[0] * len * 0.3, cy + p.y + d[1] * len * 0.3);
+          ctx.lineTo(cx + p.x + d[0] * len, cy + p.y + d[1] * len);
+        });
+        ctx.stroke();
+      });
 
       // reticle (blinks while invulnerable)
       if (invuln <= 0 || Math.floor(invuln * 8) % 2 === 0) {

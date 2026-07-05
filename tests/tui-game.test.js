@@ -2,7 +2,7 @@
 // Run: node --test tests/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
-const core = require('../static/js/tui-game.js');
+const core = require('../assets/js/tui-game.js');
 
 // deterministic rng for spawn/split tests
 const rngOf = (v) => () => v;

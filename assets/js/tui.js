@@ -582,6 +582,18 @@
     else if (dy > 45) moveMenuSel(-1);
   }, { passive: true });
 
+  // mobile: the virtual keyboard overlays the layout viewport, hiding the
+  // prompt; size the frame to the VISUAL viewport so the CLI stays on screen
+  if (window.visualViewport) {
+    var wrapEl = document.getElementById('wrap');
+    var vvFit = function () {
+      var vh = Math.round(window.visualViewport.height);
+      wrapEl.style.height = (vh < window.innerHeight - 40 ? vh + 'px' : '');
+      window.scrollTo(0, 0);
+    };
+    window.visualViewport.addEventListener('resize', vvFit);
+  }
+
   document.getElementById('promptline').addEventListener('click', function () { input.focus(); });
   accChip.addEventListener('click', cycleTheme);
 

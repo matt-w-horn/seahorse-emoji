@@ -8,7 +8,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <title>{{ site.Title }}</title>
 <meta name="description" content="{{ site.Params.subtitle }}">
 <link rel="canonical" href="{{ .Permalink }}">
@@ -27,7 +27,8 @@
 {{- end }}
 <link rel="stylesheet" href="{{ "terminal.css" | relURL }}">
 <link rel="stylesheet" href="{{ "style.css" | relURL }}">
-<link rel="stylesheet" href="{{ "css/tui.css" | relURL }}">
+{{ $tuiCss := resources.Get "css/tui.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $tuiCss.RelPermalink }}">
 <noscript><style>#promptline, #echoline, .chip { display: none; }</style></noscript>
 </head>
 <body>
@@ -90,8 +91,8 @@
 {{ with $resume }}<template id="tpl-resume">{{ .Content }}</template>{{ end }}
 <template id="tpl-about">{{ .Content }}</template>
 
-<script src="{{ "js/tui-parse.js" | relURL }}" defer></script>
-<script src="{{ "js/tui-game.js" | relURL }}" defer></script>
-<script src="{{ "js/tui.js" | relURL }}" defer></script>
+{{ $bundle := slice (resources.Get "js/tui-parse.js") (resources.Get "js/tui-game.js") (resources.Get "js/tui.js")
+   | resources.Concat "js/tui-bundle.js" | minify | fingerprint }}
+<script src="{{ $bundle.RelPermalink }}" defer></script>
 </body>
 </html>
