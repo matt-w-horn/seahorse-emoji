@@ -436,16 +436,17 @@ a:hover { color: var(--foreground); }
 .t-title { color: var(--accent); font-weight: 700; }
 .art { color: var(--accent); white-space: pre; line-height: 1.18; margin: 0; }
 
-button.menurow {
+.menurow {
   display: block; width: 100%; text-align: left;
+  text-decoration: none;
   background: none; border: none; border-radius: 0;
   font: inherit; font-weight: 400; color: var(--foreground);
   padding: 2px 0; cursor: pointer; white-space: pre-wrap;
 }
-button.menurow:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
-button.menurow:focus-visible { outline: 1px solid var(--accent); outline-offset: 0; }
-button.menurow .note { color: var(--dim); }
-button.menurow.sel { color: var(--accent); }
+.menurow:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.menurow:focus-visible { outline: 1px solid var(--accent); outline-offset: 0; }
+.menurow .note { color: var(--dim); }
+.menurow.sel { color: var(--accent); }
 
 /* reader: Hugo-rendered post HTML inside the terminal */
 #screen h2 { color: var(--accent); margin: 18px 0 8px; }
@@ -490,7 +491,7 @@ button.menurow.sel { color: var(--accent); }
   #title-chip { left: 10px; } #acc-chip { right: 10px; }
   #keys-chip { left: 10px; } #page-chip { right: 10px; }
   .art { font-size: 10px; }
-  button.menurow { padding: .4em 0; }
+  .menurow { padding: .4em 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
