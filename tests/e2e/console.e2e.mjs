@@ -12,6 +12,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
 const BASE = (process.env.BASE_URL || 'http://127.0.0.1:1313').replace(/\/$/, '');
+const MOBILE = !!process.env.MOBILE;   // MOBILE=1 emulates a phone viewport
 const PORT = 9333;
 const CHROME = process.env.CHROME_BIN || [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -85,6 +86,11 @@ async function main() {
     }
   };
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable'); await send('Log.enable');
+  if (MOBILE) {
+    await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
+    console.log('(mobile viewport: 390x844)');
+  }
+  const noHOverflow = async () => (await evalJs('document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1')) === true;
 
   console.log('\n[1] deep link /resume/');
   netUrls.length = 0;
@@ -96,6 +102,7 @@ async function main() {
   check('prejs cleared', !(await evalJs('!!document.querySelector("#screen .prejs")')));
   check('no fragment fetch on deep link (inline template)', !netUrls.some((u) => u.includes('index.fragment.html')));
   check('native caret hidden (transparent)', (await evalJs('getComputedStyle(document.getElementById("in")).caretColor')) === 'rgba(0, 0, 0, 0)');
+  check('no horizontal overflow (resume)', await noHOverflow());
 
   console.log('\n[2] type "posts" -> URL, then Back');
   await typeCmd('posts'); await sleep(400);
@@ -111,6 +118,7 @@ async function main() {
   const mythosFrag = '/posts/2026-04-11-mythos/index.fragment.html';
   check('fetched mythos fragment', netUrls.filter((u) => u.includes(mythosFrag)).length === 1);
   check('post BODY rendered (fragment injected)', /glasswing/i.test(await evalJs('document.getElementById("screen").innerText')));
+  check('no horizontal overflow (post)', await noHOverflow());
   check('URL is the post permalink', await evalJs('location.pathname') === '/posts/2026-04-11-mythos/');
   netUrls.length = 0;
   await evalJs('history.back()'); await sleep(400);
