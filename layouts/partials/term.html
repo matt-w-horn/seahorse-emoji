@@ -1,0 +1,51 @@
+{{- $posts := slice -}}
+{{- range (where site.RegularPages "Type" "posts").ByDate.Reverse -}}
+  {{- $posts = $posts | append (dict
+        "title" .Title
+        "date" (.Date.Format "2006-01-02")
+        "url" .RelPermalink
+        "slug" .File.ContentBaseName) -}}
+{{- end -}}
+
+<div id="term" class="term" style="display:none" aria-label="interactive terminal (optional; all content is on the pages below)">
+  <div id="term-out" class="term-out"></div>
+  <div class="term-line">
+    <span class="term-ps1">guest@matthorn.io:~$</span>
+    <input id="term-in" class="term-in" type="text" autocomplete="off"
+           autocapitalize="none" spellcheck="false" aria-label="terminal input" />
+  </div>
+</div>
+
+<style>
+  .term {
+    border: 1px solid var(--accent, #ffa86a);
+    padding: 12px 14px;
+    margin: 25px 0 40px;
+  }
+  .term-out { white-space: pre-wrap; word-break: break-word; max-height: 340px; overflow-y: auto; }
+  .term-out .dim { opacity: .65; }
+  .term-out .err { color: var(--accent, #ffa86a); }
+  .term-line { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+  .term-ps1 { color: var(--accent, #ffa86a); white-space: nowrap; }
+  .term-in {
+    flex: 1; min-width: 0;
+    background: transparent; border: none; outline: none;
+    color: inherit; font: inherit; padding: 0;
+    caret-color: var(--accent, #ffa86a);
+  }
+</style>
+
+<script>
+  window.__TERM_DATA = {
+    posts: {{ $posts | jsonify | safeJS }},
+    resumeUrl: {{ (site.GetPage "/resume").RelPermalink | jsonify | safeJS }},
+    homeUrl: {{ "/" | relURL | jsonify | safeJS }},
+    about: [
+      "Matt Horn. Software and security engineering, about fifteen years:",
+      "identity, access management, cloud infrastructure, and lately AI/ML",
+      "infrastructure and the security problems that come with it.",
+      "Occasional essays and very short fiction live on this site."
+    ]
+  };
+</script>
+<script src="{{ "js/term.js" | relURL }}" defer></script>
