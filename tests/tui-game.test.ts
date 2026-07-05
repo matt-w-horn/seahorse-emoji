@@ -1,11 +1,11 @@
-// Tests for the game's pure math core (TUIGameCore).
-// Run: node --test tests/*.test.js
-const test = require('node:test');
-const assert = require('node:assert');
-const core = require('../assets/js/tui-game.js');
+// Tests for the game's pure math core.
+// Run: node --experimental-strip-types --test tests/*.test.ts
+import test from 'node:test';
+import assert from 'node:assert';
+import { core } from '../assets/js/tui-game.ts';
 
 // deterministic rng for spawn/split tests
-const rngOf = (v) => () => v;
+const rngOf = (v: number) => () => v;
 
 test('icosahedron topology: 12 vertices, 30 edges, unit-ish radius, valid indices', () => {
   assert.equal(core.ICO.verts.length, 12);
@@ -22,11 +22,11 @@ test('icosahedron topology: 12 vertices, 30 edges, unit-ish radius, valid indice
 test('project: perspective shrinks with depth, center is invariant, eye plane is null', () => {
   const near = core.project(100, 50, 200, core.FOCAL);
   const far = core.project(100, 50, 1000, core.FOCAL);
-  assert.ok(near.s > far.s, 'closer is larger');
-  assert.ok(Math.abs(near.x) > Math.abs(far.x), 'closer displaces more');
+  assert.ok(near!.s > far!.s, 'closer is larger');
+  assert.ok(Math.abs(near!.x) > Math.abs(far!.x), 'closer displaces more');
   const center = core.project(0, 0, 500, core.FOCAL);
-  assert.equal(center.x, 0);
-  assert.equal(center.y, 0);
+  assert.equal(center!.x, 0);
+  assert.equal(center!.y, 0);
   assert.equal(core.project(1, 1, 0, core.FOCAL), null);
   assert.equal(core.project(1, 1, -5, core.FOCAL), null);
 });

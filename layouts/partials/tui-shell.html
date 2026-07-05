@@ -79,7 +79,8 @@
 {{- $resumeUrl := "" }}{{ $resumeCU := "" -}}
 {{- with $resume }}{{ $resumeUrl = .RelPermalink }}{{ with .OutputFormats.Get "fragment" }}{{ $resumeCU = .RelPermalink }}{{ end }}{{ end -}}
 {{- $aboutCU := "" }}{{ with site.Home.OutputFormats.Get "fragment" }}{{ $aboutCU = .RelPermalink }}{{ end -}}
-{{- $game := resources.Get "js/tui-game.js" | minify | fingerprint -}}
+{{- /* Game: standalone ESM chunk, loaded on demand by tui.ts via import(). */ -}}
+{{- $game := resources.Get "js/tui-game.ts" | js.Build (dict "minify" true "format" "esm" "target" "es2020") | fingerprint -}}
 <script type="application/json" id="tui-data">{{ dict
     "posts" $m
     "postsUrl" ("/posts/" | relURL)
@@ -99,8 +100,10 @@
 {{ else if .IsPage }}<template id="tpl-{{ .File.ContentBaseName }}">{{ .Content }}</template>
 {{ end }}
 
-{{ $bundle := slice (resources.Get "js/tui-parse.js") (resources.Get "js/tui.js")
-   | resources.Concat "js/tui-core.js" | minify | fingerprint }}
-<script src="{{ $bundle.RelPermalink }}" defer></script>
+{{- /* Core: esbuild bundles tui.ts + its static import of tui-parse.ts into
+      one classic (iife) script; the dynamic import(gameScriptUrl) stays a
+      runtime import. */ -}}
+{{ $core := resources.Get "js/tui.ts" | js.Build (dict "minify" true "format" "iife" "target" "es2020") | fingerprint }}
+<script src="{{ $core.RelPermalink }}" defer></script>
 </body>
 </html>
