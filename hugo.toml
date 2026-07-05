@@ -5,10 +5,26 @@ theme = "terminal"
 copyright = "Personal site; views are my own, not any employer's. © 2026 Matt Horn · CC BY-ND 4.0"
 enableRobotsTXT = true
 pagination.pagerSize = 10
+# no content has tags; without this /tags/ would be an empty themed orphan
+# that the console shell never covers.
+disableKinds = ["taxonomy", "term"]
 
 [markup.goldmark.renderer]
   # posts embed raw HTML (centered <img> blocks)
   unsafe = true
+
+# Every page also renders a bare-content "fragment" the console fetches on
+# demand (lazy nav). Declaring [outputs].home REPLACES its defaults, so rss
+# must be re-listed or the home feed vanishes.
+[outputs]
+  home = ["html", "rss", "fragment"]
+  page = ["html", "fragment"]
+
+[outputFormats.fragment]
+  mediaType = "text/html"       # reuse built-in; distinct baseName avoids a path collision
+  baseName = "index.fragment"   # -> /<path>/index.fragment.html
+  isHTML = true
+  notAlternative = true         # keep out of <link alternate> / .AlternativeOutputFormats
 
 [params]
   contentTypeName = "posts"

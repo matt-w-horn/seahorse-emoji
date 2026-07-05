@@ -16,6 +16,7 @@
   var keysChip = document.getElementById('keys-chip');
   var pageChip = document.getElementById('page-chip');
   var echoEl = document.getElementById('echoline');
+  var caret = document.getElementById('caret');
   if (!DATA || !screen || !input) return;
 
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -23,7 +24,7 @@
   var POSTS = DATA.posts;
   var SUBTITLE = (DATA.subtitle || 'software and security engineering').toLowerCase();
   var RESUME = DATA.resumeUrl
-    ? { slug: 'resume', title: 'resume.md', date: '', url: DATA.resumeUrl, tpl: 'tpl-resume' }
+    ? { slug: 'resume', title: 'resume.md', date: '', url: DATA.resumeUrl, tpl: 'tpl-resume', contentUrl: DATA.resumeContentUrl }
     : null;
 
   /* ---------- fixed art ---------- */
@@ -99,9 +100,49 @@
     h.textContent = text;
     return h;
   }
-  function tplContent(id) {
-    var t = document.getElementById(id);
-    return t ? t.content.cloneNode(true) : null;
+  function clearNode(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+  var contentCache = {};   // id -> pristine DocumentFragment (cloned per mount)
+  var loadSeq = 0;         // stale-async guard: only the newest fetch may inject
+
+  // Our CSP enforces require-trusted-types-for 'script', which blocks the HTML
+  // parsers (DOMParser, template.innerHTML) for plain strings. The fetched
+  // fragments are our own same-origin Hugo output, so a pass-through policy is
+  // safe; the CSP's `trusted-types tui-fragment` restricts creation to this
+  // one name. <template> parses inert (scripts don't run, resources don't load
+  // until the nodes are adopted into the live tree).
+  var htmlPolicy = (window.trustedTypes && window.trustedTypes.createPolicy)
+    ? window.trustedTypes.createPolicy('tui-fragment', { createHTML: function (s) { return s; } })
+    : null;
+  function parseFragment(html) {
+    var tpl = document.createElement('template');
+    tpl.innerHTML = htmlPolicy ? htmlPolicy.createHTML(html) : html;
+    return tpl.content.cloneNode(true);
+  }
+
+  // Mount a doc's content into `mount` (already on screen). Inline <template>
+  // (the current page's own doc) -> sync; cached -> sync; else fetch the bare
+  // fragment lazily. On failure the caller's permalink row is the fallback.
+  function loadContent(id, url, mount) {
+    var tpl = document.getElementById(id);
+    if (tpl) { mount.appendChild(tpl.content.cloneNode(true)); return; }
+    if (contentCache[id]) { mount.appendChild(contentCache[id].cloneNode(true)); return; }
+    if (!url) { mount.appendChild(rowEl('(missing content; the permalink above has it)', 'err')); return; }
+    var token = ++loadSeq;
+    mount.appendChild(rowEl('loading…', 'dim'));
+    fetch(url, { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw 0; return r.text(); })
+      .then(function (html) {
+        if (token !== loadSeq) return;   // user navigated away mid-flight
+        var frag = parseFragment(html);
+        contentCache[id] = frag.cloneNode(true);
+        clearNode(mount); mount.appendChild(frag);
+        updateScrollChip();
+      })
+      .catch(function () {
+        if (token !== loadSeq) return;
+        clearNode(mount); mount.appendChild(rowEl('(content unavailable; the permalink above has it)', 'err'));
+      });
   }
 
   /* ---------- chrome ---------- */
@@ -133,6 +174,7 @@
     tail.className = 'tail';
     tail.textContent = '$';
     ps1.appendChild(tail);
+    if (caret) { caretBase = input.offsetLeft; syncCaret(); }   // prompt width changed
   }
 
   function setKeys(text) { keysChip.textContent = text; }
@@ -140,23 +182,81 @@
   function flash(text, cls) { setPage(text, cls || 'acc'); }
   function echo(text, cls) { echoEl.textContent = text || ''; echoEl.className = cls === 'err' ? 'err' : ''; }
 
-  /* ---------- navigation stack: esc always goes back ---------- */
+  /* ---------- routing: the browser history is the source of truth ----------
+     Real-page views (home, posts, each post, resume) push an entry with a real
+     URL, so the address bar and Back/Forward work. TUI-only views (help/about/
+     motd/game) have no server URL: they push with url=null (same pathname) so
+     esc/Back still reverse through them without inventing a 404. Every entry's
+     state carries {name, slug?, depth}; popstate re-paints from it. */
 
-  var navStack = [];
-  var current = null;
+  var currentRoute = null;
 
-  function goTo(paintFn) {
-    if (paintFn === current) { paintFn(); return; }   // self-navigation: repaint, no stack push
-    if (current) navStack.push(current);
-    current = paintFn;
-    paintFn();
+  function bySlug(s) { return POSTS.filter(function (x) { return x.slug === s; })[0]; }
+  function norm(u) { return String(u || '').replace(/[?#].*$/, '').replace(/\/+$/, '') || '/'; }
+  function withDepth(r, d) { return { name: r.name, slug: r.slug, depth: d }; }
+  function sameRoute(a, b) { return !!a && !!b && a.name === b.name && a.slug === b.slug; }
+
+  function urlFor(route) {
+    switch (route.name) {
+      case 'home':   return DATA.homeUrl || '/';
+      case 'posts':  return DATA.postsUrl;
+      case 'resume': return DATA.resumeUrl;
+      case 'doc':    var p = bySlug(route.slug); return p ? p.url : null;
+      default:       return null;   // help/about/motd/game: keep current URL
+    }
   }
-  function goBack() {
-    if (navStack.length === 0) { flash('already at ~'); return; }
-    current = navStack.pop();
-    current();
+
+  // The ONLY paint dispatcher. Never pushes history.
+  function render(route) {
+    currentRoute = route;
+    switch (route.name) {
+      case 'posts':  paintPosts(); break;
+      case 'about':  paintAbout(); break;
+      case 'help':   paintHelp();  break;
+      case 'motd':   paintMotd();  break;
+      case 'game':   paintPlay();  break;
+      case 'resume': paintDoc(RESUME); break;
+      case 'doc':    var p = bySlug(route.slug); if (p) paintDoc(p); else paintHome(); break;
+      default:       paintHome();
+    }
   }
-  function goHome() { navStack = []; current = paintHome; menu = null; paintHome(); }
+
+  function go(route) {
+    if (sameRoute(route, currentRoute)) { render(route); return; }   // repaint, no dup entry
+    var depth = ((window.history.state && window.history.state.depth) || 0) + 1;
+    window.history.pushState(withDepth(route, depth), '', urlFor(route));
+    render(route);
+  }
+
+  function stepBack() {
+    var st = window.history.state;
+    if (st && st.depth > 0) { window.history.back(); return; }   // popstate re-paints
+    if (currentRoute && currentRoute.name === 'home') { flash('already at ~'); return; }
+    go({ name: 'home' });   // esc on a directly-loaded deep link: go home, in-site
+  }
+
+  // fresh load / reload only (history.state is null); popstate uses the state.
+  function routeFor(path) {
+    var p = norm(path);
+    if (p === norm(DATA.homeUrl || '/')) return { name: 'home' };
+    if (p === norm(DATA.postsUrl)) return { name: 'posts' };
+    if (DATA.resumeUrl && p === norm(DATA.resumeUrl)) return { name: 'resume' };
+    var hit = POSTS.filter(function (x) { return norm(x.url) === p; })[0];
+    return hit ? { name: 'doc', slug: hit.slug } : { name: 'home' };
+  }
+
+  // Adapters so the existing paint-function call sites need no changes.
+  function routeOfPaint(fn) {
+    if (fn === paintPosts) return { name: 'posts' };
+    if (fn === paintAbout) return { name: 'about' };
+    if (fn === paintHelp)  return { name: 'help' };
+    if (fn === paintMotd)  return { name: 'motd' };
+    if (fn === paintPlay)  return { name: 'game' };
+    return { name: 'home' };
+  }
+  function goTo(paintFn) { go(routeOfPaint(paintFn)); }
+  function goBack() { stepBack(); }
+  function goHome() { go({ name: 'home' }); }
 
   /* ---------- views ---------- */
 
@@ -286,8 +386,9 @@
     setKeys('esc: back');
     setPage('');
     screen.appendChild(rowEl('about.txt', 't-title'));
-    var c = tplContent('tpl-about');
-    if (c) screen.appendChild(c);
+    var mount = document.createElement('div');
+    screen.appendChild(mount);
+    loadContent('tpl-about', DATA.aboutContentUrl, mount);
     screen.appendChild(rowEl(DATA.copyright, 'dim'));
   }
 
@@ -308,6 +409,25 @@
     screen.appendChild(rowEl(['the code:        ', { text: 'github.com/matt-w-horn/morningprint', href: 'https://github.com/matt-w-horn/morningprint' }]));
   }
 
+  var gameLoad = null;   // load-once promise for the game module (lazy)
+  function loadGame() {
+    if (window.TUIGame) return Promise.resolve();
+    if (!gameLoad) {
+      // import() with a same-origin string is governed by script-src 'self'
+      // and is NOT a Trusted-Types sink (unlike script.src). The game's IIFE
+      // runs on evaluation and self-registers window.TUIGame.
+      gameLoad = import(DATA.gameScriptUrl).catch(function (e) { gameLoad = null; throw e; });
+    }
+    return gameLoad;
+  }
+  function gameFailed() {
+    view = { name: 'game' };   // drop ownsKeys: keyboard returns to the shell
+    setKeys('esc: back');
+    setPage('');
+    clearNode(screen);
+    screen.appendChild(rowEl('the game failed to load; esc goes back', 'err'));
+  }
+
   function paintPlay() {
     view = { name: 'game', ownsKeys: true }; menu = null;
     clearScreen();
@@ -315,29 +435,27 @@
     setPath([{ text: '~', go: goHome }, { text: 'play' }]);
     input.value = '';
     input.blur();
-    if (!window.TUIGame) {
-      view = { name: 'game' };   // no engine: keyboard back to the shell
-      setKeys('esc: back');
-      setPage('');
-      screen.appendChild(rowEl('the game failed to load; esc goes back', 'err'));
-      return;
-    }
-    setKeys('arrows steer · space fires · esc: back');
-    setPage('no coins needed');
+    setKeys('loading game…');
+    setPage('');
     var canvas = document.createElement('canvas');
     canvas.id = 'gamecanvas';
-    screen.appendChild(canvas);
-    activeGame = TUIGame.start(canvas, {
-      reduced: reduced,
-      isActive: function () { return view.name === 'game' && canvas.isConnected; }
-    });
+    loadGame().then(function () {
+      if (view.name !== 'game') return;   // navigated away during load
+      if (!window.TUIGame) { gameFailed(); return; }
+      screen.appendChild(canvas);
+      setKeys('arrows steer · space fires · esc: back');
+      setPage('no coins needed');
+      activeGame = TUIGame.start(canvas, {
+        reduced: reduced,
+        isActive: function () { return view.name === 'game' && canvas.isConnected; }
+      });
+    }).catch(function () { if (view.name === 'game') gameFailed(); });
   }
 
-  /* doc captured in a closure so back-navigation can never dangle */
   function openDoc(doc) {
     if (!doc) return;
     menu = null;
-    goTo(function () { paintDoc(doc); });
+    go(doc.slug === 'resume' ? { name: 'resume' } : { name: 'doc', slug: doc.slug });
   }
 
   function paintDoc(doc) {
@@ -345,11 +463,7 @@
     clearScreen();
     var crumbs = [{ text: '~', go: goHome }];
     if (doc.slug !== 'resume') {
-      crumbs.push({ text: 'posts', go: function () {
-        // behave like "back" when posts is where we came from; else navigate
-        if (navStack[navStack.length - 1] === paintPosts) goBack();
-        else goTo(paintPosts);
-      } });
+      crumbs.push({ text: 'posts', go: function () { go({ name: 'posts' }); } });
     }
     crumbs.push({ text: doc.slug });
     setPath(crumbs);
@@ -359,9 +473,9 @@
       { text: doc.date ? doc.date + ' · ' : '', cls: 'dim' },
       { text: 'permalink', href: doc.url, cls: 'dim' }
     ], 'permalink'));
-    var c = tplContent(doc.tpl || ('tpl-' + doc.slug));
-    if (c) screen.appendChild(c);
-    else screen.appendChild(rowEl('(missing content; the permalink above has it)', 'err'));
+    var mount = document.createElement('div');
+    screen.appendChild(mount);
+    loadContent(doc.tpl || ('tpl-' + doc.slug), doc.contentUrl, mount);
     screen.appendChild(rowEl('(end) · esc goes back', 'dim'));
 
     setKeys('scroll to read · space: a screenful · esc: back');
@@ -445,19 +559,19 @@
     theme: { desc: 'cycle color theme', fn: cycleTheme },
     plain: { desc: 'the ordinary website (same pages, no terminal)', fn: function () { window.location.href = DATA.postsUrl; } },
     whoami: { desc: 'who runs this place', fn: function () { echo('matt (guest is you)'); } },
-    clear: { desc: 'redraw the screen', fn: function () { echo(''); setPage(''); current(); } }
+    clear: { desc: 'redraw the screen', fn: function () { echo(''); setPage(''); render(currentRoute); } }
   };
 
   function makeRun(name) { return function () { run(name); }; }
 
-  var history = [];
+  var cmdHistory = [];   // typed-command recall (up/down). Not window.history.
   var histPos = 0;
 
   function run(raw) {
     var text = raw.trim();
     if (!text) { if (view.name === 'doc') scrollDoc(1, true); return; }
-    history.push(raw);
-    histPos = history.length;
+    cmdHistory.push(raw);
+    histPos = cmdHistory.length;
     var parts = text.split(/\s+/);
     var name = parts[0].toLowerCase();
     var cmd = commands[name];
@@ -513,11 +627,11 @@
     if (e.key === 'Enter') {
       var v = input.value; input.value = ''; run(v);
     } else if (e.key === 'ArrowUp') {
-      if (histPos > 0) { histPos--; input.value = history[histPos]; }
+      if (histPos > 0) { histPos--; input.value = cmdHistory[histPos]; }
       e.preventDefault();
     } else if (e.key === 'ArrowDown') {
-      if (histPos < history.length - 1) { histPos++; input.value = history[histPos]; }
-      else if (histPos === history.length - 1) { histPos = history.length; input.value = ''; }
+      if (histPos < cmdHistory.length - 1) { histPos++; input.value = cmdHistory[histPos]; }
+      else if (histPos === cmdHistory.length - 1) { histPos = cmdHistory.length; input.value = ''; }
       // not navigating history: leave whatever is typed alone
       e.preventDefault();
     } else if (e.key === 'Tab') {
@@ -549,6 +663,7 @@
     if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
       input.focus();
       input.value += e.key;
+      syncCaret();   // this key's keyup targets document, not the input
       e.preventDefault();
     }
   });
@@ -592,12 +707,63 @@
       var vh = Math.round(window.visualViewport.height);
       wrapEl.style.height = (vh < window.innerHeight - 40 ? vh + 'px' : '');
       window.scrollTo(0, 0);
+      if (caret) { measureCaret(); caretBase = input.offsetLeft; syncCaret(); }
     };
     window.visualViewport.addEventListener('resize', vvFit);
   }
 
   document.getElementById('promptline').addEventListener('click', function () { input.focus(); });
   accChip.addEventListener('click', cycleTheme);
+
+  /* ---------- block cursor: a full-width block that tracks the caret ----------
+     The native caret is hidden (caret-color:transparent); this overlay block is
+     positioned from selectionStart against the monospace column width, so it
+     tracks mid-line edits too. Blink is CSS (auto-disabled under reduced motion,
+     leaving a solid block); color follows the theme via var(--accent). */
+
+  var chWidth = 8, caretBase = 0, caretRaf = 0;
+
+  function measureCaret() {
+    if (!caret) return;
+    var cs = getComputedStyle(input);
+    var probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre';
+    probe.style.fontFamily = cs.fontFamily;
+    probe.style.fontSize = cs.fontSize;
+    probe.style.fontWeight = cs.fontWeight;
+    probe.style.fontStyle = cs.fontStyle;
+    probe.style.letterSpacing = cs.letterSpacing;
+    probe.textContent = '0000000000';
+    document.body.appendChild(probe);
+    chWidth = probe.getBoundingClientRect().width / 10 || 8;
+    document.body.removeChild(probe);
+    caret.style.width = chWidth + 'px';
+    caret.style.top = input.offsetTop + 'px';
+    caret.style.height = input.offsetHeight + 'px';
+  }
+
+  function syncCaret() {
+    if (!caret || caretRaf) return;
+    caretRaf = requestAnimationFrame(function () {
+      caretRaf = 0;
+      if (document.activeElement !== input) { caret.classList.add('hidden'); return; }
+      caret.classList.remove('hidden');
+      var i = input.selectionStart;
+      if (i == null) i = input.value.length;
+      caret.style.left = (caretBase + i * chWidth - input.scrollLeft) + 'px';
+    });
+  }
+
+  if (caret) {
+    ['input', 'keyup', 'click', 'select'].forEach(function (ev) {
+      input.addEventListener(ev, syncCaret);
+    });
+    input.addEventListener('focus', function () { caretBase = input.offsetLeft; syncCaret(); });
+    input.addEventListener('blur', function () { caret.classList.add('hidden'); });
+    window.addEventListener('resize', function () { measureCaret(); caretBase = input.offsetLeft; syncCaret(); });
+    measureCaret();
+    caretBase = input.offsetLeft;
+  }
 
   /* ---------- boot: POST screen, skippable ---------- */
 
@@ -607,14 +773,21 @@
     if (booted) return;
     booted = true;
     bootTimers.forEach(clearTimeout);
-    current = paintHome;
-    paintHome();
+    render(currentRoute);   // currentRoute is home (boot only runs for a fresh '/')
     input.focus();
   }
 
-  current = paintHome;
-  if (reduced) { bootSkip(); }
-  else {
+  window.addEventListener('popstate', function (e) {
+    render(e.state || withDepth(routeFor(location.pathname), 0));
+  });
+
+  // Stamp state so Back/popstate always have a route + depth (a fresh load has
+  // none). Reload restores the prior state, keeping the session back-stack.
+  var initRoute = window.history.state || withDepth(routeFor(location.pathname), 0);
+  window.history.replaceState(initRoute, '', location.href);
+  currentRoute = initRoute;
+
+  if (initRoute.name === 'home' && !reduced) {
     clearScreen();   // remove the server-rendered fallback block
     setKeys('any key skips');
     POST_LINES.forEach(function (l, i) {
@@ -628,5 +801,8 @@
       bootTimers.push(setTimeout(bootSkip, 450));
     }, 120 * POST_LINES.length + 260));
     screen.addEventListener('click', bootSkip, { once: true });
+  } else {
+    render(initRoute);   // deep link or reduced-motion: paint straight in, no BIOS
+    input.focus();
   }
 })();
