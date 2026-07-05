@@ -10,7 +10,7 @@
     "e2e": "node tests/e2e/console.e2e.mjs"
   },
   "devDependencies": {
-    "@types/node": "^22.20.0",
-    "typescript": "^5.7.3"
+    "@types/node": "^26.1.0",
+    "typescript": "^6.0.3"
   }
 }
