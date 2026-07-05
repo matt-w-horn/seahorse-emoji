@@ -63,7 +63,7 @@
 </main>
 
 {{- /* Non-executable data block: lets the CSP stay at script-src 'self'
-      with no inline-script hash to maintain. tui.js parses #tui-data.
+      with no inline-script hash to maintain. tui.ts parses #tui-data.
       Identical on every page, so the shell can be truly shared. */ -}}
 {{ $m := slice }}
 {{- range $posts -}}
