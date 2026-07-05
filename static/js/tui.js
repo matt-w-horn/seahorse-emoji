@@ -44,7 +44,7 @@
     'starting shell'
   ];
 
-  var MOTD_INTRO = 'motd from morningprint, my receipt printer art project:';
+  var MOTD_INTRO = 'message of the day, from morningprint:';
   var MOTD = [
     '          ░░░▒▒▒▓▓▓▒▒▒░░░',
     '       ░▒▓▓███████████▓▓▒░',
@@ -53,8 +53,7 @@
     '   ≈≈≈  ≈≈≈≈  ≈≈≈≈≈  ≈≈≈≈  ≈≈≈',
     '     ≈≈≈≈  ≈≈≈≈≈≈  ≈≈≈≈≈≈',
     '',
-    '  every morning, one original print',
-    '  -> github.com/matt-w-horn/morningprint'
+    '  every morning, one original print'
   ];
 
   /* ---------- element builders ---------- */
@@ -293,6 +292,13 @@
     setPage('');
     screen.appendChild(rowEl(MOTD_INTRO, 'dim'));
     screen.appendChild(artEl(MOTD, 'a sunrise over waves, drawn in block characters'));
+    screen.appendChild(gapEl());
+    screen.appendChild(rowEl('My receipt printer wakes up before I do and prints one original', 'wrapcol'));
+    screen.appendChild(rowEl('artwork, themed to the day. This sunrise is its house style.', 'wrapcol'));
+    screen.appendChild(gapEl());
+    var post = findPost('morningprint');
+    if (post) screen.appendChild(rowEl(['the full story:  ', { text: post.slug + '.md', click: function () { openDoc(post); } }]));
+    screen.appendChild(rowEl(['the code:        ', { text: 'github.com/matt-w-horn/morningprint', href: 'https://github.com/matt-w-horn/morningprint' }]));
   }
 
   /* doc captured in a closure so back-navigation can never dangle */
@@ -405,7 +411,7 @@
     posts: { desc: 'the posts directory', fn: function () { goTo(paintPosts); } },
     home: { desc: 'back to ~', fn: goHome },
     back: { desc: 'go back one screen', fn: goBack },
-    motd: { desc: 'message of the day', fn: function () { goTo(paintMotd); } },
+    motd: { desc: 'a note from my receipt printer', fn: function () { goTo(paintMotd); } },
     theme: { desc: 'cycle color theme', fn: cycleTheme },
     plain: { desc: 'the ordinary website (same pages, no terminal)', fn: function () { window.location.href = DATA.postsUrl; } },
     whoami: { desc: 'who runs this place', fn: function () { echo('matt (guest is you)'); } },
