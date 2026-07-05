@@ -9,3 +9,10 @@ Copyright (c) 2026 Matt Horn
 This work is not affiliated with, sponsored by, or endorsed by Google,
 Anthropic, or any past or present employer of the author. All views and
 content are the author's own.
+
+Third-party components:
+- themes/terminal: hugo-theme-terminal by panr, MIT (see themes/terminal/LICENSE.md)
+- terminal-css by panr (styles vendored into assets/css/tui.css, palette in
+  static/terminal.css, headings in static/style.css): public domain (Unlicense)
+The CC BY-ND 4.0 license in LICENSE covers this repository's content (posts,
+resume, about); third-party components remain under their own terms.
