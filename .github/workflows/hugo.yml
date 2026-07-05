@@ -33,8 +33,10 @@ jobs:
       - name: Build
         env:
           HUGO_ENVIRONMENT: production
-          BASE_URL: ${{ steps.pages.outputs.base_url }}
-        run: hugo --minify --baseURL "${BASE_URL}/"
+        # baseURL comes from hugo.toml (https://matthorn.io/), not Pages
+        # metadata: the metadata reports http during certificate gaps, which
+        # once baked mixed-content asset URLs into a deploy.
+        run: hugo --minify
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
