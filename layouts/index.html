@@ -1,59 +1,95 @@
-{{ define "main" }}
-  {{ if .Content }}
-    <div class="index-content {{ if .Params.framed -}}framed{{- end -}}">
-      {{ .Content }}
-    </div>
-  {{ end }}
+{{- /* Standalone TUI home. Deliberately bypasses the theme's baseof so the
+      terminal owns the whole viewport; the head below is a hand-kept subset
+      of themes/terminal/layouts/partials/head.html (canonical/og/twitter/RSS).
+      When changing head behavior site-wide, change both. */ -}}
+{{- $posts := (where site.RegularPages "Type" "posts").ByDate.Reverse -}}
+{{- $resume := site.GetPage "/resume" -}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ site.Title }}</title>
+<meta name="description" content="{{ site.Params.subtitle }}">
+<link rel="canonical" href="{{ .Permalink }}">
+{{ partial "extended_head.html" . }}
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ site.Title }}">
+<meta property="og:description" content="{{ site.Params.subtitle }}">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta property="og:image" content="{{ "og-image.png" | absURL }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+{{ with .OutputFormats.Get "rss" -}}
+<link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ site.Title }}">
+{{- end }}
+<link rel="stylesheet" href="{{ "terminal.css" | relURL }}">
+<link rel="stylesheet" href="{{ "style.css" | relURL }}">
+<link rel="stylesheet" href="{{ "css/tui.css" | relURL }}">
+<noscript><style>#promptline, #echoline, .chip { display: none; }</style></noscript>
+</head>
+<body>
 
-  {{ partial "term.html" . }}
-
-  <div class="posts">
-    {{ $isntDefault := not (or (eq (trim $.Site.Params.contentTypeName " ") "posts") (eq (trim $.Site.Params.contentTypeName " ") "")) }}
-    {{ $contentTypeName := cond $isntDefault (string $.Site.Params.contentTypeName) "posts" }}
-
-    {{ $PageContext := . }}
-    {{ if .IsHome }}
-      {{ $PageContext = .Site }}
-    {{ end }}
-    {{ $paginator := .Paginate (where $PageContext.RegularPages "Type" $contentTypeName) }}
-
-    {{ range $paginator.Pages }}
-      <article class="post on-list">
-        <h2 class="post-title">
-          <a href="{{ .Permalink }}">{{ .Title | markdownify }}</a>
-        </h2>
-
-        <div class="post-meta">
-          {{- if .Date -}}
-            <time class="post-date">
-              {{- partial "post-date" . -}}
-            </time>
-          {{- end -}}
-          {{- with .Params.Author -}}
-            <span class="post-author">{{ . }}</span>
-          {{- end -}}
-        </div>
-
-        {{ partial "cover.html" . }}
-
-        <div class="post-content">
-          {{ if .Params.showFullContent }}
-            {{ .Content }}
-          {{ else if .Description }}
-            <p>{{ .Description | markdownify }}</p>
-          {{ else }}
-            {{ .Summary }}
+<div id="wrap">
+  <div id="frame">
+    <span class="chip" id="title-chip"><span class="site">matthorn.io</span> <span class="stripe">▍ ▍ ▍ ▍ ▍ ▍ ▍ ▍ ▍ ▍</span></span>
+    <span class="chip" id="acc-chip" title="cycle color theme">theme: pistachio</span>
+    <div id="screen">
+      {{- /* Server-rendered fallback: real links and content for crawlers,
+            no-JS visitors, and failed script loads. Boot clears it. */}}
+      <div class="prejs">
+        <h1>{{ site.Title }}</h1>
+        <p class="dim">{{ site.Params.subtitle }}. This page is an interactive
+        terminal when JavaScript runs; either way, everything is an ordinary
+        page you can open directly.</p>
+        {{ .Content }}
+        <h2>Posts</h2>
+        <ul>
+          {{ range $posts }}
+          <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> <span class="dim">{{ .Date.Format "2006-01-02" }}</span></li>
           {{ end }}
-        </div>
-
-        {{ if not .Params.showFullContent }}
-          <div>
-            <a class="read-more button inline" href="{{ .RelPermalink }}">[{{ $.Site.Params.ReadMore }}]</a>
-          </div>
-        {{ end }}
-      </article>
-    {{ end }}
-
-    {{ partial "pagination.html" . }}
+          {{ with $resume }}<li><a href="{{ .RelPermalink }}">Resume</a></li>{{ end }}
+        </ul>
+        <p class="dim">{{ site.Copyright }}</p>
+      </div>
+    </div>
+    <div id="echoline" aria-live="polite"></div>
+    <div id="promptline">
+      <span id="ps1"></span>
+      <input id="in" type="text" autocomplete="off" autocapitalize="none"
+             spellcheck="false" aria-label="terminal input" />
+    </div>
+    <span class="chip" id="keys-chip"></span>
+    <span class="chip" id="page-chip"></span>
   </div>
+</div>
+
+<script>
+  {{ $m := slice }}
+  {{- range $posts -}}
+    {{- $m = $m | append (dict
+          "slug" .File.ContentBaseName
+          "date" (.Date.Format "2006-01-02")
+          "title" .Title
+          "url" .RelPermalink) -}}
+  {{- end }}
+  window.__TUI = {
+    posts: {{ $m | jsonify | safeJS }},
+    postsUrl: {{ "/posts/" | relURL | jsonify | safeJS }},
+    resumeUrl: {{ with $resume }}{{ .RelPermalink | jsonify | safeJS }}{{ else }}""{{ end }},
+    subtitle: {{ site.Params.subtitle | jsonify | safeJS }},
+    copyright: {{ site.Copyright | jsonify | safeJS }}
+  };
+</script>
+
+{{ range $posts }}
+<template id="tpl-{{ .File.ContentBaseName }}">{{ .Content }}</template>
 {{ end }}
+{{ with $resume }}<template id="tpl-resume">{{ .Content }}</template>{{ end }}
+<template id="tpl-about">{{ .Content }}</template>
+
+<script src="{{ "js/tui.js" | relURL }}" defer></script>
+</body>
+</html>

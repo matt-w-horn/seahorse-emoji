@@ -1,0 +1,7 @@
+/* Pistachio preset from https://panr.github.io/terminal-css/ (the theme's
+   documented palette hook; loaded on every theme-rendered page). */
+:root {
+  --background: #1d2021;
+  --foreground: #ebdbb2;
+  --accent: #8ec07c;
+}
