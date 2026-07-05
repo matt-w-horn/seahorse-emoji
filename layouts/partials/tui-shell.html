@@ -88,6 +88,7 @@
     "resumeContentUrl" $resumeCU
     "aboutContentUrl" $aboutCU
     "gameScriptUrl" $game.RelPermalink
+    "siteTitle" site.Title
     "subtitle" site.Params.subtitle
     "copyright" site.Copyright
   | jsonify | safeJS }}</script>
@@ -95,8 +96,7 @@
 {{- /* Only the CURRENT doc is inlined (zero-fetch initial paint); all other
       docs load lazily via fetch. */ -}}
 {{ if .IsHome }}<template id="tpl-about">{{ .Content }}</template>
-{{ else if and (eq .Type "posts") .IsPage }}<template id="tpl-{{ .File.ContentBaseName }}">{{ .Content }}</template>
-{{ else if .IsPage }}<template id="tpl-resume">{{ .Content }}</template>
+{{ else if .IsPage }}<template id="tpl-{{ .File.ContentBaseName }}">{{ .Content }}</template>
 {{ end }}
 
 {{ $bundle := slice (resources.Get "js/tui-parse.js") (resources.Get "js/tui.js")

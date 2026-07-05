@@ -21,6 +21,15 @@
 
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // `plain` view (the `plain` command reloads with ?plain): skip booting the
+  // terminal entirely, leaving the server-rendered .prejs content on screen and
+  // hiding the prompt/chips via CSS. Keeps a no-terminal reading mode reachable
+  // now that every URL boots the console by default.
+  if (/[?&]plain(?:=|&|$)/.test(location.search)) {
+    document.documentElement.classList.add('plain');
+    return;
+  }
+
   var POSTS = DATA.posts;
   var SUBTITLE = (DATA.subtitle || 'software and security engineering').toLowerCase();
   var RESUME = DATA.resumeUrl
@@ -192,7 +201,7 @@
   var currentRoute = null;
 
   function bySlug(s) { return POSTS.filter(function (x) { return x.slug === s; })[0]; }
-  function norm(u) { return String(u || '').replace(/[?#].*$/, '').replace(/\/+$/, '') || '/'; }
+  function norm(u) { return String(u || '').replace(/[?#].*$/, '').replace(/index\.html$/, '').replace(/\/+$/, '') || '/'; }
   function withDepth(r, d) { return { name: r.name, slug: r.slug, depth: d }; }
   function sameRoute(a, b) { return !!a && !!b && a.name === b.name && a.slug === b.slug; }
 
@@ -206,9 +215,24 @@
     }
   }
 
+  function titleFor(route) {
+    var base = DATA.siteTitle || 'Matt Horn';
+    if (route.name === 'doc') { var p = bySlug(route.slug); return p ? p.title + ' :: ' + base : base; }
+    if (route.name === 'resume') return 'Resume :: ' + base;
+    if (route.name === 'posts') return 'Posts :: ' + base;
+    if (route.name === 'about') return 'About :: ' + base;
+    return base;   // home, help, motd, game
+  }
+
   // The ONLY paint dispatcher. Never pushes history.
   function render(route) {
+    // A route that can't paint (stale history state after a deploy removed the
+    // doc/resume) resolves to home; currentRoute reflects what actually paints
+    // so the same-route guard and stepBack stay in sync.
+    if (route.name === 'doc' && !bySlug(route.slug)) route = { name: 'home' };
+    if (route.name === 'resume' && !RESUME) route = { name: 'home' };
     currentRoute = route;
+    document.title = titleFor(route);
     switch (route.name) {
       case 'posts':  paintPosts(); break;
       case 'about':  paintAbout(); break;
@@ -216,7 +240,7 @@
       case 'motd':   paintMotd();  break;
       case 'game':   paintPlay();  break;
       case 'resume': paintDoc(RESUME); break;
-      case 'doc':    var p = bySlug(route.slug); if (p) paintDoc(p); else paintHome(); break;
+      case 'doc':    paintDoc(bySlug(route.slug)); break;
       default:       paintHome();
     }
   }
@@ -228,11 +252,17 @@
     render(route);
   }
 
+  var traversing = false;   // true between our history.back() and its popstate
   function stepBack() {
+    if (traversing) return;   // history.back() is async; don't queue a second before popstate
     var st = window.history.state;
-    if (st && st.depth > 0) { window.history.back(); return; }   // popstate re-paints
+    if (st && st.depth > 0) { traversing = true; window.history.back(); return; }   // popstate re-paints
     if (currentRoute && currentRoute.name === 'home') { flash('already at ~'); return; }
-    go({ name: 'home' });   // esc on a directly-loaded deep link: go home, in-site
+    // depth 0 and not home: a directly-loaded deep link. Replace this entry with
+    // home (don't push) so esc can't ping-pong doc<->home; Back from a deep link
+    // leaves the site anyway.
+    window.history.replaceState(withDepth({ name: 'home' }, 0), '', DATA.homeUrl || '/');
+    render({ name: 'home' });
   }
 
   // fresh load / reload only (history.state is null); popstate uses the state.
@@ -422,13 +452,15 @@
   }
   function gameFailed() {
     view = { name: 'game' };   // drop ownsKeys: keyboard returns to the shell
+    clearScreen();             // also drops the lock class + wheel handler
     setKeys('esc: back');
     setPage('');
-    clearNode(screen);
     screen.appendChild(rowEl('the game failed to load; esc goes back', 'err'));
   }
 
+  var playSeq = 0;   // per-invocation token: a slow load must not start a superseded engine
   function paintPlay() {
+    var token = ++playSeq;
     view = { name: 'game', ownsKeys: true }; menu = null;
     clearScreen();
     screen.classList.add('lock');
@@ -440,7 +472,7 @@
     var canvas = document.createElement('canvas');
     canvas.id = 'gamecanvas';
     loadGame().then(function () {
-      if (view.name !== 'game') return;   // navigated away during load
+      if (token !== playSeq || view.name !== 'game') return;   // superseded or navigated away
       if (!window.TUIGame) { gameFailed(); return; }
       screen.appendChild(canvas);
       setKeys('arrows steer · space fires · esc: back');
@@ -449,7 +481,7 @@
         reduced: reduced,
         isActive: function () { return view.name === 'game' && canvas.isConnected; }
       });
-    }).catch(function () { if (view.name === 'game') gameFailed(); });
+    }).catch(function () { if (token === playSeq && view.name === 'game') gameFailed(); });
   }
 
   function openDoc(doc) {
@@ -493,6 +525,7 @@
     if (view.name !== 'doc' || chipRaf) return;
     chipRaf = requestAnimationFrame(function () {
       chipRaf = 0;
+      if (view.name !== 'doc') return;   // view changed between schedule and frame
       var max = screen.scrollHeight - screen.clientHeight;
       var label = max <= 0 ? 'all of it fits'
         : (function () { var p = Math.round(screen.scrollTop / max * 100); return p >= 99 ? 'end' : p + '% ▼'; })();
@@ -545,7 +578,7 @@
       if (r.kind === 'resume') { openDoc(RESUME); return; }
       if (r.kind === 'posts') { goTo(paintPosts); return; }
       if (r.kind === 'post') {
-        var p = POSTS.filter(function (x) { return x.slug === r.slug; })[0];
+        var p = bySlug(r.slug);
         if (p) { openDoc(p); return; }
       }
       echo('cat: ' + r.name + ': no such file', 'err');
@@ -557,7 +590,7 @@
     play: { desc: 'wireframe asteroids', fn: function () { goTo(paintPlay); } },
     motd: { desc: 'a note from my receipt printer', fn: function () { goTo(paintMotd); } },
     theme: { desc: 'cycle color theme', fn: cycleTheme },
-    plain: { desc: 'the ordinary website (same pages, no terminal)', fn: function () { window.location.href = DATA.postsUrl; } },
+    plain: { desc: 'a plain, no-terminal view of this page', fn: function () { window.location.href = location.pathname + '?plain'; } },
     whoami: { desc: 'who runs this place', fn: function () { echo('matt (guest is you)'); } },
     clear: { desc: 'redraw the screen', fn: function () { echo(''); setPage(''); render(currentRoute); } }
   };
@@ -778,6 +811,8 @@
   }
 
   window.addEventListener('popstate', function (e) {
+    traversing = false;                               // our history.back() (if any) has landed
+    bootTimers.forEach(clearTimeout); booted = true;  // cancel any in-flight BIOS so it can't stomp the paint
     render(e.state || withDepth(routeFor(location.pathname), 0));
   });
 

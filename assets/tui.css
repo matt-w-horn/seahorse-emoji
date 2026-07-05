@@ -471,6 +471,10 @@ a:hover { color: var(--foreground); }
 #caret.hidden { display: none; }
 @keyframes tui-caret-blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
 
+/* `plain` reading mode (the `plain` command reloads with ?plain): tui.js skips
+   booting, so hide the terminal chrome and leave the server-rendered .prejs. */
+html.plain #promptline, html.plain #echoline, html.plain .chip { display: none; }
+
 .prejs { max-width: 72ch; }
 .prejs h1 { color: var(--accent); }
 .prejs a { color: var(--accent); }
