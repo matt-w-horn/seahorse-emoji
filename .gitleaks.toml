@@ -1,0 +1,16 @@
+# gitleaks config — keeps every built-in secret rule. This repo publishes
+# matthorn.io, so anything committed here is public the moment it builds; the
+# scan is a backstop against an accidental paste rather than a last line of
+# defense. https://github.com/gitleaks/gitleaks#configuration
+title = "seahorse-emoji"
+
+[extend]
+useDefault = true # built-in rules: Google API keys, generic high-entropy, etc.
+
+[allowlist]
+description = "Generated files and vendored theme content"
+paths = [
+  '''package-lock\.json''',
+  '''themes/.*''',
+  '''public/.*''',
+]

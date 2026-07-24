@@ -7,6 +7,11 @@ on:
   push:
     branches: [main]
 
+# Least privilege: this workflow only reads the tree and runs tests. Set
+# explicitly so the job stays safe if the repo-level default is ever widened.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
