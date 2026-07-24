@@ -21,10 +21,19 @@ const CHROME = process.env.CHROME_BIN || [
 ].find((p) => existsSync(p)) || 'google-chrome';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// --disable-dev-shm-usage: CI containers cap /dev/shm at 64 MB, which Chrome can
+// crash on during startup. Chrome's stderr is captured rather than discarded, so
+// a browser that never comes up reports *why* instead of just timing out below.
+const chromeErr = [];
+let chromeExit = null;
 const chrome = spawn(CHROME, [
   '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
-  '--no-sandbox', `--remote-debugging-port=${PORT}`, '--user-data-dir=/tmp/cdp-console-e2e', 'about:blank',
-], { stdio: 'ignore' });
+  '--no-sandbox', '--disable-dev-shm-usage',
+  `--remote-debugging-port=${PORT}`, '--user-data-dir=/tmp/cdp-console-e2e', 'about:blank',
+], { stdio: ['ignore', 'ignore', 'pipe'] });
+chrome.stderr.on('data', (d) => { if (chromeErr.length < 40) chromeErr.push(d.toString()); });
+chrome.on('error', (e) => chromeErr.push(`spawn failed: ${e.message}`));
+chrome.on('exit', (code, signal) => { chromeExit = signal || code; });
 
 let ws, msgId = 0;
 const pending = new Map();
@@ -65,7 +74,12 @@ async function main() {
     } catch { /* chrome still starting */ }
     await sleep(200);
   }
-  if (!target) throw new Error('no chrome page target');
+  if (!target) throw new Error(
+    'no chrome page target after 10s\n' +
+    `  binary: ${CHROME}\n` +
+    `  chrome: ${chromeExit === null ? 'still running' : `exited with ${chromeExit}`}\n` +
+    `  stderr: ${chromeErr.join('').trim() || '(nothing on stderr)'}`,
+  );
 
   ws = new WebSocket(target.webSocketDebuggerUrl);
   await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej; });
