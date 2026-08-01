@@ -437,10 +437,11 @@ a:hover { color: var(--foreground); }
 /* reader: Hugo-rendered post HTML inside the terminal */
 #screen h2 { color: var(--accent); margin: 18px 0 8px; }
 #screen h3, #screen h4 { color: var(--accent); margin: 16px 0 8px; }
-#screen p { margin: 12px 0; max-width: 72ch; }
-#screen ul, #screen ol { margin: 12px 0 12px 4ch; max-width: 68ch; }
-#screen pre { margin: 12px 0; padding: 10px 12px; overflow-x: auto; max-width: 72ch; }
-#screen img { margin: 12px 0; max-width: min(100%, 72ch); height: auto; }
+#screen p { margin: 12px 0; max-width: 80ch; }
+#screen ul, #screen ol { margin: 12px 0 12px 4ch; max-width: 76ch; }
+#screen pre { margin: 12px 0; padding: 10px 12px; overflow-x: auto; max-width: 80ch; }
+#screen img { margin: 12px 0; max-width: min(100%, 80ch); height: auto; }
+#screen .table-wrap { max-width: min(100%, 80ch); }
 #screen .permalink { font-size: 13px; }
 
 #echoline {
@@ -479,7 +480,7 @@ a:hover { color: var(--foreground); }
    booting, so hide the terminal chrome and leave the server-rendered .prejs. */
 html.plain #promptline, html.plain #echoline, html.plain .chip { display: none; }
 
-.prejs { max-width: 72ch; }
+.prejs { max-width: 80ch; }
 .prejs h1 { color: var(--accent); }
 .prejs a { color: var(--accent); }
 
