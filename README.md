@@ -54,7 +54,7 @@ short fiction.
 
 Also published at [matthorn.io](https://matthorn.io).
 
-- [Honesty gates for a Lean library](./content/posts/2026-08-01-honesty-gates.md) - August 1, 2026
+- [When a Correct Proof is a Lie: Auditing Intent in Lean](./content/posts/2026-08-01-honesty-gates.md) - August 1, 2026
 - [A lesson engine in plain files](./content/posts/2026-07-24-lesson-engine.md) - July 24, 2026
 - [This homepage is a terminal](./content/posts/2026-07-05-terminal-homepage.md) - July 5, 2026
 - [My receipt printer prints an original artwork every morning](./content/posts/2026-07-04-morningprint.md) - July 4, 2026
