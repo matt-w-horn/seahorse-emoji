@@ -1,5 +1,5 @@
 +++
-title = "When a Correct Proof is a Lie: Auditing Intent in Lean"
+title = "When a Correct Proof is a Lie: Honesty Gates for a Lean Library"
 date = 2026-08-01
 author = "Matt Horn"
 +++
@@ -15,8 +15,10 @@ doesn't mean **what you meant** compiles just fine:
 ```lean
 import Mathlib
 
--- This compiles. Division by zero is defined as zero in Lean.
-example (x : ℝ) : x / 0 = 0 := div_zero x
+-- This compiles. In Lean,
+-- division by zero is zero.
+example (x : ℝ) : x / 0 = 0 :=
+  div_zero x
 ```
 
 Kevin Buzzard's
@@ -43,8 +45,11 @@ Lean checked the statement.
 The docstring is what a human reads in addition to the statement.
 
 ```lean
-/-- The inverse cancels: for any real `a`, the product `a⁻¹ * a` is `1`. -/
-theorem inv_mul_cancel_of_le : ∀ {a : ℝ}, 0 < a → a⁻¹ * a = 1
+/-- The inverse cancels:
+for any real `a`,
+the product `a⁻¹ * a` is `1`. -/
+theorem inv_mul_cancel_of_le :
+    ∀ {a : ℝ}, 0 < a → a⁻¹ * a = 1
 ```
 
 The proof is **technically** correct. The statement is **technically** correct.
@@ -188,6 +193,18 @@ stopped elaborating, and nothing noticed, because the only gate that ever read
 it was the scanner and the scanner was still happy. The test of the test had
 rotted and the suite stayed green the whole time. The runner now checks that the
 compile-cleanly fixtures still compile.
+
+**Update:** Independent re-checking of exported proofs is an old idea, and
+Lean has had external checkers for years. What Leonardo de Moura's
+[Who Watches the Provers?](https://leodemoura.github.io/blog/2026-3-16-who-watches-the-provers/)
+(March 2026) documents is the new pressure: AI is now finding kernel bugs
+(seven in Rocq this year, with Claude assisting), and the
+[Lean Kernel Arena](https://arena.lean-lang.org/) benchmarks the independent
+checkers against each other. That prompted me to close a gap here: none of
+the gates above re-check the kernel's own work, so a weekly CI job now
+replays the library's full export through
+[Nanoda](https://github.com/ammkrn/nanoda_lib), one of those independent
+kernels, written in Rust.
 
 ## The referee is a skill
 
