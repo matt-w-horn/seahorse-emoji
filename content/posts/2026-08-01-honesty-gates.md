@@ -189,6 +189,18 @@ it was the scanner and the scanner was still happy. The test of the test had
 rotted and the suite stayed green the whole time. The runner now checks that the
 compile-cleanly fixtures still compile.
 
+**Update:** Independent re-checking of exported proofs is an old idea, and
+Lean has had external checkers for years. What Leonardo de Moura's
+[Who Watches the Provers?](https://leodemoura.github.io/blog/2026-3-16-who-watches-the-provers/)
+(March 2026) documents is the new pressure: AI is now finding kernel bugs
+(seven in Rocq this year, with Claude assisting), and the
+[Lean Kernel Arena](https://arena.lean-lang.org/) benchmarks the independent
+checkers against each other. That prompted me to close a gap here: none of
+the gates above re-check the kernel's own work, so a weekly CI job now
+replays the library's full export through
+[Nanoda](https://github.com/ammkrn/nanoda_lib), one of those independent
+kernels, written in Rust.
+
 ## The referee is a skill
 
 My referee runs as one of seven Claude Code skills for Lean, in [lean-
