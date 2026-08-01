@@ -38,7 +38,7 @@ opinion, because docstrings are comments.
 
 The judge is an LLM referee with a narrow job. It sees one
 docstring-statement pair, blinded from the rest of the project. It must not
-trust its own reading of the statement: it writes small Lean probes,
+trust its own reading of the statement. It writes small Lean probes,
 elaborates them against the real toolchain, and only then records a verdict.
 For the pair above the verdict is `prose-overclaims`, with the
 counterexample attached.
@@ -49,10 +49,14 @@ verdict goes stale. A stale verdict is reported on every test run until the
 pair is re-refereed.
 
 A judge can also be lazy, so the judge is examined first. The template ships
-fifteen calibration pairs with known defects: a dropped hypothesis, an "iff"
-claimed where one direction is proved, uniqueness claimed over a bare
-existence, a vacuous statement whose hypotheses cannot hold at once. A
-referee configuration must get these right before its verdicts count.
+fifteen calibration pairs with known defects:
+
+- a dropped hypothesis
+- an "iff" claimed where one direction is proved
+- uniqueness claimed over a bare existence
+- a vacuous statement whose hypotheses cannot hold at once
+
+A referee configuration must get these right before its verdicts count.
 
 ## The mechanical tier
 
@@ -85,11 +89,10 @@ split by task rather than topic, so each loads only when its task comes up:
 | `lake` | the build |
 | `loogle` | finding a lemma that probably already exists |
 
-The skills were written against Lean v4.32.0, with the tactic inventories
-and error strings extracted from the toolchain rather than recalled. Mathlib
-renames things continuously, so the skills tell the agent to grep the pinned
-source instead of trusting memory. A remembered lemma name costs a full
-rebuild to disprove.
+I wrote the skills against Lean v4.32.0. The tactic inventories and error
+strings come from the toolchain, not from memory. Mathlib renames things
+continuously, so the skills tell the agent to grep the pinned source instead
+of memory. A remembered lemma name costs a full rebuild to disprove.
 
 Fork the template, run the rename script, and replace the hello module. Then
 tell me which gate fired first. Corrections to the skills are welcome too,
