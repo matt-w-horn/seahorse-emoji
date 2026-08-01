@@ -4,8 +4,6 @@ date = 2026-07-05
 author = "Matt Horn"
 +++
 
-*Written in a personal capacity. Views are my own, not those of any employer.*
-
 The homepage of this site is a terminal. You can `ls` the posts, `cd` around,
 and `cat` this one:
 

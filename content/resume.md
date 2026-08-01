@@ -3,7 +3,7 @@ title = "Resume"
 author = "Matt Horn"
 +++
 
-*Written in a personal capacity. Also available as a [PDF](/resume.pdf).*
+*Also available as a [PDF](/resume.pdf).*
 
 **Software Engineer** | Google | July 2025 - Present
 

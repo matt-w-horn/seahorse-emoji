@@ -4,8 +4,6 @@ date = 2026-03-27
 author = "Matt Horn"
 +++
 
-*Written in a personal capacity. Views are my own, not those of any employer.*
-
 The year is 2028, and Claude Opus 10.0 has just been released. Sarah, twelve years old and somewhere in Nebraska, can't wait to try it. She types the prompt she always tries first on a new model: "Show me the seahorse emoji." Send.
 
 The model starts thinking...

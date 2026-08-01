@@ -4,8 +4,6 @@ date = 2026-08-01
 author = "Matt Horn"
 +++
 
-*Written in a personal capacity. Views are my own, not those of any employer.*
-
 Lean's kernel checks every proof. A proof that does not establish its
 statement will not compile. The kernel checks nothing else. A statement that
 does not mean what you intended compiles without complaint:
