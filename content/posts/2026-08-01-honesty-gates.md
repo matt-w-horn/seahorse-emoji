@@ -1,5 +1,5 @@
 +++
-title = "When a Correct Proof is a Lie: Auditing Intent in Lean"
+title = "When a Correct Proof is a Lie: Honesty Gates for a Lean Library"
 date = 2026-08-01
 author = "Matt Horn"
 +++
@@ -15,8 +15,10 @@ doesn't mean **what you meant** compiles just fine:
 ```lean
 import Mathlib
 
--- This compiles. Division by zero is defined as zero in Lean.
-example (x : ℝ) : x / 0 = 0 := div_zero x
+-- This compiles. In Lean,
+-- division by zero is zero.
+example (x : ℝ) : x / 0 = 0 :=
+  div_zero x
 ```
 
 Kevin Buzzard's
@@ -43,8 +45,11 @@ Lean checked the statement.
 The docstring is what a human reads in addition to the statement.
 
 ```lean
-/-- The inverse cancels: for any real `a`, the product `a⁻¹ * a` is `1`. -/
-theorem inv_mul_cancel_of_le : ∀ {a : ℝ}, 0 < a → a⁻¹ * a = 1
+/-- The inverse cancels:
+for any real `a`,
+the product `a⁻¹ * a` is `1`. -/
+theorem inv_mul_cancel_of_le :
+    ∀ {a : ℝ}, 0 < a → a⁻¹ * a = 1
 ```
 
 The proof is **technically** correct. The statement is **technically** correct.
