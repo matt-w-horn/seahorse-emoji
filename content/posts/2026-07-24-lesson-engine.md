@@ -4,8 +4,6 @@ date = 2026-07-24
 author = "Matt Horn"
 +++
 
-*Written in a personal capacity. Views are my own, not those of any employer.*
-
 I wanted to drill Python and teach a few subjects my own way. Neither belongs
 on a hosted course platform. So I built a small engine that runs on my own
 machine.

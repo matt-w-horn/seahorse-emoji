@@ -4,8 +4,6 @@ date = 2026-07-04
 author = "Matt Horn"
 +++
 
-*Written in a personal capacity. Views are my own, not those of any employer.*
-
 The first minutes of my day were going to my phone. I'd wake up, scroll the news, check the weather, and feel slightly worse for it. So I made a bet with myself: could the same inputs (weather, headlines, whatever today's date means) arrive on paper instead, once a day, with nothing to refresh?
 
 Here's what came out of the printer yesterday and this morning:
