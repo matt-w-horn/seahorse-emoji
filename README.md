@@ -17,12 +17,14 @@ progressive enhancement over the server-rendered fallback, inside a strict
 
 ## Build and run
 
-Install Hugo **extended** (CI pins 0.163.3) and Node 20 or newer.
+Install Hugo **extended** (CI pins 0.163.3) and Node 22 or newer: `npm test` runs
+TypeScript through `--experimental-strip-types`, which landed in 22.6.
 
 ```bash
 hugo server        # local dev server with live reload
 npm test           # unit tests for the terminal's DOM-free cores
 npm run typecheck  # tsc --noEmit
+npm run e2e        # browser e2e; needs Chrome and `hugo server` already running
 hugo --minify      # production build, as CI runs it
 ```
 
@@ -33,12 +35,13 @@ A push to `main` deploys the site.
 
 ## Layout
 
-- `content/` — posts and pages: Markdown with TOML front matter
-- `layouts/index.html` — the standalone terminal homepage
-- `assets/js/` — the terminal: `tui.ts` (the UI), `tui-parse.ts` (path and command
-  resolution, pure), `tui-game.ts` (asteroids, pure math core)
-- `tests/` — unit tests for the pure cores, plus a console e2e check
-- `themes/terminal` — the vendored MIT theme behind the ordinary pages
+- `content/` holds the posts and pages: Markdown with TOML front matter
+- `layouts/index.html` is the standalone terminal homepage
+- `assets/js/` is the terminal: `tui.ts` (the UI), `tui-parse.ts` (path and
+  command resolution, pure), `tui-game.ts` (asteroids, pure math core), and
+  `types.ts` (shared types)
+- `tests/` holds unit tests for the pure cores, plus a console e2e check
+- `themes/terminal` is the vendored MIT theme behind the ordinary pages
 
 ## About
 
