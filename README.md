@@ -1,8 +1,54 @@
-# About
+# matthorn.io
 
-I'm Matt Horn. I've worked in software and security engineering for about fifteen years. Most of that time went to identity, access management, and cloud infrastructure at companies you've probably heard of; the resume below has the list. More recently I've been focused on AI/ML infrastructure and the security problems that come with it.
+[![ci](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/ci.yml/badge.svg)](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/ci.yml)
+[![deploy](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/hugo.yml/badge.svg)](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/hugo.yml)
+![license: CC BY-ND 4.0](https://img.shields.io/badge/license-CC%20BY--ND%204.0-blue)
 
-I write here occasionally: essays on security and AI, and once in a while some very short fiction.
+Source for [matthorn.io](https://matthorn.io): a [Hugo](https://gohugo.io/) static site
+deployed to GitHub Pages. The repo is named after
+["The Seahorse Emoji"](./content/posts/2026-03-27-seahorse-emoji.md), the post it
+started as.
+
+The homepage is a hand-written terminal: about 1,550 lines of vanilla TypeScript in
+`assets/js/` give the site `ls`/`cd`/`cat` navigation, a theme switcher, and a
+wireframe-3D asteroids game. Every page is also an ordinary Hugo page. The terminal is
+progressive enhancement over the server-rendered fallback, inside a strict
+`script-src 'self'` CSP with no inline scripts.
+
+## Build and run
+
+Install Hugo **extended** (CI pins 0.163.3) and Node 20 or newer.
+
+```bash
+hugo server        # local dev server with live reload
+npm test           # unit tests for the terminal's DOM-free cores
+npm run typecheck  # tsc --noEmit
+hugo --minify      # production build, as CI runs it
+```
+
+A push to `main` deploys the site.
+[`.github/workflows/hugo.yml`](.github/workflows/hugo.yml) runs the tests, builds with
+`hugo --minify`, and publishes to GitHub Pages. To regenerate `static/resume.pdf`, run
+`sh scripts/build-resume-pdf.sh` (macOS only).
+
+## Layout
+
+- `content/` — posts and pages: Markdown with TOML front matter
+- `layouts/index.html` — the standalone terminal homepage
+- `assets/js/` — the terminal: `tui.ts` (the UI), `tui-parse.ts` (path and command
+  resolution, pure), `tui-game.ts` (asteroids, pure math core)
+- `tests/` — unit tests for the pure cores, plus a console e2e check
+- `themes/terminal` — the vendored MIT theme behind the ordinary pages
+
+## About
+
+I'm Matt Horn. I've worked in software and security engineering for about fifteen
+years, most of it on identity, access management, and cloud infrastructure; the resume
+below has the list. More recently I've been focused on AI/ML infrastructure and its
+security problems.
+
+I write here occasionally: essays on security and AI, and once in a while some very
+short fiction.
 
 ## Posts (newest first)
 
@@ -53,5 +99,3 @@ written on personal time using personal equipment and personal accounts. It is
 not affiliated with, sponsored by, or endorsed by Google, Anthropic, or any
 past or present employer. Views are my own. Copyright (c) 2026 Matt Horn. See
 [NOTICE](NOTICE).
-
-

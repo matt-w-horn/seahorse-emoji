@@ -17,21 +17,22 @@ progressive enhancement over the server-rendered fallback.
 ## Commands
 
 ```bash
-node --test tests/*.test.js          # run the JS unit tests (Node's built-in runner)
-node --test tests/tui-parse.test.js  # run a single test file
+npm test                             # unit tests (node --experimental-strip-types --test tests/*.test.ts)
+npm run typecheck                    # tsc --noEmit
+npm run e2e                          # browser console e2e (tests/e2e/console.e2e.mjs)
 hugo server                          # local dev server with live reload
 hugo --minify                        # production build (as CI does it; set HUGO_ENVIRONMENT=production)
 sh scripts/build-resume-pdf.sh       # regenerate static/resume.pdf from scripts/resume-pdf/resume.html
 ```
 
-There is no `package.json`, bundler, or linter — Node runs only the tests, and Hugo's asset
-pipeline does the JS concat/minify/fingerprint. Hugo **extended** is required; CI pins
-`0.163.3`.
+There is no bundler or linter — `package.json` exists only for tsc and the test scripts,
+and Hugo's asset pipeline does the JS concat/minify/fingerprint. Hugo **extended** is
+required; CI pins `0.163.3`.
 
 ## CI/CD
 
 `.github/workflows/hugo.yml` runs on push to `main`: install Hugo extended 0.163.3 →
-`node --test tests/*.test.js` → `hugo --minify` → deploy to GitHub Pages. There is no lint
+`npm ci` → `npm run typecheck` → `npm test` → `hugo --minify` → deploy to GitHub Pages. There is no lint
 step. `baseURL` comes from `hugo.toml` (`https://matthorn.io/`), **not** Pages metadata —
 the metadata once reported `http` during a cert gap and baked mixed-content asset URLs into
 a deploy.
@@ -85,5 +86,5 @@ a deploy.
 - Security reports go through GitHub private vulnerability reporting (`SECURITY.md`), not
   public issues.
 - `seahorse-emoji.md` at the repo root is a stale stub pointing at the real post under
-  `content/posts/`; `README.md` mirrors the site's About/resume rather than documenting the
-  build.
+  `content/posts/`. `README.md` documents the build first, then carries the site's
+  About/resume content below it.
