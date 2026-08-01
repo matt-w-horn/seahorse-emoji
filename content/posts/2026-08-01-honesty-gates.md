@@ -4,6 +4,14 @@ date = 2026-08-01
 author = "Matt Horn"
 +++
 
+**TL;DR:** Lean's kernel checks proofs, not the prose around them. This
+post is the machinery I use to close that gap: a blinded, calibrated
+Claude referee for docstring-vs-statement claims, and mechanical gates
+for everything else. The referee ships as a Claude Code skill in
+[lean-skills (github)](https://github.com/matt-w-horn/lean-skills), and
+the whole gate stack as a fork-ready template in
+[lean-self-audit-template (github)](https://github.com/matt-w-horn/lean-self-audit-template).
+
 I've been absorbed in [Lean](https://lean-lang.org/) lately. This post is what
 I've found helpful, especially when working with a general-purpose assistant
 like Claude Code.
@@ -15,10 +23,8 @@ doesn't mean **what you meant** compiles just fine:
 ```lean
 import Mathlib
 
--- This compiles. In Lean,
--- division by zero is zero.
-example (x : ℝ) : x / 0 = 0 :=
-  div_zero x
+-- This compiles. In Lean, division by zero is zero.
+example (x : ℝ) : x / 0 = 0 := div_zero x
 ```
 
 Kevin Buzzard's
@@ -33,7 +39,7 @@ capable of doing this are already very busy. I wanted gates that run at machine
 speed and that I'd trust the way I trust my own reading. I built them while
 formalizing something of my own, and they're now included in a template you can
 fork:
-[lean-self-audit-template](https://github.com/matt-w-horn/lean-self-audit-template).
+[lean-self-audit-template (github)](https://github.com/matt-w-horn/lean-self-audit-template).
 The one that needs a model is the interesting one (to me, at least), so I'll
 start there.
 
@@ -45,8 +51,7 @@ Lean checked the statement.
 The docstring is what a human reads in addition to the statement.
 
 ```lean
-/-- The inverse cancels:
-for any real `a`,
+/-- The inverse cancels: for any real `a`,
 the product `a⁻¹ * a` is `1`. -/
 theorem inv_mul_cancel_of_le :
     ∀ {a : ℝ}, 0 < a → a⁻¹ * a = 1
@@ -203,13 +208,14 @@ Lean has had external checkers for years. What Leonardo de Moura's
 checkers against each other. That prompted me to close a gap here: none of
 the gates above re-check the kernel's own work, so a weekly CI job now
 replays the library's full export through
-[Nanoda](https://github.com/ammkrn/nanoda_lib), one of those independent
+[Nanoda (github)](https://github.com/ammkrn/nanoda_lib), one of those independent
 kernels, written in Rust.
 
 ## The referee is a skill
 
-My referee runs as one of seven Claude Code skills for Lean, in [lean-
-skills](https://github.com/matt-w-horn/lean-skills). They're split by what
+My referee runs as one of seven Claude Code skills for Lean, in
+[lean-skills (github)](https://github.com/matt-w-horn/lean-skills).
+They're split by what
 you're doing rather than by topic, so each loads only when its task comes up:
 
 | Skill | Fires when |
