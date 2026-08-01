@@ -22,3 +22,12 @@ body {
 code, kbd, pre {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Ubuntu Mono", monospace !important;
 }
+
+/* Markdown tables wider than the column scroll inside themselves instead of
+   widening the page (neither the theme nor terminal-css constrains them). */
+table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
