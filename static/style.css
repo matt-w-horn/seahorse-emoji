@@ -23,11 +23,10 @@ code, kbd, pre {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Ubuntu Mono", monospace !important;
 }
 
-/* Markdown tables wider than the column scroll inside themselves instead of
-   widening the page (neither the theme nor terminal-css constrains them). */
-table {
-  display: block;
-  width: max-content;
+/* render-table.html wraps every markdown table; wide ones scroll inside the
+   wrapper instead of widening the page. The table itself stays display:table
+   so border-collapse keeps working. */
+.table-wrap {
   max-width: 100%;
   overflow-x: auto;
 }
