@@ -17,14 +17,15 @@ progressive enhancement over the server-rendered fallback, inside a strict
 
 ## Build and run
 
-Install Hugo **extended** (CI pins 0.163.3) and Node 22 or newer: `npm test` runs
-TypeScript through `--experimental-strip-types`, which landed in 22.6.
+Install Hugo **extended** (CI pins 0.163.3) and Node 22.6 or newer: `npm test`
+runs TypeScript through `--experimental-strip-types`. Run `npm ci` before
+`npm run typecheck`; the two test commands need no `node_modules`.
 
 ```bash
 hugo server        # local dev server with live reload
 npm test           # unit tests for the terminal's DOM-free cores
 npm run typecheck  # tsc --noEmit
-npm run e2e        # browser e2e; needs Chrome and `hugo server` already running
+npm run e2e        # browser e2e; needs Chrome installed and hugo server running
 hugo --minify      # production build, as CI runs it
 ```
 
