@@ -48,18 +48,20 @@ theorem inv_mul_cancel_of_le : ∀ {a : ℝ}, 0 < a → a⁻¹ * a = 1
 ```
 
 The proof is **technically** correct. The statement is **technically** correct.
-But the docstring lies: it drops `0 < a`, and at `a = 0` the product is `0`,
-not `1`. The kernel has no opinion, because docstrings are comments.
+But the docstring lies: it drops `0 < a`, and at `a = 0` the product is `0`, not
+`1`. The kernel has no opinion, because docstrings are comments.
 
 Catching that is a review problem, so it needs a reviewer. In this case, it's a
 referee with a deliberately small job. It sees one docstring-statement pair (and
 the verified docstrings of that declaration's direct dependencies) and nothing
 else from the project. The blinding is enforced by tooling rather than by
-instruction: the referee has no file access at all, only a probe command and
-web search. It isn't allowed to trust its own reading of the statement; it
-writes small Lean probes, elaborates them against the real toolchain, and only
-then returns a verdict. For the pair above the verdict is `prose-overclaims`,
-with the counterexample attached.
+instruction: the referee has no file access at all, only a probe command and web
+search. Web search can in principle reach the public repo, which is a hole I've
+left open because closing it costs the referee the mathematical background it
+needs. It isn't allowed to trust its own reading of the statement; it writes
+small Lean probes, elaborates them against the real toolchain, and only then
+returns a verdict. For the pair above the verdict is `prose-overclaims`, with
+the counterexample attached.
 
 A verdict of `supported` or `accepted` goes into a ledger, `tests/claims.lock`
 ([example](https://github.com/matt-w-horn/overload/blob/main/tests/claims.lock)),
@@ -82,37 +84,37 @@ verdict is not.
 So the sweep runs a breadth-first search up the dependency tree from the base
 axioms. Each wave holds the declarations whose dependencies already have
 verdicts, so a wave's members are independent and go out together; real
-libraries are shallow, and this takes on the order of ten waves. That ordering
-isn't a preference, it falls out of the hashing: a row commits to its direct
-dependencies' docstrings, so verified context can only accumulate bottom-up.
-Mathematicians don't skim a proof and pronounce it sound; they walk it step by
-step. This is the only approach that found anything, and what it found were real
-errors, some in the Lean and some in the docstring.
+libraries are shallow, and this takes on the order of ten waves. The ordering
+falls out of the hashing: a row commits to its direct dependencies' docstrings,
+so verified context can only accumulate bottom-up. Mathematicians don't skim a
+proof and pronounce it sound; they walk it step by step. This approach found
+real errors, some in the Lean and some in the docstring.
 
 Opus 5 does the refereeing; on this job it looked as capable as Fable 5. Fable 5
 orchestrates the run and applies fixes as verdicts come in.
 
 The first sweep is the expensive part. A referee runs under a dollar a pair, and
-orchestration costs several times that. The seven hundred-odd pairs in my own
-library came to a few hundred dollars. Mathlib has about 74,000 docstrings,
-which puts a first sweep there in six figures. That is why I run this against a
-library I wrote.
+orchestration costs several times that, so call it $4 or $5 a pair all in. The
+700-odd pairs in my own library came to a few thousand dollars. Mathlib has
+about 74,000 docstrings, which puts a first sweep there in six figures. That is
+why I run this against a library I wrote.
 
-After the first sweep it's cheap, because a verdict only goes stale when
-something under it moves. Each row is keyed on three hashes: the printed
-statement, the docstring, and the sorted docstrings of the declaration's direct
-dependencies. Edit one docstring and every consumer of that declaration needs
-re-refereeing. The dependency graph comes from `getUsedConstantsAsSet`, which
-walks proof bodies, so it sees what the proof used rather than what the
-statement mentions.
+After the first sweep it's cheap, because a verdict only goes stale when one of
+its inputs moves. Each row is keyed on three hashes: the printed statement, the
+docstring, and the sorted docstrings of the declaration's direct dependencies.
+Edit one docstring and every consumer of that declaration needs re-refereeing.
+The dependency graph comes from `getUsedConstantsAsSet`, which walks proof
+bodies, so it sees what the proof used rather than what the statement mentions.
 
-Proof bodies are the exception, and deliberately so. Golf a theorem's proof,
-rewrite the tactic block, swap the argument entirely: no verdict goes stale,
-because proof irrelevance means the body was never part of what the statement
-claims. A definition's body is different, because there the body *is* the
-meaning. It gets hashed into the statement lock rather than the ledger, so
-changing a `def`'s body trips that gate while the claims verdicts stay green. I
-learned the distinction from a definition that changed body with no header
+Proof bodies are the exception, and deliberately so. Golf a theorem's proof or
+rewrite the tactic block and no verdict goes stale, because proof irrelevance
+means the body was never part of what the statement claims. Reach for different
+lemmas while you're in there and the dependency set moves, which does stale the
+row, and that is the behaviour you want: the referee was handed those docstrings
+as verified context. A definition's body is different, because there the body
+*is* the meaning. It gets hashed into the statement lock rather than the ledger,
+so changing a `def`'s body trips that gate while the claims verdicts stay green.
+I learned the distinction from a definition that changed body with no header
 drift reported.
 
 ## The referee gets evaluated too
@@ -127,12 +129,11 @@ nine carry a defect I planted:
 - a statement whose hypotheses can never hold at once
 
 Five more are honest, three of those lifted straight from Mathlib, and the
-fifteenth is genuinely ambiguous. A configuration has to match the key on all
-fifteen before I let it write to the ledger, which means calling the honest
+fifteenth is genuinely ambiguous. A configuration has to match the answer key on
+all fifteen before I let it write to the ledger, which means calling the honest
 pairs honest and the ambiguous one ambiguous. A confident wrong answer there
 disqualifies it as surely as a miss. That half of the test is the half worth
-having: a referee that flags everything is as useless as one that flags
-nothing.
+having: a referee that flags everything is as useless as one that flags nothing.
 
 ## The gates that need no model
 
@@ -147,8 +148,9 @@ Under the referee sit the mechanical gates. Each one hard-fails the build:
 | Silencing guard | a commit weakens a linter, or adds `axiom`, `unsafe`, or `partial` |
 | Negative fixtures | a gate misses a constructed evasion |
 
-Five of those fire on bad code. The silencing guard fires on someone quietly
-weakening a gate, which turned out to be its own category.
+Four of those fire on defects in the library. The last two police the gates
+themselves: the fixtures catch a gate that stopped biting, and the silencing
+guard catches someone weakening one.
 
 The axiom audit is the one I'd port to any project
 ([example](https://github.com/matt-w-horn/overload/blob/main/Overload/AxiomAudit.lean)):
@@ -160,17 +162,18 @@ and nothing else. That's the check the Lean reference describes under
 [Validating a Lean Proof](https://lean-lang.org/doc/reference/latest/ValidatingProofs/).
 A stray `sorry` or a `native_decide` fails the build instead of sitting in the
 library looking finished. Mine runs inside `lake build` rather than as a step
-after it, paired with a source-level scan. There's one hole no environment
-sweep can close: Lean never adds an `example` to the environment, so a `sorry`
-inside one compiles and never moves the count.
+after it, paired with a source-level scan. The scan is there because of one
+hole no environment sweep can close: Lean never adds an `example` to the
+environment, so a `sorry` inside one compiles and never moves the count. Only
+reading the source catches that.
 
-Two things went wrong there that I didn't predict. The audit prints a count,
-and for a while two copies of it printed different counts, 914 against 919,
-with nothing comparing the two numbers; they get diffed character for character
-now. And a syntax linter only runs in modules that transitively import it, so
-`decide +native`, the config-flag spelling of `native_decide`, once elaborated
-in a slim-import module with no warning at all. A separate gate now forces
-every module to reach the carrier.
+Two things went wrong there that I didn't predict. The audit prints a count, and
+for a while two copies of it printed different counts, 914 against 919, with
+nothing comparing the two numbers; they get diffed character for character now.
+And a syntax linter only runs in modules that transitively import it, so `decide
++native`, the config-flag spelling of `native_decide`, once elaborated in a
+slim-import module with no warning at all. A separate gate now forces every
+module to reach the carrier.
 
 The negative fixtures are the row I'd argue for hardest: eleven files that are
 supposed to fail
@@ -183,15 +186,14 @@ feed it something it has to reject.
 Then one of them stopped being a fixture. An import drifted, the file quietly
 stopped elaborating, and nothing noticed, because the only gate that ever read
 it was the scanner and the scanner was still happy. The test of the test had
-rotted and the suite stayed green the whole time. The runner now checks that
-the compile-cleanly fixtures still compile.
+rotted and the suite stayed green the whole time. The runner now checks that the
+compile-cleanly fixtures still compile.
 
 ## The referee is a skill
 
-My referee runs as one of seven Claude Code skills for Lean, in
-[lean-skills](https://github.com/matt-w-horn/lean-skills). They're split by
-what you're doing rather than by topic, so each loads only when its task comes
-up:
+My referee runs as one of seven Claude Code skills for Lean, in [lean-
+skills](https://github.com/matt-w-horn/lean-skills). They're split by what
+you're doing rather than by topic, so each loads only when its task comes up:
 
 | Skill | Fires when |
 |---|---|
