@@ -1,5 +1,9 @@
 # matthorn.io
 
+[![ci](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/ci.yml/badge.svg)](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/ci.yml)
+[![deploy](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/hugo.yml/badge.svg)](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/hugo.yml)
+![license: CC BY-ND 4.0](https://img.shields.io/badge/license-CC%20BY--ND%204.0-blue)
+
 Source for [matthorn.io](https://matthorn.io): a [Hugo](https://gohugo.io/) static site
 deployed to GitHub Pages. The repo is named after
 ["The Seahorse Emoji"](./content/posts/2026-03-27-seahorse-emoji.md), the post it
