@@ -540,7 +540,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     loadGame().then(function (mod) {
       if (token !== playSeq || view.name !== 'game') return;   // superseded or navigated away
       screen.appendChild(canvas);
-      setKeys('arrows steer · space fires · esc: back', '‹ back · drag: steer · tap: fire');
+      setKeys('arrows steer · space fires · esc: back', '‹ back · drag: steer · hold: fire');
       setPage('no coins needed');
       activeGame = mod.start(canvas, {
         reduced: reduced,

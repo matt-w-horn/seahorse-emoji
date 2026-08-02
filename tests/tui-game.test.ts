@@ -182,6 +182,7 @@ test('polyhedron faces: icosahedron 20 triangles, octahedron 8, all face edges a
 
 test('color helpers: hex round-trip, mix midpoint, hue rotation, luma ordering', () => {
   assert.deepEqual(core.hexToRgb('#8ec07c'), [142, 192, 124]);
+  assert.deepEqual(core.hexToRgb('#8ec07g'), [128, 128, 128], 'trailing non-hex char falls back to gray');
   assert.equal(core.rgbToHex([142, 192, 124]), '#8ec07c');
   assert.deepEqual(core.mixRgb([0, 0, 0], [255, 255, 255], 0.5), [128, 128, 128]);
   const cyan = core.rotateHue([255, 0, 0], 180);
@@ -192,9 +193,18 @@ test('color helpers: hex round-trip, mix midpoint, hue rotation, luma ordering',
   assert.ok(core.luma([128, 128, 128]) < core.luma([255, 255, 255]));
 });
 
+test('huntersForWave: none on wave 1, one from wave 2, one more every third wave, capped at 3', () => {
+  assert.equal(core.huntersForWave(1), 0);
+  assert.equal(core.huntersForWave(2), 1);
+  assert.equal(core.huntersForWave(4), 1);
+  assert.equal(core.huntersForWave(5), 2);
+  assert.equal(core.huntersForWave(8), 3);
+  assert.equal(core.huntersForWave(50), 3, 'capped');
+});
+
 test('grazed: near pass past the ship scores, wide pass does not', () => {
   const size = 0;
-  const hitR = core.SIZES[size] * 0.8 + 26;
+  const hitR = core.shipHitR(size);   // the exported radius, not a copy of the formula
   const near = { x: hitR + 10, y: 0, size: size };
   const wide = { x: hitR * 2 + 60, y: 0, size: size };
   assert.ok(!core.hitShip({ x: near.x, y: near.y, size: size }, 0, 0), 'near pass is not a hit');

@@ -233,8 +233,14 @@ function hitHunter(h: Pick<Hunter, 'x' | 'y' | 'z'>, bullet: Pick<Bullet, 'x' | 
   return dx * dx + dy * dy < HUNTER_R * HUNTER_R;
 }
 
+// the ship's collision radius against a rock of this size class; hitShip
+// tests it directly and grazed widens the same radius by 1.8x
+function shipHitR(size: number): number {
+  return SIZES[size] * 0.8 + 26;
+}
+
 function hitShip(rock: Pick<Rock, 'x' | 'y' | 'size'>, camX: number, camY: number): boolean {
-  var r = SIZES[rock.size] * 0.8 + 26;
+  var r = shipHitR(rock.size);
   var dx = rock.x - camX, dy = rock.y - camY;
   return dx * dx + dy * dy < r * r;
 }
@@ -242,9 +248,14 @@ function hitShip(rock: Pick<Rock, 'x' | 'y' | 'size'>, camX: number, camY: numbe
 // a rock that passes the camera close but clean is a graze (caller checks
 // hitShip first; this only widens the same radius)
 function grazed(rock: Pick<Rock, 'x' | 'y' | 'size'>, camX: number, camY: number): boolean {
-  var r = (SIZES[rock.size] * 0.8 + 26) * 1.8;
+  var r = shipHitR(rock.size) * 1.8;
   var dx = rock.x - camX, dy = rock.y - camY;
   return dx * dx + dy * dy < r * r;
+}
+
+// hunters join from wave 2, one more every third wave, never more than 3
+function huntersForWave(level: number): number {
+  return level >= 2 ? Math.min(1 + Math.floor((level - 2) / 3), 3) : 0;
 }
 
 // kill chains step the multiplier every 4 kills, capped at x5
@@ -260,8 +271,8 @@ function hexToRgb(hex: string): RGB {
   if (h.length === 3) {
     h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
   }
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return [128, 128, 128];
   var n = parseInt(h, 16);
-  if (isNaN(n) || h.length !== 6) return [128, 128, 128];
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
@@ -325,8 +336,8 @@ export const core = {
   rotate: rotate, project: project,
   spawnRock: spawnRock, spawnWave: spawnWave, splitRock: splitRock, advanceRock: advanceRock,
   spawnPickup: spawnPickup, collectPickup: collectPickup,
-  spawnHunter: spawnHunter, steerHunter: steerHunter,
-  hitBullet: hitBullet, hitHunter: hitHunter, hitShip: hitShip,
+  spawnHunter: spawnHunter, steerHunter: steerHunter, huntersForWave: huntersForWave,
+  hitBullet: hitBullet, hitHunter: hitHunter, hitShip: hitShip, shipHitR: shipHitR,
   grazed: grazed, comboMult: comboMult,
   hexToRgb: hexToRgb, rgbToHex: rgbToHex, mixRgb: mixRgb,
   rotateHue: rotateHue, luma: luma
@@ -375,6 +386,7 @@ function blip(f0: number, f1: number, dur: number, type: OscillatorType, vol: nu
   g.gain.setValueAtTime(vol, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
   o.connect(g); g.connect(acMaster);
+  o.onended = function () { o.disconnect(); g.disconnect(); };   // don't let dead nodes pile up in the graph
   o.start(t); o.stop(t + dur);
 }
 
@@ -392,6 +404,7 @@ function whump(dur: number, f0: number, vol: number): void {
   g.gain.setValueAtTime(vol, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
   s.connect(f); f.connect(g); g.connect(acMaster);
+  s.onended = function () { s.disconnect(); f.disconnect(); g.disconnect(); };
   s.start(t); s.stop(t + dur);
 }
 
@@ -414,13 +427,13 @@ const XDIRS: Edge[] = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
 const PLUSDIRS: Edge[] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 const DASH = [4, 7];
 const NODASH: number[] = [];
+const SPREAD1 = [0];
+const SPREAD3 = [-170, 0, 170];
 
 export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
   var out = canvas.getContext('2d')!;
   var ctx = out;                                   // the world draws straight to the visible canvas
-  var bQuartCv = document.createElement('canvas'); // quarter-res downsample of the frame
-  var bQuart = bQuartCv.getContext('2d')!;
-  var persistCv = document.createElement('canvas'); // accumulated bloom + phosphor trails
+  var persistCv = document.createElement('canvas'); // quarter-res accumulated bloom + phosphor trails
   var pctx = persistCv.getContext('2d')!;
   var reduced = !!opts.reduced;
   var isActive = opts.isActive || function () { return true; };
@@ -439,7 +452,7 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
   var fireCool = 0, muzzleT = 0, invuln = 0, attractT = 0, runT = 0, flash = 0;
   var chain = 0, chainT = 0;
   var shieldUp = false, rapidT = 0, tripleT = 0;
-  var shake = 0, interT = 0, bannerT = 0, gridPhase = 0;
+  var shake = 0, interT = 0, bannerT = 0, bannerTxt = '', gridPhase = 0;
   var ignoreUntil = performance.now() + 250;
   var lastT = performance.now();
   var raf = 0, stopped = false;
@@ -552,7 +565,6 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
      pays one drawImage instead of a gradient fill and a pattern fill */
   var overlayCv = document.createElement('canvas');
   function buildOverlay() {
-    var dpr = window.devicePixelRatio || 1;
     overlayCv.width = Math.max(1, canvas.width);
     overlayCv.height = Math.max(1, canvas.height);
     var octx = overlayCv.getContext('2d')!;
@@ -571,21 +583,19 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
   /* sizing: resize-driven, not per-frame. The canvas is absolutely
      positioned over the whole screen box (padding included), so it measures
      the parent's client box directly and draws at native pixel ratio */
-  var W = 300, H = 200;
+  var W = 300, H = 200, dpr = window.devicePixelRatio || 1;
   function fit() {
     var parent = canvas.parentNode as HTMLElement | null;
     if (!parent) return;
-    var dpr = window.devicePixelRatio || 1;
+    dpr = window.devicePixelRatio || 1;
     W = Math.max(60, parent.clientWidth); H = Math.max(60, parent.clientHeight);
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     canvas.style.width = W + 'px';
     canvas.style.height = H + 'px';
     out.setTransform(dpr, 0, 0, dpr, 0, 0);
-    bQuartCv.width = Math.max(1, Math.round(canvas.width / 4));
-    bQuartCv.height = Math.max(1, Math.round(canvas.height / 4));
-    persistCv.width = bQuartCv.width;
-    persistCv.height = bQuartCv.height;
+    persistCv.width = Math.max(1, Math.round(canvas.width / 4));
+    persistCv.height = Math.max(1, Math.round(canvas.height / 4));
     buildOverlay();
     if (!raf) render();
   }
@@ -604,15 +614,22 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
   }
   makeStars();
 
-  function resetCam() { cam = { x: 0, y: 0, vx: 0, vy: 0 }; invuln = 2.2; }
+  // a held drag would snap the camera right back to where it died, so the
+  // recenter also ends the drag; touching again re-anchors from center
+  function resetCam() { cam = { x: 0, y: 0, vx: 0, vy: 0 }; invuln = 2.2; dragFrom = null; }
+  // the banner text is baked here, not per frame in the render loop
+  function announceWave() {
+    bannerT = 1.2;
+    bannerTxt = ('WAVE ' + level).split('').join(' ');
+    sfx.wave();
+  }
   function startRun() {
     mode = 'playing'; score = 0; lives = 3; level = 1;
     rocks = spawnWave(1, rng); bullets = []; hunters = []; pickups = [];
     keys = {}; spawned.length = 0; rings.length = 0; pops.length = 0; debN = 0;
     chain = 0; chainT = 0; shieldUp = false; rapidT = 0; tripleT = 0;
     shake = 0; interT = 0; runT = 0;
-    bannerT = 1.2;
-    sfx.wave();
+    announceWave();
     resetCam();
     ensureLoop();
   }
@@ -622,7 +639,7 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
     if (bullets.length >= (rapidT > 0 ? 7 : 4)) return;
     fireCool = rapidT > 0 ? 0.11 : 0.2;
     muzzleT = 0.06;
-    var spread = tripleT > 0 ? [-170, 0, 170] : [0];
+    var spread = tripleT > 0 ? SPREAD3 : SPREAD1;
     for (var i = 0; i < spread.length; i++) {
       bullets.push({ x: cam.x, y: cam.y, z: Z_NEAR + 10, vx: spread[i], vy: 0, vz: 950 });
     }
@@ -631,14 +648,21 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
 
   function toggleSound() {
     soundOn = !soundOn;
-    if (!soundOn && ac && ac.state === 'running') ac.suspend().catch(function () { /* already gone */ });
+    if (!soundOn && ac) ac.suspend().catch(function () { /* already gone */ });
     if (soundOn) blip(660, 660, 0.05, 'square', 0.3);
     if (!raf) render();
   }
 
   /* input */
+  // the shell keeps its prompt editable while the game is mounted, so keys
+  // typed into an editable element are the prompt's, not the game's ("home"
+  // must not mute on the m, fire on a space, or restart on enter)
+  function typingTarget(e: KeyboardEvent): boolean {
+    var el = e.target as HTMLElement | null;
+    return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+  }
   function onKeyDown(e: KeyboardEvent) {
-    if (performance.now() < ignoreUntil) return;
+    if (performance.now() < ignoreUntil || typingTarget(e)) return;
     keys[e.key] = true;
     if (e.key === 'Enter' && mode !== 'playing') startRun();
     if (e.key === ' ') fire();
@@ -646,9 +670,14 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
   }
   function onKeyUp(e: KeyboardEvent) { keys[e.key] = false; }
   function onBlurLike() { keys = {}; dragFrom = null; }
+  // the speaker glyph's box, in canvas CSS pixels: drawSpeaker renders it,
+  // inSpeaker pads it out to a finger-sized corner target, and the lives
+  // row anchors beside it; one home for all three
+  function speakerBox() { return { x: W - 34, y: 14, w: 20, h: 12 }; }
   function inSpeaker(e: PointerEvent): boolean {
+    var b = speakerBox();
     var r = canvas.getBoundingClientRect();
-    return e.clientX > r.right - 50 && e.clientY < r.top + 40;
+    return e.clientX > r.left + b.x - 16 && e.clientY < r.top + b.y + b.h + 14;
   }
   function onPointerDown(e: PointerEvent) {
     if (performance.now() < ignoreUntil) return;
@@ -684,24 +713,32 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
     window.removeEventListener('pointerup', onPointerUp);
     themeObserver.disconnect();
     ro.disconnect();
-    if (ac && ac.state === 'running') ac.suspend().catch(function () { /* already gone */ });
+    // unconditional: a resume() issued by a last-frame sfx can still be in
+    // flight, and suspending an already-suspended context is a no-op
+    if (ac) ac.suspend().catch(function () { /* already gone */ });
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
   };
 
   /* simulation */
-  function killRock(rk: Rock) {
+  // shared kill bookkeeping (the chain window, the multiplied score, the
+  // score pop, and the pickup roll) so rock and hunter kills cannot drift
+  function awardKill(x: number, y: number, z: number, basePts: number, col: string, dropP: number) {
     chain++; chainT = 2;
-    var pts = SCORES[rk.size] * comboMult(chain);
+    var pts = basePts * comboMult(chain);
     score += pts;
+    pop(x, y, z, '+' + pts, col);
+    if (rng() < dropP) pickups.push(spawnPickup(x, y, z, Math.floor(rng() * 3), rng));
+  }
+
+  function killRock(rk: Rock) {
     var S = SIZES[rk.size];
     var col = pal.sizeBright[rk.size];   // the explosion inherits the victim's hue
-    pop(rk.x, rk.y, rk.z, '+' + pts, col);
+    awardKill(rk.x, rk.y, rk.z, SCORES[rk.size], col, 0.08);
     burst(rk.x, rk.y, rk.z, 14 - rk.size * 3, 150 + (2 - rk.size) * 40, col);
     ring(rk.x, rk.y, rk.z, S * 0.35, S * 2.4, 0.35, col);
     shake = Math.min(1, shake + 0.18 + (2 - rk.size) * 0.08);
     sfx.boom(rk.size);
-    if (rng() < 0.08) pickups.push(spawnPickup(rk.x, rk.y, rk.z, Math.floor(rng() * 3), rng));
     spawned.push.apply(spawned, splitRock(rk, rng));
   }
 
@@ -732,15 +769,25 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
     else resetCam();
   }
 
+  // one advance/recycle rule for both modes; recycled stars rescatter so
+  // the field's pattern never freezes
+  function advanceStars(speed: number, dt: number) {
+    for (var i = 0; i < stars.length; i++) {
+      var st = stars[i];
+      st.z -= speed * dt;
+      if (st.z < 8) {
+        st.z = Z_FAR;
+        st.x = (rng() * 2 - 1) * X_BOUND * 1.6;
+        st.y = (rng() * 2 - 1) * Y_BOUND * 1.6;
+      }
+    }
+  }
+
   function step(dt: number) {
     if (mode !== 'playing') {
       attractT += dt;
       gridPhase -= 30 * dt;
-      for (var si = 0; si < stars.length; si++) {
-        var ss = stars[si];
-        ss.z -= 30 * dt;
-        if (ss.z < 8) ss.z = Z_FAR;
-      }
+      advanceStars(30, dt);
       return;
     }
     runT += dt;
@@ -769,19 +816,11 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
     // stars and grid; 6x during the inter-wave jump
     var warp = interT > 0 ? 6 : 1;
     gridPhase -= 220 * warp * dt;
-    for (var i = 0; i < stars.length; i++) {
-      var st = stars[i];
-      st.z -= 220 * warp * dt;
-      if (st.z < 8) {
-        st.z = Z_FAR;
-        st.x = (rng() * 2 - 1) * X_BOUND * 1.6;
-        st.y = (rng() * 2 - 1) * Y_BOUND * 1.6;
-      }
-    }
+    advanceStars(220 * warp, dt);
 
     // the per-entity passes below compact in place: no per-frame arrays
     var w = 0;
-    for (i = 0; i < bullets.length; i++) {
+    for (var i = 0; i < bullets.length; i++) {
       var bl = bullets[i];
       bl.x += bl.vx * dt; bl.y += bl.vy * dt; bl.z += bl.vz * dt;
       if (bl.z < Z_FAR) bullets[w++] = bl;
@@ -802,8 +841,11 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
         }
       }
       if (!gone && rk.z <= Z_NEAR) {
-        if (invuln <= 0 && hitShip(rk, cam.x, cam.y)) damage();
-        else if (grazed(rk, cam.x, cam.y)) {
+        // a direct hit never pays the graze bonus: during invulnerability a
+        // dead-center pass is a swallowed collision, not a near miss
+        var direct = hitShip(rk, cam.x, cam.y);
+        if (invuln <= 0 && direct) damage();
+        else if (!direct && grazed(rk, cam.x, cam.y)) {
           score += 5;
           pop(rk.x, rk.y, Z_NEAR + 60, '+5', pal.fg);
           sfx.graze();
@@ -823,15 +865,11 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
       for (j = 0; j < bullets.length; j++) {
         if (hitHunter(h, bullets[j])) {
           bullets.splice(j, 1);
-          chain++; chainT = 2;
-          var pts = 150 * comboMult(chain);
-          score += pts;
-          pop(h.x, h.y, h.z, '+' + pts, pal.hostileHot);
+          awardKill(h.x, h.y, h.z, 150, pal.hostileHot, 0.3);
           burst(h.x, h.y, h.z, 16, 260, pal.hostileHot);
           ring(h.x, h.y, h.z, HUNTER_R * 0.5, HUNTER_R * 4, 0.4, pal.hostileHot);
           shake = Math.min(1, shake + 0.45);
           sfx.hunterDown();
-          if (rng() < 0.3) pickups.push(spawnPickup(h.x, h.y, h.z, Math.floor(rng() * 3), rng));
           down = true;
           break;
         }
@@ -849,9 +887,12 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
     for (i = 0; i < pickups.length; i++) {
       var pk = pickups[i];
       pk.z += pk.vz * dt; pk.ax += pk.sx * dt; pk.ay += pk.sy * dt;
-      if (pk.z <= Z_NEAR + 40) {
-        if (collectPickup(pk, cam.x, cam.y)) applyPickup(pk.kind);
-      } else {
+      // the collection window spans the last stretch before the camera, so a
+      // late steer still catches the crate; uncollected ones fly past like
+      // rocks do instead of vanishing mid-air
+      if (pk.z <= Z_NEAR + 40 && collectPickup(pk, cam.x, cam.y)) {
+        applyPickup(pk.kind);
+      } else if (pk.z > Z_NEAR) {
         pickups[w++] = pk;
       }
     }
@@ -887,10 +928,9 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
       if (interT <= 0) {
         level++;
         rocks = spawnWave(level, rng);
-        var nh = level >= 2 ? Math.min(1 + Math.floor((level - 2) / 3), 3) : 0;
+        var nh = huntersForWave(level);
         for (i = 0; i < nh; i++) hunters.push(spawnHunter(level, rng));
-        bannerT = 1.2;
-        sfx.wave();
+        announceWave();
       }
     } else if (rocks.length === 0 && hunters.length === 0) {
       interT = 1.3;
@@ -898,9 +938,11 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
   }
 
   /* ================= rendering: the phosphor pipeline =================
-     renderScene draws the world into the persistence buffer; compose fades
-     nothing (that already happened), blits bloom + crisp onto the visible
-     canvas, then vignette and scanlines; renderHud draws crisp chrome. */
+     renderScene draws the world crisp onto the visible canvas; glowPersist
+     downsamples that frame into the fading persistence buffer and blends it
+     back over the crisp lines; render() then lays the vignette overlay and
+     the opaque background under everything, and renderHud draws crisp
+     chrome on top. */
 
   // rotate each vertex once, keeping both the rotated local position (for
   // face normals) and its projection (for paths), in the caches declared up
@@ -987,20 +1029,18 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
      the result back over the crisp lines. Trails and bloom stay soft and
      dim; the current frame's beam never ghosts. */
   function glowPersist() {
-    var qw = bQuartCv.width, qh = bQuartCv.height;
-    bQuart.clearRect(0, 0, qw, qh);
-    bQuart.drawImage(canvas, 0, 0, qw, qh);
+    var qw = persistCv.width, qh = persistCv.height;
     if (reduced) {
-      // bloom without trails
+      // bloom without trails; drawImage downsamples in the one call
       pctx.clearRect(0, 0, qw, qh);
-      pctx.drawImage(bQuartCv, 0, 0);
+      pctx.drawImage(canvas, 0, 0, qw, qh);
     } else {
       pctx.globalCompositeOperation = 'destination-out';
       pctx.fillStyle = 'rgba(0,0,0,0.5)';
       pctx.fillRect(0, 0, qw, qh);
       pctx.globalCompositeOperation = 'lighter';
       pctx.globalAlpha = 0.5;
-      pctx.drawImage(bQuartCv, 0, 0);
+      pctx.drawImage(canvas, 0, 0, qw, qh);
       pctx.globalAlpha = 1;
       pctx.globalCompositeOperation = 'source-over';
     }
@@ -1139,9 +1179,9 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
     }
 
     // pickups: pulsing glass crates, each kind in its own hue
+    var pulse = 0.55 + 0.45 * Math.sin(runT * 7);
     for (i = 0; i < pickups.length; i++) {
       var pk = pickups[i];
-      var pulse = 0.55 + 0.45 * Math.sin(runT * 7);
       var kcol = pal.kindCols[pk.kind];
       shapeTransform(pk.x, pk.y, pk.z, pk.ax, pk.ay, 26, OVERTS);
       shapeFaces(cx, cy, pk.x, pk.y, pk.z, OFACES, kcol, 0.14 * pulse);
@@ -1273,7 +1313,7 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
       ctx.font = 'bold 22px ' + pal.font;
       ctx.fillStyle = pal.waveCols[level % 8];
       ctx.globalAlpha = Math.min(1, bannerT / 0.35);
-      ctx.fillText(('WAVE ' + level).split('').join(' '), cx, cy - Math.min(W, H) * 0.22);
+      ctx.fillText(bannerTxt, cx, cy - Math.min(W, H) * 0.22);
       ctx.globalAlpha = 1;
       ctx.textAlign = 'left';
       ctx.font = '13px ' + pal.font;
@@ -1322,14 +1362,15 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
   }
 
   function clearFrame() {
-    out.save();
+    // explicit transforms instead of save/restore: no per-frame traffic on
+    // the full context state stack when only the transform changes
     out.setTransform(1, 0, 0, 1, 0, 0);
     out.clearRect(0, 0, canvas.width, canvas.height);
-    out.restore();
+    out.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   function drawSpeaker() {
-    var x = W - 34, y = 14;
+    var b = speakerBox(), x = b.x, y = b.y;
     out.strokeStyle = pal.dim;
     out.lineWidth = 1.4;
     out.beginPath();
@@ -1374,8 +1415,9 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
       // lives: little ship triangles
       out.strokeStyle = pal.dim;
       out.lineWidth = 1.4;
+      var lifeX = speakerBox().x - 24;   // clear of the speaker glyph
       for (var i = 0; i < lives; i++) {
-        var lx = W - 58 - i * 16;
+        var lx = lifeX - i * 16;
         out.beginPath();
         out.moveTo(lx, 14); out.lineTo(lx + 4, 24); out.lineTo(lx - 4, 24);
         out.closePath();

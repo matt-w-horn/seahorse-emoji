@@ -220,7 +220,9 @@ async function main() {
   await typeCmd('play'); await sleep(900);
   check('game script fetched on demand', netUrls.some((u) => /tui-game\..*\.js/.test(u)));
   check('canvas mounted', (await evalJs('!!document.getElementById("gamecanvas")')) === true);
-  check('game engine started (canvas sized by fit())', (await evalJs('(function(){var c=document.getElementById("gamecanvas");return !!c && c.width>0;})()')) === true);
+  // a fresh canvas defaults to width 300, so compare against what fit()
+  // computes from the parent box; width>0 would pass with fit() never run
+  check('game engine started (canvas sized by fit())', (await evalJs('(function(){var c=document.getElementById("gamecanvas");return !!c && !!c.parentElement && c.width === Math.round(Math.max(60, c.parentElement.clientWidth) * (window.devicePixelRatio || 1));})()')) === true);
   // the prompt must still be editable while the game owns the keyboard: a
   // focused input should NOT have its backspace/typing swallowed.
   await evalJs('var i=document.getElementById("in"); i.value="ab"; i.focus();');
