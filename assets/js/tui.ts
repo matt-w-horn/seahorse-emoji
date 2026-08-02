@@ -63,6 +63,12 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
 
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Touch-first mode: no hover and a coarse pointer means no usable keyboard,
+  // so the CLI is dropped. CSS (html.touch) hides the prompt line; here the
+  // menus stay natively scrollable and the keys chip becomes the back button.
+  var touchUI = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  if (touchUI) document.documentElement.classList.add('touch');
+
   // `plain` view (the `plain` command reloads with ?plain): skip booting the
   // terminal entirely, leaving the server-rendered .prejs content on screen and
   // hiding the prompt/chips via CSS. Keeps a no-terminal reading mode reachable
@@ -228,7 +234,14 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     if (caret) { caretBase = input.offsetLeft; syncCaret(); }   // prompt width changed
   }
 
-  function setKeys(text: string) { keysChip.textContent = text; }
+  // Each view passes its keyboard hint plus a touch variant; a touch label
+  // starting with '‹' styles and behaves as the back button (see the keysChip
+  // click handler).
+  function setKeys(text: string, touchText?: string) {
+    var t = touchUI && touchText !== undefined ? touchText : text;
+    keysChip.textContent = t;
+    keysChip.classList.toggle('tap', touchUI && t.charAt(0) === '‹');
+  }
   function setPage(text: string, cls?: string) { pageChip.textContent = text || ''; pageChip.className = 'chip' + (cls ? ' ' + cls : ''); }
   function flash(text: string, cls?: string) { setPage(text, cls || 'acc'); }
   function echo(text: string, cls?: string) { echoEl.textContent = text || ''; echoEl.className = cls === 'err' ? 'err' : ''; }
@@ -398,17 +411,18 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       ].filter(function (it) { return it.label !== 'resume.md' || RESUME; })
     });
     clearScreen();
-    screen.classList.add('lock');
-    setWheel(true);
+    if (!touchUI) { screen.classList.add('lock'); setWheel(true); }
     setPath([{ text: '~' }]);
-    setKeys('arrows or scroll: select · enter: open');
+    setKeys('arrows or scroll: select · enter: open', 'tap an item to open');
     setPage('');
     screen.appendChild(artEl(FIG, 'matthorn.io'));
     screen.appendChild(rowEl([{ text: SUBTITLE + '  ', cls: 'dim' }, { text: STRIPE, cls: 'acc' }]));
     screen.appendChild(gapEl());
     paintMenuItems();
     screen.appendChild(gapEl());
-    screen.appendChild(rowEl('Arrows and enter, tap anything underlined, or type a command.', 'dim'));
+    screen.appendChild(rowEl(touchUI
+      ? 'Tap anything underlined to open it.'
+      : 'Arrows and enter, tap anything underlined, or type a command.', 'dim'));
     screen.appendChild(gapEl());
     screen.appendChild(rowEl(DATA!.copyright, 'dim'));
   }
@@ -422,23 +436,24 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       }).concat([{ label: '..', note: 'back', run: goBack }])
     });
     clearScreen();
-    screen.classList.add('lock');
-    setWheel(true);
+    if (!touchUI) { screen.classList.add('lock'); setWheel(true); }
     setPath([{ text: '~', go: goHome }, { text: 'posts' }]);
-    setKeys('arrows or scroll: select · enter: open · esc: back');
+    setKeys('arrows or scroll: select · enter: open · esc: back', '‹ back');
     setPage('');
     screen.appendChild(rowEl('~/posts', 't-title'));
     screen.appendChild(gapEl());
     paintMenuItems();
     screen.appendChild(gapEl());
-    screen.appendChild(rowEl('Posts open in a scrollable reader; esc brings you back.', 'dim'));
+    screen.appendChild(rowEl(touchUI
+      ? 'Posts open in a scrollable reader; ‹ back (bottom left) returns.'
+      : 'Posts open in a scrollable reader; esc brings you back.', 'dim'));
   }
 
   function paintHelp() {
     view = { name: 'help' }; menu = null;
     clearScreen();
     setPath([{ text: '~', go: goHome }]);
-    setKeys('esc: back');
+    setKeys('esc: back', '‹ back');
     setPage('');
     screen.appendChild(rowEl('commands', 't-title'));
     screen.appendChild(gapEl());
@@ -446,8 +461,12 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       screen.appendChild(rowEl(['  ', { text: name, click: makeRun(name) }, Array(Math.max(1, 12 - name.length)).join(' ') + ' ' + commands[name].desc], 'cmd'));
     });
     screen.appendChild(gapEl());
-    screen.appendChild(rowEl('anywhere: esc goes back, the path above the prompt is tappable.', 'dim'));
-    screen.appendChild(rowEl('while reading: scroll naturally, or space for a screenful.', 'dim'));
+    if (touchUI) {
+      screen.appendChild(rowEl('tap a command above to run it; ‹ back (bottom left) goes back.', 'dim'));
+    } else {
+      screen.appendChild(rowEl('anywhere: esc goes back, the path above the prompt is tappable.', 'dim'));
+      screen.appendChild(rowEl('while reading: scroll naturally, or space for a screenful.', 'dim'));
+    }
     screen.appendChild(rowEl('prefer an ordinary website? every page here is one: try plain.', 'dim'));
   }
 
@@ -455,7 +474,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     view = { name: 'about' }; menu = null;
     clearScreen();
     setPath([{ text: '~', go: goHome }, { text: 'about.txt' }]);
-    setKeys('esc: back');
+    setKeys('esc: back', '‹ back');
     setPage('');
     screen.appendChild(rowEl('about.txt', 't-title'));
     var mount = document.createElement('div');
@@ -468,7 +487,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     view = { name: 'motd' }; menu = null;
     clearScreen();
     setPath([{ text: '~', go: goHome }]);
-    setKeys('esc: back');
+    setKeys('esc: back', '‹ back');
     setPage('');
     screen.appendChild(rowEl(MOTD_INTRO, 'dim'));
     screen.appendChild(artEl(MOTD, 'a sunrise over waves, drawn in block characters'));
@@ -498,9 +517,11 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
   function gameFailed() {
     view = { name: 'game' };   // drop ownsKeys: keyboard returns to the shell
     clearScreen();             // also drops the lock class + wheel handler
-    setKeys('esc: back');
+    setKeys('esc: back', '‹ back');
     setPage('');
-    screen.appendChild(rowEl('the game failed to load; esc goes back', 'err'));
+    screen.appendChild(rowEl(touchUI
+      ? 'the game failed to load; ‹ back (bottom left) returns'
+      : 'the game failed to load; esc goes back', 'err'));
   }
 
   var playSeq = 0;   // per-invocation token: a slow load must not start a superseded engine
@@ -519,7 +540,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     loadGame().then(function (mod) {
       if (token !== playSeq || view.name !== 'game') return;   // superseded or navigated away
       screen.appendChild(canvas);
-      setKeys('arrows steer · space fires · esc: back');
+      setKeys('arrows steer · space fires · esc: back', '‹ back · drag: steer · tap: fire');
       setPage('no coins needed');
       activeGame = mod.start(canvas, {
         reduced: reduced,
@@ -552,9 +573,9 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     var mount = document.createElement('div');
     screen.appendChild(mount);
     loadContent(doc.tpl || ('tpl-' + doc.slug), doc.contentUrl, mount);
-    screen.appendChild(rowEl('(end) · esc goes back', 'dim'));
+    screen.appendChild(rowEl(touchUI ? '(end) · ‹ back (bottom left) returns' : '(end) · esc goes back', 'dim'));
 
-    setKeys('scroll to read · space: a screenful · esc: back');
+    setKeys('scroll to read · space: a screenful · esc: back', '‹ back');
     chipLast = '';
     setPage('');
     updateScrollChip();
@@ -768,16 +789,20 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     else screen.removeEventListener('wheel', onWheel, { passive: false } as EventListenerOptions);
   }
 
-  var touchY: number | null = null;
-  screen.addEventListener('touchstart', function (e) { touchY = e.touches[0].clientY; }, { passive: true });
-  screen.addEventListener('touchend', function (e) {
-    if (!menu) { touchY = null; return; }
-    if (touchY === null) return;
-    var dy = e.changedTouches[0].clientY - touchY;
-    touchY = null;
-    if (dy < -45) moveMenuSel(1);
-    else if (dy > 45) moveMenuSel(-1);
-  }, { passive: true });
+  // swipe-to-select serves locked menus on hybrid (touch + hover) devices; in
+  // touch-first mode menus scroll natively, so a swipe must stay a scroll.
+  if (!touchUI) {
+    var touchY: number | null = null;
+    screen.addEventListener('touchstart', function (e) { touchY = e.touches[0].clientY; }, { passive: true });
+    screen.addEventListener('touchend', function (e) {
+      if (!menu) { touchY = null; return; }
+      if (touchY === null) return;
+      var dy = e.changedTouches[0].clientY - touchY;
+      touchY = null;
+      if (dy < -45) moveMenuSel(1);
+      else if (dy > 45) moveMenuSel(-1);
+    }, { passive: true });
+  }
 
   // mobile: the virtual keyboard overlays the layout viewport, hiding the
   // prompt; size the frame to the VISUAL viewport so the CLI stays on screen
@@ -794,6 +819,15 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
 
   (document.getElementById('promptline') as HTMLElement).addEventListener('click', function () { input.focus(); });
   accChip.addEventListener('click', cycleTheme);
+
+  // touch-first back button: the keys chip, when its label is a '‹ back'
+  // variant (setKeys toggles the .tap class on the same condition).
+  if (touchUI) {
+    keysChip.addEventListener('click', function () {
+      if (view.name === 'boot') { bootSkip(); return; }
+      if ((keysChip.textContent || '').charAt(0) === '‹') goBack();
+    });
+  }
 
   /* ---------- block cursor: a full-width block that tracks the caret ----------
      The native caret is hidden (caret-color:transparent); this overlay block is
@@ -854,7 +888,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     booted = true;
     bootTimers.forEach(clearTimeout);
     render(currentRoute!);   // currentRoute is home (boot only runs for a fresh '/')
-    input.focus();
+    if (!touchUI) input.focus();   // focusing in a tap's context would raise the keyboard
   }
 
   window.addEventListener('popstate', function (e) {
@@ -871,7 +905,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
 
   if (initRoute.name === 'home' && !reduced) {
     clearScreen();   // remove the server-rendered fallback block
-    setKeys('any key skips');
+    setKeys('any key skips', 'tap to skip');
     POST_LINES.forEach(function (l, i) {
       bootTimers.push(setTimeout(function () {
         screen.appendChild(rowEl(l, 'dim'));
@@ -885,6 +919,6 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     screen.addEventListener('click', bootSkip, { once: true });
   } else {
     render(initRoute);   // deep link or reduced-motion: paint straight in, no BIOS
-    input.focus();
+    if (!touchUI) input.focus();
   }
 })();
