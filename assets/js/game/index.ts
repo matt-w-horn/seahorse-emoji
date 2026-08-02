@@ -1,6 +1,11 @@
 // start() wires the pieces together and owns the frame loop and teardown.
 // Everything it touches is replaceable behind an interface; this file is the
 // only place that knows all of them exist.
+//
+// One canvas, one call: teardown loses the WebGL context, and a canvas whose
+// context was lost that way will not hand out another. tui.ts creates a fresh
+// <canvas> on every entry to the game, so this holds; calling start() twice on
+// the same element would not.
 
 import { createSim } from './sim.ts';
 import { mulberry32 } from './rng.ts';

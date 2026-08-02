@@ -567,10 +567,13 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: RendererOpts): G
     post.resize(pw, ph, 1);
   }
 
+  /* Losing the context is the teardown: it reclaims the batch buffers, the
+     five post-processing targets and their textures in one go. It also means
+     this canvas can never host a renderer again, which is fine because tui.ts
+     builds a fresh <canvas> on every entry to the game. */
   function dispose() {
-    post.dispose();
     const ext = gl.getExtension('WEBGL_lose_context');
-    if (ext) ext.loseContext();     // a re-entered game gets a fresh context
+    if (ext) ext.loseContext();
   }
 
   return { fit, handle, setPalette, step, draw, flash: () => flashT, dispose };

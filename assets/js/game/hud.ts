@@ -16,6 +16,7 @@
 // makes innerHTML a throwing sink; createElement and textContent are not.
 
 import { FOCAL, Z_NEAR } from './sim.ts';
+import { project } from './geometry.ts';
 import type { SimState } from './sim.ts';
 import { comboMult } from './sim.ts';
 import type { Palette, SimEvent } from './types.ts';
@@ -162,7 +163,15 @@ export function createHud(mount: HTMLElement, opts: HudOpts): Hud {
       setText(midBest, state.best > 0 ? 'best ' + state.best : '');
     }
 
-    if (setText(sound, opts.isSoundOn() ? '♪' : '♪̸') || themed) sound.style.color = pal.dim;
+    /* The glyph stays ♪ either way and CSS strikes it through when muted.
+       U+266A followed by a combining long solidus renders inconsistently in
+       monospace faces: some drop the stroke, some widen the cell. A class is
+       one thing that always draws. */
+    const muted = !opts.isSoundOn();
+    setText(sound, '♪');
+    sound.classList.toggle('muted', muted);
+    sound.setAttribute('aria-pressed', String(muted));
+    if (themed) sound.style.color = pal.dim;
 
     bannerT = Math.max(0, bannerT - dt);
     banner.style.opacity = bannerT > 0 ? String(Math.min(1, bannerT / 0.35)) : '0';
@@ -170,20 +179,20 @@ export function createHud(mount: HTMLElement, opts: HudOpts): Hud {
     flashEl.style.opacity = flash > 0 ? String(Math.min(0.6, flash)) : '0';
     if (themed) flashEl.style.borderColor = pal.fg;
 
-    // project the pops the same way the scene projects everything else
+    /* Pops are world-anchored, so they go through the same project() the scene
+       geometry does rather than a second copy of the perspective divide. It
+       returns null at or behind the eye, which is the pop's own cull. */
     const cx = w / 2, cy = h / 2;
     let keep = 0;
     for (const p of pops) {
       p.t -= dt;
       if (p.t <= 0) { p.el.remove(); continue; }
       pops[keep++] = p;
-      const rel = p.z;
-      if (rel <= 1) { p.el.style.opacity = '0'; continue; }
-      const s = FOCAL / rel;
+      const at = project(p.x - state.cam.x, p.y - state.cam.y, p.z, FOCAL);
+      if (!at) { p.el.style.opacity = '0'; continue; }
       const f = p.t / p.life;
       p.el.style.transform = 'translate(-50%,-50%) translate(' +
-        (cx + (p.x - state.cam.x) * s) + 'px,' +
-        (cy + (p.y - state.cam.y) * s - (1 - f) * 30) + 'px)';
+        (cx + at.x) + 'px,' + (cy + at.y - (1 - f) * 30) + 'px)';
       p.el.style.opacity = String(Math.min(1, f * 2));
     }
     pops.length = keep;

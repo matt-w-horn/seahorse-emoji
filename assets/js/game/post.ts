@@ -127,7 +127,6 @@ export interface Post {
   sceneTarget: RenderTarget;
   resize: (w: number, h: number, dpr: number) => void;
   run: (bg: [number, number, number], light: boolean, time: number, warp: number, dt: number) => void;
-  dispose: () => void;
 }
 
 export function createPost(renderer: Renderer, opts: PostOpts): Post {
@@ -210,17 +209,13 @@ export function createPost(renderer: Renderer, opts: PostOpts): Post {
     draw(compositePass, null);
   }
 
-  function dispose() {
-    // Frees the framebuffer objects. The textures and depth renderbuffers
-    // behind them are reclaimed by the context loss that render.ts triggers
-    // immediately after, which is what actually returns the memory.
-    for (const t of [scene, bright, blur, trailA, trailB]) {
-      gl.deleteFramebuffer(t.buffer);
-    }
-  }
-
+  /* No dispose(). These five targets own real GPU memory, but render.ts loses
+     the whole context on teardown, which reclaims the framebuffers, their
+     textures and the depth renderbuffer together. A loop deleting framebuffers
+     here freed a strict subset of that, immediately beforehand, and reads as
+     though it were the thing doing the reclaiming. */
   return {
     get sceneTarget() { return scene; },
-    resize, run, dispose,
+    resize, run,
   } as Post;
 }

@@ -553,10 +553,19 @@ html.touch #frame:has(#gamecanvas) { padding-bottom: 0; }
 .ghud-bl { position: absolute; bottom: 0.6rem; left: 1rem; color: var(--dim); }
 .ghud-mult { margin-left: 0.5rem; }
 .ghud-lives { color: var(--dim); letter-spacing: 0.15em; }
+/* The canvas version of this control had a deliberately finger-sized hit box
+   padded out around a small glyph. A 0.82rem note in a button is about 20x24,
+   well under the 44px a thumb needs, so the target is widened here rather than
+   the glyph. Muting strikes the note through: a combining solidus on U+266A
+   renders inconsistently across monospace faces. */
 .ghud-sound {
   pointer-events: auto; background: none; border: 0; cursor: pointer;
-  font: inherit; padding: 0.2rem 0.4rem; margin: -0.2rem -0.4rem;
+  font: inherit; line-height: 1;
+  min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin: -0.6rem -0.5rem;
 }
+.ghud-sound.muted { text-decoration: line-through; }
 /* The attract emblem is drawn at the centre of the scene and projects to a
    fixed pixel size (the projection is screen_px = world * FOCAL / z, so it does
    not scale with the viewport). The copy sits below it, hence the offset;

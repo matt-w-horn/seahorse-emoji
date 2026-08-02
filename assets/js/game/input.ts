@@ -27,7 +27,13 @@ function typingTarget(e: KeyboardEvent): boolean {
 
 export function createInput(canvas: HTMLCanvasElement, opts: InputOpts): Input {
   const keys: { [k: string]: boolean } = {};
-  let startLatch = false;               // consumed by the next read()
+  /* Latches, not just held state. A frame samples input once, so a press and
+     release inside one frame is invisible to polling: the 2D renderer called
+     fire() straight from the keydown handler and never dropped a shot, and a
+     quick tap on a loaded phone (where frames run long) is exactly when it
+     matters. Each latch survives until the next read() consumes it. */
+  let startLatch = false;
+  let fireLatch = false;
   let drag: { x: number; y: number } | null = null;
   let dragFrom: { px: number; py: number; cx: number; cy: number } | null = null;
   const ignoreUntil = performance.now() + 250;   // swallow the key or tap that launched the game
@@ -36,12 +42,14 @@ export function createInput(canvas: HTMLCanvasElement, opts: InputOpts): Input {
     if (performance.now() < ignoreUntil || typingTarget(e)) return;
     keys[e.key] = true;
     if (e.key === 'Enter' && !opts.isPlaying()) startLatch = true;
+    if (e.key === ' ') fireLatch = true;
     if (e.key === 'm' || e.key === 'M') opts.onToggleSound();
   }
   function onKeyUp(e: KeyboardEvent) { keys[e.key] = false; }
   function onBlurLike() {
     for (const k in keys) keys[k] = false;
     drag = null; dragFrom = null;
+    fireLatch = false; startLatch = false;
   }
 
   // The mute control is a real button in the HUD layer above the canvas, so it
@@ -54,6 +62,7 @@ export function createInput(canvas: HTMLCanvasElement, opts: InputOpts): Input {
     const at = opts.camPos();
     dragFrom = { px: e.clientX, py: e.clientY, cx: at.x, cy: at.y };
     drag = { x: at.x, y: at.y };
+    fireLatch = true;                                       // a tap is a shot, however brief
   }
   function onPointerMove(e: PointerEvent) {
     if (!dragFrom || !opts.isPlaying()) return;
@@ -79,11 +88,12 @@ export function createInput(canvas: HTMLCanvasElement, opts: InputOpts): Input {
     const out: Intent = {
       left: !!keys.ArrowLeft, right: !!keys.ArrowRight,
       up: !!keys.ArrowUp, down: !!keys.ArrowDown,
-      fire: !!keys[' '],
+      fire: !!keys[' '] || fireLatch,
       start: startLatch,
       drag: drag,
     };
     startLatch = false;
+    fireLatch = false;
     return out;
   }
 

@@ -93,13 +93,16 @@ a deploy.
       scanlines, edge chromatic aberration). Trails decay per second, not per frame.
     - `hud.ts` — score, wave, lives and attract copy as **DOM** styled by `tui.css`. Never
       `innerHTML`: the CSP's trusted-types policy makes it a throwing sink.
+    - `types.ts` — the entity records, the `Intent` the sim reads and the `SimEvent`s it emits.
     - `audio.ts` / `input.ts` / `index.ts` — synthesized sfx, DOM events collapsed to one
       `Intent` per frame, and the wiring plus the frame loop.
   - `tui.ts` — the main terminal UI (DOM rendering, command dispatch, nav stack, views).
   - Modules are TypeScript ES modules: Hugo's asset pipeline builds them for the browser,
     and the tests import the pure cores directly under Node (`--experimental-strip-types`).
 - `tests/` — `tui-parse.test.ts`, `game-sim.test.ts`, `game-geometry.test.ts`,
-  `game-palette.test.ts`; pure cores only, no DOM/jsdom. `game-sim.test.ts` carries a
+  `game-palette.test.ts`, `game-input.test.ts`. Pure cores, no jsdom; `game-input` is the
+  one exception and stubs three event targets and a clock by hand, because the latch
+  behaviour there is exactly the kind that looks right while dropping a keypress. `game-sim.test.ts` carries a
   **recorded seed-42 replay**: an autopilot flies at the nearest rock for 30 seconds and the
   final score, event tally and a position checksum are asserted against recorded values. It
   is a tripwire, not a spec — a deliberate rules change moves it, and re-recording belongs in
