@@ -36,8 +36,14 @@ required; CI pins `0.163.3`.
 ## CI/CD
 
 `.github/workflows/ci.yml` gates PRs (and re-checks pushes to `main`): `npm ci` →
-typecheck → unit tests → `hugo --minify` → the browser e2e three ways against the built
-site (desktop, `MOBILE=1` phone viewport, `TOUCH=1` coarse-pointer touch mode).
+typecheck → unit tests → `hugo --minify` → a gzip size budget on the game chunk → the
+browser e2e three ways against the built site (desktop, `MOBILE=1` phone viewport,
+`TOUCH=1` coarse-pointer touch mode). The size budget exists because the game bundles
+`ogl`; failing there is meant to make a dependency bump a decision rather than a surprise.
+
+**`npm ci` must run before `hugo --minify`**: Hugo's esbuild resolves the bare `ogl`
+import from `node_modules`, so a build without it fails rather than silently omitting
+the game.
 `.github/workflows/hugo.yml` runs on push to `main`: install Hugo extended 0.163.3 →
 `npm ci` → `npm run typecheck` → `npm test` → `hugo --minify` → deploy to GitHub Pages. There is no lint
 step. `baseURL` comes from `hugo.toml` (`https://matthorn.io/`), **not** Pages metadata —
@@ -62,21 +68,46 @@ a deploy.
   - `tui-parse.ts` — pure path/command resolution (`segments`/`normalize`/`resolve`/
     `matchPost`/`completions`), no DOM. Paths resolved by a **segment stack** (split on `/`,
     drop `.`/empty, `~` re-anchors, `..` pops), not regex.
-  - `tui-game.ts` — 3D asteroids in a vector-monitor style: an offscreen persistence
-    buffer composited with additive bloom, back-face-culled glass solids, and a hue family
-    derived from the live theme (staggered waves, a homing hunter, fly-through power-ups,
-    kill-chain scoring, synthesized WebAudio sfx — nothing fetched, CSP-clean). The math
-    core (the `core` export: geometry, projection, spawning, collision, color) is DOM-free
-    and tested, while `start` wires it to a canvas.
+  - `tui-game.ts` — a two-line barrel. Hugo builds **this path** into the game chunk and
+    `tests/e2e/console.e2e.mjs` matches the built URL, so the filename is load-bearing.
+  - `game/` — 3D asteroids in a vector-monitor style, on [ogl](https://github.com/oframe/ogl)
+    (Unlicense, ~17 KB gzip of the 26.8 KB chunk). Split by **authority**: state that changes
+    what the game *does* is in `sim.ts`, state that changes what it *looks like* belongs to
+    the renderer, so a rendering bug cannot cost a life.
+    - `sim.ts` — the rules and the state machine. No DOM, no ogl, seeded rng. `step()` takes
+      an `Intent`; what happened comes back from `drain()` as events. Fully testable.
+    - `geometry.ts` / `palette.ts` / `rng.ts` — pure and tested. The palette derives the whole
+      colour family from four CSS custom properties, so the theme switcher restyles the game.
+    - `render.ts` — the scene. Everything is light on black: three dynamic batches (triangles,
+      lines, points) blending **additively**, which is why draw order does not matter.
+    - `post.ts` — bright-pass, separable blur, then the CRT composite (barrel, vignette,
+      scanlines, edge chromatic aberration). Trails decay per second, not per frame.
+    - `hud.ts` — score, wave, lives and attract copy as **DOM** styled by `tui.css`. Never
+      `innerHTML`: the CSP's trusted-types policy makes it a throwing sink.
+    - `audio.ts` / `input.ts` / `index.ts` — synthesized sfx, DOM events collapsed to one
+      `Intent` per frame, and the wiring plus the frame loop.
   - `tui.ts` — the main terminal UI (DOM rendering, command dispatch, nav stack, views).
   - Modules are TypeScript ES modules: Hugo's asset pipeline builds them for the browser,
     and the tests import the pure cores directly under Node (`--experimental-strip-types`).
-- `tests/` — `tui-parse.test.ts`, `tui-game.test.ts`; test the pure cores only (no DOM/jsdom).
+- `tests/` — `tui-parse.test.ts`, `game-sim.test.ts`, `game-geometry.test.ts`,
+  `game-palette.test.ts`; pure cores only, no DOM/jsdom. `game-sim.test.ts` carries a
+  **recorded seed-42 replay**: an autopilot flies at the nearest rock for 30 seconds and the
+  final score, event tally and a position checksum are asserted against recorded values. It
+  is a tripwire, not a spec — a deliberate rules change moves it, and re-recording belongs in
+  the same commit. Two earlier versions of it caught nothing (a seed compared against itself
+  survives any change applied to both runs; a scripted sweep killed one rock in 30 seconds).
 - `static/` — `resume.pdf`, `og-image.png`, `favicon.svg`, CSS palette/heading files.
 - `scripts/` — the resume-PDF build helper.
 
 ## Conventions & gotchas
 
+- **The game needs WebGL, and headless Chrome does not give it away.** `--disable-gpu`
+  leaves no WebGL at all unless `--enable-unsafe-swiftshader` is also passed, which
+  `tests/e2e/console.e2e.mjs` now does. Without it the game fails to start, the shell shows
+  its error state, and every assertion that only checks for the *absence* of errors still
+  passes. The e2e therefore asserts positively that a context exists and that pressing enter
+  advances the simulation. When WebGL is genuinely unavailable in a real browser, `start()`
+  throws and `tui.ts`'s existing `gameFailed()` path shows "the game failed to load".
 - **Strict CSP** lives in `layouts/partials/extended_head.html`:
   `default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline';
   img-src 'self' https://raw.githubusercontent.com/matt-w-horn/; connect-src 'self';

@@ -37,6 +37,20 @@ jobs:
           sudo dpkg -i "${RUNNER_TEMP}/hugo.deb"
       - name: Build site
         run: hugo --minify
+      - name: Game chunk size budget
+        # The game bundles ogl, so this is the one place a dependency bump can
+        # quietly cost visitors bandwidth. 26.8 KB gzip at the time of writing;
+        # the ceiling leaves room to grow but not to slip a second renderer in.
+        # Raising it is a decision, which is the point of failing here.
+        run: |
+          LIMIT=45000
+          FILE=$(ls public/js/tui-game.*.js)
+          SIZE=$(gzip -9 -c "$FILE" | wc -c)
+          echo "game chunk: $SIZE bytes gzip (limit $LIMIT)"
+          if [ "$SIZE" -gt "$LIMIT" ]; then
+            echo "::error::game chunk is $SIZE bytes gzip, over the $LIMIT budget"
+            exit 1
+          fi
       - name: End-to-end (headless Chrome over CDP)
         run: |
           # Serve the built site statically (production-like: /foo/index.html
