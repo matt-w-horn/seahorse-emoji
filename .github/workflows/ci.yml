@@ -45,3 +45,4 @@ jobs:
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8080/ >/dev/null && break; sleep 1; done
           BASE_URL=http://127.0.0.1:8080 node tests/e2e/console.e2e.mjs
           MOBILE=1 BASE_URL=http://127.0.0.1:8080 node tests/e2e/console.e2e.mjs
+          TOUCH=1 BASE_URL=http://127.0.0.1:8080 node tests/e2e/console.e2e.mjs
