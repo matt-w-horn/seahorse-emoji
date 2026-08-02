@@ -104,10 +104,10 @@ Opus 5 does the refereeing; on this job it looked as capable as Fable 5. Fable 5
 orchestrates the run and applies fixes as verdicts come in.
 
 The first sweep is the expensive part. A referee runs under a dollar a pair, and
-orchestration costs several times that, so call it $4 or $5 a pair all in. The
-700-odd pairs in my own library came to a few thousand dollars. Mathlib has
-about 74,000 docstrings, which puts a first sweep there in six figures. That is
-why I run this against a library I wrote.
+orchestration costs several times that, so call it $0.25 a pair all in. The
+700-odd pairs in my own library came to about a hundred dollars. Mathlib has
+about 74,000 docstrings, which puts a first sweep there at a much higher figure.
+That is why I run this against a library I wrote.
 
 After the first sweep it's cheap, because a verdict only goes stale when one of
 its inputs moves. Each row is keyed on three hashes: the printed statement, the
