@@ -263,6 +263,25 @@ test('damage: the shield eats one hit, then lives go, then the run ends', () => 
   assert.ok(last.some((e) => e.kind === 'gameOver'), 'the last life ends the run');
 });
 
+test('the last life is only lost once, however many rocks arrive together', () => {
+  const sim = createSim(mulberry32(1));
+  sim.step(1 / 60, intent({ start: true }));
+  sim.drain();
+  sim.state.lives = 1;
+  sim.state.invuln = 0;
+  // three rocks on the camera in the same step. A survivable hit is protected
+  // from the next by the respawn invulnerability; the fatal one has no respawn.
+  const at = (x: number) => ({ x, y: 0, z: Z_NEAR, vx: 0, vy: 0, vz: -1, ax: 0, ay: 0, sx: 0, sy: 0, size: 0 });
+  sim.state.rocks = [at(0), at(5), at(-5)];
+  sim.step(1 / 60, IDLE);
+
+  const kinds = sim.drain().map((e) => e.kind);
+  assert.equal(kinds.filter((k) => k === 'lifeLost').length, 1, 'one death, not one per rock');
+  assert.equal(kinds.filter((k) => k === 'gameOver').length, 1);
+  assert.equal(sim.state.lives, 0, 'lives never go negative');
+  assert.equal(sim.state.mode, 'over');
+});
+
 test('invulnerability swallows a direct hit and pays no graze bonus', () => {
   const sim = createSim(mulberry32(13));
   sim.step(1 / 60, intent({ start: true }));
@@ -394,8 +413,8 @@ test('respawn: losing a life grants 2.2 seconds of invulnerability', () => {
 
    The autopilot matters as much as the recorded numbers. A scripted sweep flew
    around killing one rock in thirty seconds, which exercised almost nothing;
-   flying at the nearest rock kills about a hundred and runs the splits, the
-   pickups, the shield and the death path. A probe that does not touch the code
+   flying at the nearest rock kills 62, takes all three lives, and runs the
+   splits, the pickups, the shield and the death path. A probe that does not touch the code
    cannot regress on it.
 
    These numbers are a tripwire, not a specification. A deliberate rules change

@@ -1,6 +1,7 @@
 // The game's whole color family is derived from four CSS custom properties, so
 // switching the site theme restyles the game with no work. The derivation is
-// pure and tested; only readPalette touches the DOM.
+// pure and tested; readPalette and watchTheme are the only parts that touch
+// the DOM.
 
 import type { RGB, Palette } from './types.ts';
 
@@ -69,7 +70,7 @@ const KIND_HUES = [90, -60, -120];    // shield / rapid / triple
 
 export interface PaletteSource {
   fg: string; bg: string; accent: string; dim: string; font: string;
-  bgC: RGB; acC: RGB; dimC: RGB;
+  bgC: RGB; fgC: RGB; acC: RGB; dimC: RGB;
 }
 
 /* Every hue is a rotation of the theme accent, so the whole family restyles
@@ -99,6 +100,7 @@ export function derivePalette(src: PaletteSource): Palette {
 
   return {
     bg: src.bg, fg: src.fg, accent: src.accent, dim: src.dim, font: src.font,
+    bgC: src.bgC, fgC: src.fgC, accentC: src.acC, dimC: src.dimC,
     light: light,
     acBright: rgbToHex(acB),
     hostile: rgbToHex(hostileC),
@@ -109,15 +111,26 @@ export function derivePalette(src: PaletteSource): Palette {
 }
 
 /* The canvas context is the CSS color parser: assigning to fillStyle and
-   reading it back normalizes any color notation the theme might use. */
+   reading it back normalizes any color notation the theme might use.
+   `--dim` is a color-mix(), and Chrome normalizes those to color(srgb r g b)
+   with 0..1 components rather than to rgb() or a hex, so that form has to be
+   handled or every dim-coloured thing silently falls back to mid grey. */
 function cssToRgb(ctx: CanvasRenderingContext2D, c: string): RGB {
   ctx.fillStyle = '#808080';
   ctx.fillStyle = c;
   const s = String(ctx.fillStyle);
   if (s.charAt(0) === '#') return hexToRgb(s);
+  const srgb = /color\(srgb\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)/.exec(s);
+  if (srgb) {
+    return [
+      Math.max(0, Math.min(255, Math.round(parseFloat(srgb[1]) * 255))),
+      Math.max(0, Math.min(255, Math.round(parseFloat(srgb[2]) * 255))),
+      Math.max(0, Math.min(255, Math.round(parseFloat(srgb[3]) * 255))),
+    ];
+  }
   const m = /rgba?\(([^)]+)\)/.exec(s);
   if (m) {
-    const parts = m[1].split(',');
+    const parts = m[1].split(/[,\s/]+/).filter(Boolean);
     return [Math.round(parseFloat(parts[0])), Math.round(parseFloat(parts[1])), Math.round(parseFloat(parts[2]))];
   }
   return [128, 128, 128];
@@ -132,7 +145,7 @@ export function readPalette(ctx: CanvasRenderingContext2D): Palette {
   return derivePalette({
     fg: fg, bg: bg, accent: accent, dim: dim,
     font: getComputedStyle(document.body).fontFamily,
-    bgC: cssToRgb(ctx, bg), acC: cssToRgb(ctx, accent), dimC: cssToRgb(ctx, dim),
+    bgC: cssToRgb(ctx, bg), fgC: cssToRgb(ctx, fg), acC: cssToRgb(ctx, accent), dimC: cssToRgb(ctx, dim),
   });
 }
 

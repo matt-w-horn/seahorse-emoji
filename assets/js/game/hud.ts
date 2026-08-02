@@ -4,8 +4,9 @@
 // put chrome in the DOM and keep only world-space things in the scene, so that
 // is what this does. Everything here inherits the terminal's font and theme
 // custom properties for nothing, stays crisp at any device pixel ratio, and is
-// real selectable text. The 2D renderer spent about 120 lines on fillText and
-// re-measured the score string every frame to place the multiplier.
+// real selectable text. It replaces about 85 lines of canvas chrome drawing in
+// the 2D renderer, including a speaker glyph built from paths and a hit-tested
+// box to catch taps on it.
 //
 // Score pops are the exception and stay world-anchored: they mark where a kill
 // happened, so they are projected each frame rather than pinned to a corner.

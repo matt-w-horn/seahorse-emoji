@@ -1,6 +1,7 @@
 // Shared shapes for the game modules. Entities are plain mutable records on
-// purpose: the simulation compacts arrays in place and reuses pooled objects,
-// so nothing here is a class and nothing allocates on a hot path.
+// purpose: the simulation compacts its arrays in place rather than rebuilding
+// them, and the renderer pools debris. Spawning a rock or a bullet does still
+// allocate, which is fine at these counts.
 
 export type Vec3 = [number, number, number];
 export type Edge = [number, number];
@@ -44,6 +45,10 @@ export interface Cam { x: number; y: number; vx: number; vy: number; }
 
 export interface Palette {
   bg: string; fg: string; accent: string; dim: string; font: string;
+  /* The same four colours already parsed. The CSS strings are whatever the
+     theme author wrote, and `--dim` is a color-mix() that never looks like a
+     hex, so anything needing numbers must read these rather than re-parse. */
+  bgC: RGB; fgC: RGB; accentC: RGB; dimC: RGB;
   light: boolean; acBright: string; hostile: string; hostileHot: string;
   sizeCols: string[];    // rock hue per size class (color says score)
   sizeBright: string[];  // the same hues overdriven, for debris/pops/rings

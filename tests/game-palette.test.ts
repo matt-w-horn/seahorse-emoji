@@ -24,6 +24,7 @@ const gruvbox = {
   bgC: [29, 32, 33] as [number, number, number],
   acC: [142, 192, 124] as [number, number, number],
   dimC: [146, 131, 116] as [number, number, number],
+  fgC: [235, 219, 178] as [number, number, number],
 };
 
 test('derivePalette: full color family, every entry a valid hex', () => {

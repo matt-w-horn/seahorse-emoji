@@ -74,13 +74,19 @@ a deploy.
     `tests/e2e/console.e2e.mjs` matches the built URL, so the filename is load-bearing.
   - `game/` — 3D asteroids in a vector-monitor style, on [ogl](https://github.com/oframe/ogl)
     (Unlicense; the imported subset is 14.6 KB gzip built on its own, inside a 26.8 KB
-    chunk). Split by **authority**: state that changes
-    what the game *does* is in `sim.ts`, state that changes what it *looks like* belongs to
-    the renderer, so a rendering bug cannot cost a life.
+    chunk). Split by **authority**: state that changes what the game *does* is in `sim.ts`,
+    state that changes what it *looks like* belongs to the renderer or the HUD.
     - `sim.ts` — the rules and the state machine. No DOM, no ogl, seeded rng. `step()` takes
       an `Intent`; what happened comes back from `drain()` as events. Fully testable.
-    - `geometry.ts` / `palette.ts` / `rng.ts` — pure and tested. The palette derives the whole
+    - **The renderer and the simulation get separate generators** (`index.ts`, seeded from
+      one number). They shared one briefly, and because the starfield pulls ~880 values at
+      startup and screen shake pulls two per frame, changing a visual effect changed which
+      rocks spawned. Keep them separate or the module split buys nothing.
+    - `geometry.ts` / `palette.ts` — pure and tested; `rng.ts` is four lines of mulberry32,
+      exercised by every sim test rather than tested directly. The palette derives the whole
       colour family from four CSS custom properties, so the theme switcher restyles the game.
+      **Read the parsed `bgC`/`fgC`/`accentC`/`dimC`, never the CSS strings**: `--dim` is a
+      `color-mix()`, so it never looks like a hex and any "is it a hex?" test fails on it.
     - `render.ts` — the scene. Everything is light on black: three dynamic batches (triangles,
       lines, points) blending **additively**, which is why draw order does not matter.
     - `post.ts` — bright-pass, separable blur, then the CRT composite (barrel, vignette,

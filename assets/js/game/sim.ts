@@ -6,8 +6,10 @@
 // The split between here and render.ts is by authority, not by subject: state
 // that changes what the game does lives here (invulnerability, cooldowns, the
 // combo chain), and state that only changes what it looks like lives in the
-// renderer (screen shake, debris, muzzle flash, the wave banner). A renderer
-// bug can therefore never cost you a life.
+// renderer (screen shake, debris, muzzle flash) or the HUD (score pops, the
+// wave banner). Nothing the renderer does reaches back in here, which is only
+// true because index.ts gives the two of them separate random number
+// generators; while they shared one, screen shake changed which rocks spawned.
 
 import type { Rock, Bullet, Pickup, Hunter, Cam, Mode, Intent, SimEvent } from './types.ts';
 import type { Rng } from './rng.ts';
@@ -241,6 +243,13 @@ export function createSim(rng: Rng): Sim {
   }
 
   function damage() {
+    /* One step can present several fatal hits: the rock loop and the hunter
+       loop both run to completion, and a survivable hit is only protected from
+       the next one because resetCam() raises invuln. The last life has no
+       resetCam, so without this guard a wave arriving together took two or
+       three lives at once, ending on lives: -2 with a game over emitted per
+       rock, a death sound per rock, and an explosion per rock on one frame. */
+    if (state.mode !== 'playing') return;
     if (state.shieldUp) {
       state.shieldUp = false;
       state.invuln = 2;
@@ -265,8 +274,10 @@ export function createSim(rng: Rng): Sim {
       return;
     }
 
-    // steering: high acceleration with strong damping reaches ~750 world
-    // units/s in about 0.2s — the keyboard has to feel as direct as a drag
+    // steering: high acceleration against strong damping. Held from rest at
+    // 60fps this reaches ~445 world units/s at 0.2s and settles near 720; the
+    // keyboard has to feel as direct as a drag, so the ramp is deliberately
+    // front-loaded rather than linear
     const cam = state.cam;
     if (intent.left) cam.vx -= 3600 * dt;
     if (intent.right) cam.vx += 3600 * dt;

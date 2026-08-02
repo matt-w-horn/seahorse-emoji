@@ -211,8 +211,9 @@ export function createPost(renderer: Renderer, opts: PostOpts): Post {
   }
 
   function dispose() {
-    // the context is going away with the canvas, but the targets hold real
-    // GPU memory and a re-entered game builds new ones
+    // Frees the framebuffer objects. The textures and depth renderbuffers
+    // behind them are reclaimed by the context loss that render.ts triggers
+    // immediately after, which is what actually returns the memory.
     for (const t of [scene, bright, blur, trailA, trailB]) {
       gl.deleteFramebuffer(t.buffer);
     }

@@ -17,13 +17,18 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
   const parent = canvas.parentElement;
   if (!parent) throw new Error('game canvas needs a parent to size against');
 
-  // seeded per run, from the clock: a session is unpredictable, a test is not
-  const rng = mulberry32((Date.now() ^ 0x9e3779b9) >>> 0);
+  /* Two generators, not one. They were briefly the same object, which quietly
+     made the renderer an input to the rules: the starfield alone pulls ~880
+     values at startup and screen shake pulls two per frame, so changing the
+     shake or the debris count shifted the stream the simulation then used for
+     rock positions and pickup drops. The isolation the module split is for only
+     holds if the randomness is separate too. */
+  const seed = (Date.now() ^ 0x9e3779b9) >>> 0;
 
-  const renderer = createRenderer(canvas, { reduced, rng });
+  const renderer = createRenderer(canvas, { reduced, rng: mulberry32(seed ^ 0x5bf03635) });
   if (!renderer) throw new Error('WebGL unavailable');   // tui.ts turns this into gameFailed()
 
-  const sim = createSim(rng);
+  const sim = createSim(mulberry32(seed));
 
   // a scratch 2D context is the CSS color parser: assigning any notation to
   // fillStyle and reading it back normalizes it. The game canvas is WebGL now,
@@ -101,9 +106,17 @@ export function start(canvas: HTMLCanvasElement, opts: GameOpts): GameHandle {
         renderer!.handle(events, sim.state);
         hud.handle(events, sim.state, pal);
         speak(events);
-        // a held drag would snap the camera back to where it died
+        /* A held drag would snap the camera straight back to where it died.
+           Clearing it on the input alone is not enough: `intent` was captured
+           before the substep loop, so a frame slower than 25ms (n > 1, exactly
+           the loaded-phone case where drags happen) would re-apply the stale
+           target on the next substep and silently undo the recentre. A shield
+           loss is deliberately not in this list; it does not recentre. */
         for (const e of events) {
-          if (e.kind === 'lifeLost' || e.kind === 'gameOver' || e.kind === 'shieldLost') input.clearDrag();
+          if (e.kind === 'lifeLost' || e.kind === 'gameOver') {
+            input.clearDrag();
+            intent.drag = null;
+          }
         }
       }
     }

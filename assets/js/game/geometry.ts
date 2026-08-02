@@ -1,5 +1,8 @@
-// Polyhedra and the perspective projection. No DOM, no renderer: the shapes
-// the simulation collides against and the renderer draws are the same numbers.
+// Polyhedra and the perspective projection. No DOM, no renderer.
+//
+// These are drawing shapes only. Collision in sim.ts is sphere-against-sphere
+// off the SIZES radii, so a rock's silhouette and its hitbox are deliberately
+// not the same thing: matching them would make grazes depend on tumble angle.
 
 import type { Vec3, Edge, Face, Projected } from './types.ts';
 

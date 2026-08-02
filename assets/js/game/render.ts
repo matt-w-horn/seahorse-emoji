@@ -1,8 +1,9 @@
 // The scene, on OGL.
 //
 // Everything the game draws is light on black: the scene target is cleared to
-// black, every batch blends additively, and the composite pass adds the result
-// to the theme background. Two things fall out of that. Draw order stops
+// black, every batch blends additively, and the composite pass combines the
+// result with the theme background (adding on a dark theme, subtracting on a
+// light one; see post.ts). Two things fall out of that. Draw order stops
 // mattering, because addition is commutative, which fixes the old renderer's
 // bug where only rocks were depth-sorted and debris, bullets, rings and pops
 // composited in fixed layer order. And the bloom pass gets a clean luminance
@@ -10,18 +11,22 @@
 //
 // Three dynamic batches cover the whole game: triangles for the glass faces,
 // lines for every wireframe and tracer, points for stars and beam dwell. They
-// are rebuilt into preallocated arrays each frame, so a busy frame allocates
-// nothing and costs three draw calls.
+// are rebuilt into preallocated arrays each frame, so the vertex data itself
+// never reallocates, and the scene costs three draw calls (the post chain adds
+// five more). The per-vertex work still allocates: rotate() returns a fresh
+// array per vertex, which is the obvious thing to fix first if this ever shows
+// up in a profile.
 //
-// Presentation state lives here and nowhere else: debris, shockwave rings,
-// screen shake, the damage flash, the muzzle flash and the warp. The simulation
-// does not know any of it exists; it arrives as events.
+// The renderer owns the presentation state that nothing else needs: debris,
+// shockwave rings, screen shake, the damage flash, the muzzle flash and the
+// warp. The HUD owns its own (score pops, the wave banner). The simulation
+// knows about none of it; it arrives as events.
 
 import { Renderer, Program, Mesh, Geometry } from 'ogl';
 import { ICO, OCT, rotate } from './geometry.ts';
 import { SIZES, Z_FAR, Z_NEAR, FOCAL, X_BOUND, Y_BOUND, HUNTER_R, comboMult } from './sim.ts';
 import type { SimState } from './sim.ts';
-import { hexToRgb } from './palette.ts';
+import { hexToRgb, derivePalette } from './palette.ts';
 import type { Palette, SimEvent, Vec3, Deb, Ring, Star, RGB } from './types.ts';
 import { createPost } from './post.ts';
 import type { Rng } from './rng.ts';
@@ -48,17 +53,23 @@ interface Cols {
   bg: [number, number, number]; light: boolean;
 }
 
+const unit = (c: RGB): Col => [c[0] / 255, c[1] / 255, c[2] / 255];
+
+/* The four theme colours come from the palette already parsed. Reading the CSS
+   strings and testing them for a leading '#' looked equivalent and was not:
+   --dim is a color-mix(), which never starts with '#', so the fallback fired in
+   every theme and the grid and starfield drew gruvbox grey on a cobalt page. */
 function toCols(p: Palette): Cols {
   return {
-    fg: toCol(p.fg.charAt(0) === '#' ? p.fg : '#ebdbb2'),
-    dim: toCol(p.dim.charAt(0) === '#' ? p.dim : '#928374'),
-    accent: toCol(p.accent.charAt(0) === '#' ? p.accent : '#8ec07c'),
+    fg: unit(p.fgC),
+    dim: unit(p.dimC),
+    accent: unit(p.accentC),
     acBright: toCol(p.acBright),
     hostile: toCol(p.hostile), hostileHot: toCol(p.hostileHot),
     sizeCols: p.sizeCols.map(toCol), sizeBright: p.sizeBright.map(toCol),
     ramps: p.ramps.map((r) => r.map(toCol)),
     kindCols: p.kindCols.map(toCol), tierCols: p.tierCols.map(toCol),
-    bg: toCol(p.bg.charAt(0) === '#' ? p.bg : '#1d2021'),
+    bg: unit(p.bgC),
     light: p.light,
   };
 }
@@ -68,12 +79,19 @@ const VERT = /* glsl */ `
   attribute vec4 color;
   uniform mat4 uVP;
   uniform float uPointScale;
+  uniform float uDpr;
   varying vec4 vColor;
   void main() {
     vColor = color;
     gl_Position = uVP * vec4(position, 1.0);
-    // points shrink with distance the way the old renderer's p.s factor did
-    gl_PointSize = clamp(uPointScale / max(gl_Position.w, 1.0), 1.0, 6.0) * color.a;
+    // Points shrink with distance the way the old renderer's p.s factor did.
+    // Alpha is deliberately NOT a factor here: the fragment shader already
+    // applies it as brightness, and multiplying the size by it too put the
+    // dim 75% of the starfield at 0.5px, where a point only rasterizes when a
+    // pixel centre happens to land inside it, so those stars flickered as they
+    // drifted. gl_PointSize is in framebuffer pixels, so the clamp carries the
+    // device pixel ratio or every point shrinks on a retina display.
+    gl_PointSize = clamp(uPointScale / max(gl_Position.w, 1.0), 1.0, 6.0) * uDpr;
   }
 `;
 
@@ -119,7 +137,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: RendererOpts): G
     });
     const program = new Program(gl, {
       vertex: VERT, fragment: FRAG,
-      uniforms: { uVP: { value: new Float32Array(16) }, uPointScale: { value: 900 } },
+      uniforms: { uVP: { value: new Float32Array(16) }, uPointScale: { value: 900 }, uDpr: { value: 1 } },
       depthTest: false, depthWrite: false, cullFace: null as unknown as number,
     });
     program.setBlendFunc(gl.ONE, gl.ONE);          // additive: order stops mattering
@@ -174,14 +192,12 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: RendererOpts): G
 
   /* ---------- presentation state ---------- */
 
-  let cols: Cols = toCols({
-    bg: '#1d2021', fg: '#ebdbb2', accent: '#8ec07c', dim: '#928374', font: '', light: false,
-    acBright: '#c5e6b5', hostile: '#7ca8c0', hostileHot: '#b5d4e6',
-    sizeCols: ['#8ec07c', '#c0b57c', '#c08e7c'], sizeBright: ['#c5e6b5', '#e6ddb5', '#e6c5b5'],
-    ramps: [[], [], []].map(() => new Array(8).fill('#8ec07c')),
-    kindCols: ['#7cc0a8', '#c08e7c', '#c07ca8'], tierCols: new Array(5).fill('#c5e6b5'),
-    waveCols: new Array(8).fill('#c5e6b5'),
-  });
+  /* A palette to draw with before index.ts supplies the real one, derived
+     rather than hand-written so it cannot drift from the derivation rules. */
+  let cols: Cols = toCols(derivePalette({
+    fg: '#ebdbb2', bg: '#1d2021', accent: '#8ec07c', dim: '#928374', font: '',
+    bgC: [29, 32, 33], fgC: [235, 219, 178], acC: [142, 192, 124], dimC: [146, 131, 116],
+  }));
 
   const debris: Deb[] = [];
   for (let i = 0; i < DEB_MAX; i++) debris.push({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, t: 0, life: 1, col: '' });
@@ -456,19 +472,28 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: RendererOpts): G
     const heat = cols.tierCols[mult - 1];
     for (const bl of state.bullets) {
       // converging tracers: the spread closes with depth, anchored on the
-      // bullet, so steering after firing moves the whole tracer
+      // bullet, so steering after firing moves the whole tracer.
+      // The 26 and 16 are screen pixels, as they were when the 2D renderer
+      // applied them to an already-projected point. Emitting world-space
+      // geometry means converting: at the muzzle (z=70) the scale is 6x, so
+      // using them raw drew a tracer six times too wide.
       const prog = Math.min(1, (bl.z - Z_NEAR) / 500);
-      const sprd = 26 * (1 - prog), drop = 16 * (1 - prog);
+      const w = bl.z / FOCAL;
+      const sprd = 26 * (1 - prog) * w, drop = 16 * (1 - prog) * w;
       line(bl.x - sprd, bl.y + drop, bl.z, bl.x, bl.y, bl.z + 40, heat, 1);
       line(bl.x + sprd, bl.y + drop, bl.z, bl.x, bl.y, bl.z + 40, heat, 1);
       point(bl.x, bl.y, bl.z + 40, heat, 1);
     }
 
     // the reticle sits at the camera, so it lands dead centre whatever the
-    // steering is doing; the roll is the banking the 2D version faked
+    // steering is doing; the roll is the same banking expression the 2D
+    // renderer used, applied to the arm vectors instead of the canvas
     if (state.invuln <= 0 || Math.floor(state.invuln * 8) % 2 === 0) {
       const rc = mult > 1 ? heat : cols.accent;
       const zr = Z_NEAR + 40;
+      // same screen-pixel-to-world conversion as the tracers: every radius
+      // below is in pixels, matching the 2D renderer that drew them directly
+      const u = zr / FOCAL;
       const kick = 1 + muzzleT * 1.2;
       const roll = Math.max(-0.4, Math.min(0.4, cam.vx * 0.0006));
       const cr = Math.cos(roll), sr = Math.sin(roll);
@@ -477,9 +502,10 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: RendererOpts): G
         line(cam.x + ax * r0 * kick, cam.y + ay * r0 * kick, zr,
           cam.x + ax * r1 * kick, cam.y + ay * r1 * kick, zr, rc, 1);
       };
-      arm(-1, 0, 10, 22); arm(1, 0, 10, 22); arm(0, -1, 10, 22); arm(0, 1, 10, 22);
+      arm(-1, 0, 10 * u, 22 * u); arm(1, 0, 10 * u, 22 * u);
+      arm(0, -1, 10 * u, 22 * u); arm(0, 1, 10 * u, 22 * u);
       if (state.shieldUp) {
-        const N = 24, R = 30;
+        const N = 24, R = 30 * u;
         const sa = 0.55 + 0.2 * Math.sin(clock * 4);
         for (let i = 0; i < N; i++) {
           const t0 = i / N * TAU, t1 = (i + 1) / N * TAU;
@@ -489,7 +515,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: RendererOpts): G
       }
       if (muzzleT > 0) {
         for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-          line(cam.x + dx * 8, cam.y + dy * 8, zr, cam.x + dx * 15, cam.y + dy * 15, zr, heat, 1);
+          line(cam.x + dx * 8 * u, cam.y + dy * 8 * u, zr, cam.x + dx * 15 * u, cam.y + dy * 15 * u, zr, heat, 1);
         }
       }
     }
@@ -535,6 +561,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: RendererOpts): G
     const ph = Math.max(1, Math.round(h * dpr));
     renderer.dpr = 1;
     renderer.setSize(pw, ph);                       // gives canvas.width === pw exactly
+    for (const b of [tris, lines, points]) b.program.uniforms.uDpr.value = dpr;
     canvas.style.width = w + 'px';                  // undo the device-pixel style setSize wrote
     canvas.style.height = h + 'px';
     post.resize(pw, ph, 1);

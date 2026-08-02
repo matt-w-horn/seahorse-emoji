@@ -39,9 +39,10 @@ jobs:
         run: hugo --minify
       - name: Game chunk size budget
         # The game bundles ogl, so this is the one place a dependency bump can
-        # quietly cost visitors bandwidth. 26.8 KB gzip at the time of writing;
-        # the ceiling leaves room to grow but not to slip a second renderer in.
-        # Raising it is a decision, which is the point of failing here.
+        # quietly cost visitors bandwidth. 26.8 KB gzip at the time of writing,
+        # against a 45 KB ceiling: that headroom is for the game growing, and it
+        # is wide enough that a second library of ogl's size would still fit, so
+        # read a pass as "not yet alarming" rather than as "nothing was added".
         run: |
           LIMIT=45000
           FILE=$(ls public/js/tui-game.*.js)
