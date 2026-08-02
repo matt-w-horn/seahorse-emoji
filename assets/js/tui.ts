@@ -614,8 +614,16 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
   var accChip = document.getElementById('acc-chip') as HTMLElement;
   accChip.textContent = 'theme: ' + ACCENTS[0].name;   // single source for the initial label
   function cycleTheme() {
+    // Swap only the palette class. `touch` also lives on <html>, and assigning
+    // className wholesale dropped it, so on a touch device the first theme
+    // change un-hid the CLI prompt line. (`plain` lives there too but was never
+    // at risk: plain mode returns above before the chip is wired.) The default
+    // palette is the empty class, which classList rejects as a token, hence the
+    // guards.
+    var root = document.documentElement;
+    if (ACCENTS[accIdx].cls) root.classList.remove(ACCENTS[accIdx].cls);
     accIdx = (accIdx + 1) % ACCENTS.length;
-    document.documentElement.className = ACCENTS[accIdx].cls;
+    if (ACCENTS[accIdx].cls) root.classList.add(ACCENTS[accIdx].cls);
     accChip.textContent = 'theme: ' + ACCENTS[accIdx].name;
     echo('theme -> ' + ACCENTS[accIdx].name);
   }

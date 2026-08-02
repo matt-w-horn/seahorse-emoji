@@ -175,7 +175,20 @@ async function main() {
     check('tap skipped boot to the menu', (await evalJs('document.querySelectorAll("#screen .menurow").length')) >= 5);
     check('input still unfocused after skip', (await evalJs('document.activeElement && document.activeElement.id')) !== 'in');
 
-    console.log('\n[T6] no CSP violations / exceptions');
+    console.log('\n[T6] theme chip: cycling the palette keeps touch mode');
+    const themeName = () => evalJs('document.getElementById("acc-chip").textContent');
+    const beforeTheme = await themeName();
+    await evalJs('document.getElementById("acc-chip").click()'); await sleep(200);
+    check('theme chip label changed', (await themeName()) !== beforeTheme);
+    check('palette class applied', await evalJs('document.documentElement.classList.contains("p-cobalt")'));
+    check('html.touch survives a theme change', await evalJs('document.documentElement.classList.contains("touch")'));
+    check('promptline still hidden after theme change', (await evalJs('getComputedStyle(document.getElementById("promptline")).display')) === 'none');
+    // and again, to prove the palette swaps rather than accumulating
+    await evalJs('document.getElementById("acc-chip").click()'); await sleep(200);
+    check('previous palette class removed', !(await evalJs('document.documentElement.classList.contains("p-cobalt")')));
+    check('html.touch survives a second theme change', await evalJs('document.documentElement.classList.contains("touch")'));
+
+    console.log('\n[T7] no CSP violations / exceptions');
     check('no CSP violations', cspViolations.length === 0, cspViolations.slice(0, 2).join(' | '));
     check('no uncaught exceptions', exceptions.length === 0, exceptions.slice(0, 2).join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '));
