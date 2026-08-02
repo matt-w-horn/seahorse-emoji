@@ -71,7 +71,8 @@ a deploy.
   - `tui-game.ts` — a two-line barrel. Hugo builds **this path** into the game chunk and
     `tests/e2e/console.e2e.mjs` matches the built URL, so the filename is load-bearing.
   - `game/` — 3D asteroids in a vector-monitor style, on [ogl](https://github.com/oframe/ogl)
-    (Unlicense, ~17 KB gzip of the 26.8 KB chunk). Split by **authority**: state that changes
+    (Unlicense; the imported subset is 14.6 KB gzip built on its own, inside a 26.8 KB
+    chunk). Split by **authority**: state that changes
     what the game *does* is in `sim.ts`, state that changes what it *looks like* belongs to
     the renderer, so a rendering bug cannot cost a life.
     - `sim.ts` — the rules and the state machine. No DOM, no ogl, seeded rng. `step()` takes
