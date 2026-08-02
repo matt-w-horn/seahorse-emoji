@@ -20,6 +20,10 @@ progressive enhancement over the server-rendered fallback.
 npm test                             # unit tests (node --experimental-strip-types --test tests/*.test.ts)
 npm run typecheck                    # tsc --noEmit
 npm run e2e                          # browser console e2e (tests/e2e/console.e2e.mjs; MOBILE=1 / TOUCH=1 variants)
+                                     # needs a served site; BASE_URL defaults to hugo server's 1313 and fails
+                                     # slowly if nothing listens. Against a production build, as CI runs it:
+                                     #   hugo --minify && python3 -m http.server 8080 --directory public &
+                                     #   BASE_URL=http://127.0.0.1:8080 node tests/e2e/console.e2e.mjs
 hugo server                          # local dev server with live reload
 hugo --minify                        # production build (as CI does it; set HUGO_ENVIRONMENT=production)
 sh scripts/build-resume-pdf.sh       # regenerate static/resume.pdf from scripts/resume-pdf/resume.html
@@ -55,15 +59,19 @@ a deploy.
   - `_default/baseof.html` — overrides theme baseof only to add a `<main>` landmark.
   - `partials/extended_head.html` — favicon + the meta-tag CSP.
 - `assets/js/` — the TUI, split so the pure cores are node-testable:
-  - `tui-parse.js` — pure path/command resolution (`segments`/`normalize`/`resolve`/
+  - `tui-parse.ts` — pure path/command resolution (`segments`/`normalize`/`resolve`/
     `matchPost`/`completions`), no DOM. Paths resolved by a **segment stack** (split on `/`,
     drop `.`/empty, `~` re-anchors, `..` pops), not regex.
-  - `tui-game.js` — wireframe-3D asteroids; the math core `TUIGameCore` (geometry,
-    projection, collision) is DOM-free and tested, while `TUIGame.start` wires it to a canvas.
-  - `tui.js` — the main terminal UI (DOM rendering, command dispatch, nav stack, views).
-  - Pure modules use guarded `module.exports` so tests `require()` them under Node while the
-    browser gets the global.
-- `tests/` — `tui-parse.test.js`, `tui-game.test.js`; test the pure cores only (no DOM/jsdom).
+  - `tui-game.ts` — 3D asteroids in a vector-monitor style: an offscreen persistence
+    buffer composited with additive bloom, back-face-culled glass solids, and a hue family
+    derived from the live theme (staggered waves, a homing hunter, fly-through power-ups,
+    kill-chain scoring, synthesized WebAudio sfx — nothing fetched, CSP-clean). The math
+    core (the `core` export: geometry, projection, spawning, collision, color) is DOM-free
+    and tested, while `start` wires it to a canvas.
+  - `tui.ts` — the main terminal UI (DOM rendering, command dispatch, nav stack, views).
+  - Modules are TypeScript ES modules: Hugo's asset pipeline builds them for the browser,
+    and the tests import the pure cores directly under Node (`--experimental-strip-types`).
+- `tests/` — `tui-parse.test.ts`, `tui-game.test.ts`; test the pure cores only (no DOM/jsdom).
 - `static/` — `resume.pdf`, `og-image.png`, `favicon.svg`, CSS palette/heading files.
 - `scripts/` — the resume-PDF build helper.
 
