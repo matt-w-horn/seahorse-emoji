@@ -33,6 +33,13 @@ export interface HudOpts {
   onToggleSound: () => void;
 }
 
+// returns whether it wrote, so callers can skip dependent work too
+const setText = (node: HTMLElement, text: string): boolean => {
+  if (node.textContent === text) return false;
+  node.textContent = text;
+  return true;
+};
+
 const el = (tag: string, cls: string, parent: HTMLElement): HTMLElement => {
   const e = document.createElement(tag);
   e.className = cls;
@@ -68,6 +75,7 @@ export function createHud(mount: HTMLElement, opts: HudOpts): Hud {
 
   const pops: Pop[] = [];
   let bannerT = 0;
+  let lastPal: Palette | null = null;
 
   function pop(x: number, y: number, z: number, text: string, color: string) {
     if (pops.length >= 12) {
@@ -112,51 +120,54 @@ export function createHud(mount: HTMLElement, opts: HudOpts): Hud {
     const playing = state.mode === 'playing';
     root.classList.toggle('playing', playing);
 
+    // Colours are re-applied when the text changes OR when the theme does.
+    // Dirty-checking on text alone would leave stale colours behind after a
+    // theme switch, which is a thing this site does mid-game: readPalette
+    // returns a fresh object each time, so identity is the signal.
+    const themed = pal !== lastPal;
+    lastPal = pal;
+
     if (playing) {
-      score.textContent = 'score ' + state.score + '   wave ' + state.level;
+      // Every line here is written only when its text actually changes. All of
+      // them are steady for most frames (the score between kills, the status
+      // between whole seconds of a countdown), so writing unconditionally
+      // means a fresh string and a DOM write 60 times a second for output that
+      // did not move.
       const m = comboMult(state.chain);
-      mult.textContent = m > 1 ? '×' + m : '';
-      mult.style.color = pal.tierCols[m - 1];
+      const stat = [
+        state.shieldUp ? 'shield' : '',
+        state.rapidT > 0 ? 'rapid ' + Math.ceil(state.rapidT) : '',
+        state.tripleT > 0 ? 'triple ' + Math.ceil(state.tripleT) : '',
+      ].filter(Boolean).join(' · ');
 
-      let stat = '';
-      if (state.shieldUp) stat = 'shield';
-      if (state.rapidT > 0) stat += (stat ? ' · ' : '') + 'rapid ' + Math.ceil(state.rapidT);
-      if (state.tripleT > 0) stat += (stat ? ' · ' : '') + 'triple ' + Math.ceil(state.tripleT);
-      status.textContent = stat;
-
-      // one glyph per life, rebuilt only when the count changes
-      const want = String(state.lives);
-      if (lives.dataset.n !== want) {
-        lives.dataset.n = want;
-        lives.textContent = '▲ '.repeat(state.lives).trim();
-      }
+      setText(score, 'score ' + state.score + '   wave ' + state.level);
+      if (setText(mult, m > 1 ? '×' + m : '') || themed) mult.style.color = pal.tierCols[m - 1];
+      setText(status, stat);
+      setText(lives, '▲ '.repeat(state.lives).trim());
     } else {
-      score.textContent = '';
-      mult.textContent = '';
-      status.textContent = '';
-      lives.textContent = '';
-      lives.dataset.n = '';
-      midTitle.textContent = state.mode === 'over'
+      setText(score, '');
+      setText(mult, '');
+      setText(status, '');
+      setText(lives, '');
+      if (setText(midTitle, state.mode === 'over'
         ? 'GAME OVER · SCORE ' + state.score
-        : 'A S T E R O I D S / 3 D';
-      midHint1.textContent = opts.touch
+        : 'A S T E R O I D S / 3 D') || themed) midTitle.style.color = pal.accent;
+      setText(midHint1, opts.touch
         ? 'tap to start · hold to steer and fire'
-        : 'enter to start · arrows steer · space fires';
-      midHint2.textContent = opts.touch
+        : 'enter to start · arrows steer · space fires');
+      setText(midHint2, opts.touch
         ? 'fly through S/R/T crates: shield, rapid, triple'
-        : 'S/R/T crates power up · m mutes · esc leaves';
-      midBest.textContent = state.best > 0 ? 'best ' + state.best : '';
-      midTitle.style.color = pal.accent;
+        : 'S/R/T crates power up · m mutes · esc leaves');
+      setText(midBest, state.best > 0 ? 'best ' + state.best : '');
     }
 
-    sound.textContent = opts.isSoundOn() ? '♪' : '♪̸';
-    sound.style.color = pal.dim;
+    if (setText(sound, opts.isSoundOn() ? '♪' : '♪̸') || themed) sound.style.color = pal.dim;
 
     bannerT = Math.max(0, bannerT - dt);
     banner.style.opacity = bannerT > 0 ? String(Math.min(1, bannerT / 0.35)) : '0';
 
     flashEl.style.opacity = flash > 0 ? String(Math.min(0.6, flash)) : '0';
-    flashEl.style.borderColor = pal.fg;
+    if (themed) flashEl.style.borderColor = pal.fg;
 
     // project the pops the same way the scene projects everything else
     const cx = w / 2, cy = h / 2;

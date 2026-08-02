@@ -253,6 +253,15 @@ async function main() {
   await evalJs('window.dispatchEvent(new KeyboardEvent("keyup",{key:"ArrowLeft",bubbles:true}))');
   check('game still running after input', await evalJs('document.querySelector(".ghud").classList.contains("playing")'), wave1);
 
+  // The HUD only rewrites text and colour when they change, so a theme switch
+  // during a run has to be its own signal: dirty-checking on text alone leaves
+  // the old palette on screen.
+  const soundColBefore = await evalJs('getComputedStyle(document.querySelector(".ghud-sound")).color');
+  await evalJs('document.getElementById("acc-chip").click()'); await sleep(300);
+  const soundColAfter = await evalJs('getComputedStyle(document.querySelector(".ghud-sound")).color');
+  check('theme change mid-game restyles the hud', soundColBefore !== soundColAfter, `${soundColBefore} -> ${soundColAfter}`);
+  check('game survived the theme change', await evalJs('document.querySelector(".ghud").classList.contains("playing")'));
+
   console.log('\n[5] block cursor');
   await evalJs('history.back()'); await sleep(400);
   await nav(`${BASE}/`); await sleep(1800);

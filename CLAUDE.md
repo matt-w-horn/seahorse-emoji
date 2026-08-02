@@ -29,9 +29,11 @@ hugo --minify                        # production build (as CI does it; set HUGO
 sh scripts/build-resume-pdf.sh       # regenerate static/resume.pdf from scripts/resume-pdf/resume.html
 ```
 
-There is no bundler or linter — `package.json` exists only for tsc and the test scripts,
-and Hugo's asset pipeline does the JS concat/minify/fingerprint. Hugo **extended** is
-required; CI pins `0.163.3`.
+There is no separate bundler or linter step: Hugo's esbuild does the JS build, minify and
+fingerprint. `package.json` carries tsc and the test scripts, plus one runtime dependency,
+`ogl`, which the game imports and esbuild resolves from `node_modules` — so **`npm ci` is
+required before any `hugo` command**, not just before `npm run typecheck`. Hugo
+**extended** is required; CI pins `0.163.3`.
 
 ## CI/CD
 

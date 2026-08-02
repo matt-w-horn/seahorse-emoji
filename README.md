@@ -9,17 +9,19 @@ deployed to GitHub Pages. The repo is named after
 ["The Seahorse Emoji"](./content/posts/2026-03-27-seahorse-emoji.md), the post it
 started as.
 
-The homepage is a hand-written terminal: about 1,550 lines of vanilla TypeScript in
+The homepage is a hand-written terminal: about 3,100 lines of TypeScript in
 `assets/js/` give the site `ls`/`cd`/`cat` navigation, a theme switcher, and a
-wireframe-3D asteroids game. Every page is also an ordinary Hugo page. The terminal is
+wireframe-3D asteroids game. The only runtime dependency is
+[ogl](https://github.com/oframe/ogl), which draws the game. Every page is also an ordinary Hugo page. The terminal is
 progressive enhancement over the server-rendered fallback, inside a strict
 `script-src 'self'` CSP with no inline scripts.
 
 ## Build and run
 
 Install Hugo **extended** (CI pins 0.163.3) and Node 22.6 or newer: `npm test`
-runs TypeScript through `--experimental-strip-types`. Run `npm ci` before
-`npm run typecheck`; the two test commands need no `node_modules`.
+runs TypeScript through `--experimental-strip-types`. Run `npm ci` first: the game
+imports `ogl`, and Hugo's esbuild resolves it from `node_modules`, so both
+`npm run typecheck` and every `hugo` command need it. The unit tests do not.
 
 ```bash
 hugo server        # local dev server with live reload
@@ -39,8 +41,9 @@ A push to `main` deploys the site.
 - `content/` holds the posts and pages: Markdown with TOML front matter
 - `layouts/index.html` is the standalone terminal homepage
 - `assets/js/` is the terminal: `tui.ts` (the UI), `tui-parse.ts` (path and
-  command resolution, pure), `tui-game.ts` (asteroids, pure math core), and
-  `types.ts` (shared types)
+  command resolution, pure), `types.ts` (shared types), and `game/` (the
+  asteroids game, with the rules in `sim.ts` and the WebGL renderer in
+  `render.ts`); `tui-game.ts` is the entry point Hugo builds into the game chunk
 - `tests/` holds unit tests for the pure cores, plus a console e2e check
 - `themes/terminal` is the vendored MIT theme behind the ordinary pages
 
