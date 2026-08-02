@@ -31,8 +31,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // a browser that never comes up reports *why* instead of just timing out below.
 const chromeErr = [];
 let chromeExit = null;
+// --enable-unsafe-swiftshader: the game is WebGL now, and --disable-gpu leaves
+// headless Chrome with no WebGL at all unless software rendering is opted into
+// explicitly. Without it the game fails to start, the shell shows its error
+// state, and everything below still passes: a suite that only asserts the
+// absence of errors reports green on a dead renderer.
 const chrome = spawn(CHROME, [
-  '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
+  '--headless=new', '--disable-gpu', '--enable-unsafe-swiftshader',
+  '--no-first-run', '--no-default-browser-check',
   '--no-sandbox', '--disable-dev-shm-usage',
   `--remote-debugging-port=${PORT}`, '--user-data-dir=/tmp/cdp-console-e2e', 'about:blank',
 ], { stdio: ['ignore', 'ignore', 'pipe'] });
@@ -228,6 +234,24 @@ async function main() {
   await evalJs('var i=document.getElementById("in"); i.value="ab"; i.focus();');
   const bsPrevented = await evalJs('(function(){var e=new KeyboardEvent("keydown",{key:"Backspace",bubbles:true,cancelable:true});document.getElementById("in").dispatchEvent(e);return e.defaultPrevented;})()');
   check('backspace works in the prompt while game active', bsPrevented === false);
+
+  // The renderer is WebGL, so "no console errors" no longer implies it works:
+  // a missing context, a failed shader compile or a stalled loop are all quiet.
+  // These assert it got a context, mounted its HUD, and — the part that proves
+  // frames are actually being produced — that pressing enter advances the
+  // simulation from the attract screen into a live run.
+  check('game got a webgl2 context', await evalJs('!!document.getElementById("gamecanvas").getContext("webgl2")'));
+  check('hud mounted with the attract screen', /ASTEROIDS/.test((await evalJs('document.querySelector(".ghud-title").textContent')).replace(/\s/g, '')));
+  await evalJs('document.getElementById("in").blur()');
+  await evalJs('window.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}))');
+  await sleep(600);
+  check('enter started a run (frames are advancing)', await evalJs('document.querySelector(".ghud").classList.contains("playing")'));
+  check('hud reports a live score', /score \d+\s+wave \d+/.test(await evalJs('document.querySelector(".ghud-score").textContent')));
+  const wave1 = await evalJs('document.querySelector(".ghud-score").textContent');
+  await evalJs('window.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowLeft",bubbles:true}))');
+  await sleep(500);
+  await evalJs('window.dispatchEvent(new KeyboardEvent("keyup",{key:"ArrowLeft",bubbles:true}))');
+  check('game still running after input', await evalJs('document.querySelector(".ghud").classList.contains("playing")'), wave1);
 
   console.log('\n[5] block cursor');
   await evalJs('history.back()'); await sleep(400);

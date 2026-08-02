@@ -6,7 +6,6 @@ import type { Intent } from './types.ts';
 export interface InputOpts {
   isPlaying: () => boolean;
   onToggleSound: () => void;
-  inSpeaker: (e: PointerEvent) => boolean;
   // where the ship is right now; a drag is relative to it, so grabbing the
   // screen must not teleport the ship to the middle
   camPos: () => { x: number; y: number };
@@ -45,9 +44,12 @@ export function createInput(canvas: HTMLCanvasElement, opts: InputOpts): Input {
     drag = null; dragFrom = null;
   }
 
+  // The mute control is a real button in the HUD layer above the canvas, so it
+  // handles its own click and never reaches here. The 2D renderer drew a
+  // speaker glyph into the canvas and hit-tested pointer coordinates against a
+  // padded box to find it.
   function onPointerDown(e: PointerEvent) {
     if (performance.now() < ignoreUntil) return;
-    if (opts.inSpeaker(e)) { opts.onToggleSound(); return; }
     if (!opts.isPlaying()) { startLatch = true; return; }   // a tap that starts a run must not also drag
     const at = opts.camPos();
     dragFrom = { px: e.clientX, py: e.clientY, cx: at.x, cy: at.y };
