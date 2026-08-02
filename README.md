@@ -46,8 +46,7 @@ A push to `main` deploys the site.
 
 ## About
 
-I'm Matt Horn. I've worked in software and security engineering for about fifteen
-years, most of it on identity, access management, and cloud infrastructure; the resume
+I'm Matt Horn. I've worked in software and security engineering, most of it on identity, access management, resilience and cloud infrastructure; the resume
 below has the list. More recently I've been focused on AI/ML infrastructure and its
 security problems.
 
