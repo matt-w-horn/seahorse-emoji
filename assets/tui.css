@@ -395,6 +395,7 @@ a:hover { color: var(--foreground); }
 .chip {
   position: absolute; background: var(--background); padding: 0 8px;
   font-size: 12px; color: var(--dim); white-space: nowrap;
+  z-index: 1;   /* above the game canvas, which spans the frame's full height */
 }
 #title-chip { top: -9px; left: 16px; }
 #title-chip .site { color: var(--accent); font-weight: 700; letter-spacing: .08em; }
@@ -411,7 +412,7 @@ a:hover { color: var(--foreground); }
 #page-chip.err { color: var(--err); }
 #page-chip.acc { color: var(--accent); }
 
-#screen { flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px 16px 2px; touch-action: pan-y; scrollbar-color: var(--line) transparent; }
+#screen { flex: 1; min-width: 0; position: relative; overflow-y: auto; overscroll-behavior: contain; padding: 6px 16px 2px; touch-action: pan-y; scrollbar-color: var(--line) transparent; }
 #screen::-webkit-scrollbar { width: 8px; }
 #screen::-webkit-scrollbar-thumb { background: var(--line); }
 #screen.lock { overflow: hidden; touch-action: none; }
@@ -528,4 +529,13 @@ body {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Ubuntu Mono", monospace;
 }
 
-#gamecanvas { display: block; }
+/* the game fills the whole screen box, padding included, so its edges meet
+   the terminal frame with no visible band */
+#gamecanvas { display: block; position: absolute; inset: 0; }
+/* while the game is mounted, close the frame's inner gaps too: the frame's
+   top padding and the idle echo strip would otherwise show as background
+   bands above and below the field */
+#frame:has(#gamecanvas) { padding-top: 0; }
+#frame:has(#gamecanvas) #echoline { display: none; }
+#frame:has(#gamecanvas) #promptline { margin-top: 0; }
+html.touch #frame:has(#gamecanvas) { padding-bottom: 0; }

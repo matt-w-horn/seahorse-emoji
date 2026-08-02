@@ -91,3 +91,113 @@ test('advanceRock: integrates position and tumble', () => {
   assert.equal(r.ax, 0.5);
   assert.equal(r.ay, 1);
 });
+
+test('octahedron topology: 6 vertices, 12 edges, unit radius, valid indices', () => {
+  assert.equal(core.OCT.verts.length, 6);
+  assert.equal(core.OCT.edges.length, 12);
+  for (const v of core.OCT.verts) {
+    assert.ok(Math.abs(Math.hypot(v[0], v[1], v[2]) - 1) < 1e-9, 'vertex normalized');
+  }
+  for (const [a, b] of core.OCT.edges) {
+    assert.ok(a >= 0 && a < 6 && b >= 0 && b < 6 && a !== b);
+  }
+});
+
+test('spawnWave: 3+level rocks capped at 10, staggered so later rocks start deeper', () => {
+  const w1 = core.spawnWave(1, rngOf(0.5));
+  assert.equal(w1.length, 4);
+  for (let i = 1; i < w1.length; i++) {
+    assert.ok(w1[i].z > w1[i - 1].z, 'each rock spawns behind the previous one');
+  }
+  assert.equal(core.spawnWave(99, rngOf(0.5)).length, 10, 'wave size is capped');
+});
+
+test('spawnPickup: sits where the rock died, drifts toward the camera, keeps its kind', () => {
+  const p = core.spawnPickup(120, -80, 900, 2, rngOf(0.5));
+  assert.equal(p.x, 120);
+  assert.equal(p.y, -80);
+  assert.equal(p.z, 900);
+  assert.equal(p.kind, 2);
+  assert.ok(p.vz < 0, 'pickups drift toward the camera');
+});
+
+test('collectPickup: generous radius, misses far offsets', () => {
+  assert.ok(core.collectPickup({ x: 0, y: 0 }, 0, 0));
+  assert.ok(core.collectPickup({ x: core.PICKUP_R - 1, y: 0 }, 0, 0), 'edge of radius');
+  assert.ok(!core.collectPickup({ x: core.PICKUP_R + 1, y: 0 }, 0, 0), 'outside radius');
+});
+
+test('spawnHunter: enters deep, off-axis, approaching slower than rocks', () => {
+  const h = core.spawnHunter(2, rngOf(0.25));
+  assert.equal(h.z, core.Z_FAR);
+  assert.ok(Math.abs(h.x) > 0 || Math.abs(h.y) > 0, 'starts off-center');
+  assert.ok(h.vz < 0, 'approaches the camera');
+  const r = core.spawnRock(2, 0, rngOf(0.25));
+  assert.ok(Math.abs(h.vz) < Math.abs(r.vz), 'slower than a rock: it lingers and stalks');
+});
+
+test('steerHunter: homes toward the camera, clamps lateral speed, advances depth', () => {
+  const h = core.spawnHunter(1, rngOf(0.5));
+  h.x = 300; h.y = -200; h.vx = 0; h.vy = 0;
+  const z0 = h.z;
+  core.steerHunter(h, 0, 0, 0.1);
+  assert.ok(h.vx < 0, 'accelerates left toward the camera');
+  assert.ok(h.vy > 0, 'accelerates down toward the camera');
+  assert.ok(h.z < z0, 'still closes depth');
+  for (let i = 0; i < 200; i++) core.steerHunter(h, 0, 0, 0.05);
+  assert.ok(Math.hypot(h.vx, h.vy) <= core.HUNTER_SPEED + 1e-6, 'lateral speed is clamped');
+});
+
+test('hitHunter: inside radius and depth band hits; outside either misses', () => {
+  const h = { x: 0, y: 0, z: 400 };
+  assert.ok(core.hitHunter(h, { x: 0, y: 0, z: 400 }));
+  assert.ok(core.hitHunter(h, { x: core.HUNTER_R - 1, y: 0, z: 400 }), 'edge of radius');
+  assert.ok(!core.hitHunter(h, { x: core.HUNTER_R + 40, y: 0, z: 400 }), 'outside radius');
+  assert.ok(!core.hitHunter(h, { x: 0, y: 0, z: 400 + core.HUNTER_R * 2 }), 'outside depth band');
+});
+
+test('comboMult: starts at x1, steps up every 4 chained kills, caps at x5', () => {
+  assert.equal(core.comboMult(0), 1);
+  assert.equal(core.comboMult(3), 1);
+  assert.equal(core.comboMult(4), 2);
+  assert.equal(core.comboMult(8), 3);
+  assert.equal(core.comboMult(100), 5, 'capped');
+});
+
+test('polyhedron faces: icosahedron 20 triangles, octahedron 8, all face edges are real edges', () => {
+  assert.equal(core.ICO.faces.length, 20);
+  assert.equal(core.OCT.faces.length, 8);
+  const checkFaces = (edges: [number, number][], faces: [number, number, number][]) => {
+    const has = new Set(edges.map(([a, b]) => (a < b ? a + '-' + b : b + '-' + a)));
+    for (const [i, j, k] of faces) {
+      assert.equal(new Set([i, j, k]).size, 3, 'three distinct vertices');
+      for (const [p, q] of [[i, j], [j, k], [i, k]]) {
+        assert.ok(has.has(p < q ? p + '-' + q : q + '-' + p), 'face edge exists in the edge list');
+      }
+    }
+  };
+  checkFaces(core.ICO.edges, core.ICO.faces);
+  checkFaces(core.OCT.edges, core.OCT.faces);
+});
+
+test('color helpers: hex round-trip, mix midpoint, hue rotation, luma ordering', () => {
+  assert.deepEqual(core.hexToRgb('#8ec07c'), [142, 192, 124]);
+  assert.equal(core.rgbToHex([142, 192, 124]), '#8ec07c');
+  assert.deepEqual(core.mixRgb([0, 0, 0], [255, 255, 255], 0.5), [128, 128, 128]);
+  const cyan = core.rotateHue([255, 0, 0], 180);
+  assert.ok(cyan[0] < 10 && cyan[1] > 245 && cyan[2] > 245, 'red rotated 180deg is cyan');
+  const back = core.rotateHue(core.rotateHue([142, 192, 124], 90), -90);
+  for (let i = 0; i < 3; i++) assert.ok(Math.abs(back[i] - [142, 192, 124][i]) <= 2, 'rotation round-trips');
+  assert.ok(core.luma([0, 0, 0]) < core.luma([128, 128, 128]));
+  assert.ok(core.luma([128, 128, 128]) < core.luma([255, 255, 255]));
+});
+
+test('grazed: near pass past the ship scores, wide pass does not', () => {
+  const size = 0;
+  const hitR = core.SIZES[size] * 0.8 + 26;
+  const near = { x: hitR + 10, y: 0, size: size };
+  const wide = { x: hitR * 2 + 60, y: 0, size: size };
+  assert.ok(!core.hitShip({ x: near.x, y: near.y, size: size }, 0, 0), 'near pass is not a hit');
+  assert.ok(core.grazed(near, 0, 0), 'near pass grazes');
+  assert.ok(!core.grazed(wide, 0, 0), 'wide pass does not graze');
+});

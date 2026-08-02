@@ -58,8 +58,12 @@ a deploy.
   - `tui-parse.js` — pure path/command resolution (`segments`/`normalize`/`resolve`/
     `matchPost`/`completions`), no DOM. Paths resolved by a **segment stack** (split on `/`,
     drop `.`/empty, `~` re-anchors, `..` pops), not regex.
-  - `tui-game.js` — wireframe-3D asteroids; the math core `TUIGameCore` (geometry,
-    projection, collision) is DOM-free and tested, while `TUIGame.start` wires it to a canvas.
+  - `tui-game.js` — 3D asteroids in a vector-monitor style: an offscreen persistence
+    buffer composited with additive bloom, back-face-culled glass solids, and a hue family
+    derived from the live theme (staggered waves, a homing hunter, fly-through power-ups,
+    kill-chain scoring, synthesized WebAudio sfx — nothing fetched, CSP-clean). The math
+    core (the `core` export: geometry, projection, spawning, collision, color) is DOM-free
+    and tested, while `start` wires it to a canvas.
   - `tui.js` — the main terminal UI (DOM rendering, command dispatch, nav stack, views).
   - Pure modules use guarded `module.exports` so tests `require()` them under Node while the
     browser gets the global.
