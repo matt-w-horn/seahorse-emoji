@@ -4,13 +4,13 @@ date = 2026-08-01
 author = "Matt Horn"
 +++
 
-**TL;DR:** Lean's kernel checks proofs, not the prose around them. This
+_**TL;DR:** Lean's kernel checks proofs, not the prose around them. This
 post is the machinery I use to close that gap: a blinded, calibrated
 Claude referee for docstring-vs-statement claims, and mechanical gates
 for everything else. The referee ships as a Claude Code skill in
 [lean-skills (github)](https://github.com/matt-w-horn/lean-skills), and
 the whole gate stack as a fork-ready template in
-[lean-self-audit-template (github)](https://github.com/matt-w-horn/lean-self-audit-template).
+[lean-self-audit-template (github)](https://github.com/matt-w-horn/lean-self-audit-template)._
 
 I've been absorbed in [Lean](https://lean-lang.org/) lately. This post is what
 I've found helpful, especially when working with a general-purpose assistant
