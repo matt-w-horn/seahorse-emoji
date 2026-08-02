@@ -404,7 +404,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       sel: 0,
       items: [
         { label: 'posts/', note: POSTS.length + ' pieces of writing', href: DATA!.postsUrl, run: function () { goTo(paintPosts); } },
-        { label: 'resume.md', note: 'fifteen years of jobs', href: DATA!.resumeUrl || undefined, run: function () { openDoc(RESUME); } },
+        { label: 'resume.md', note: 'jobs', href: DATA!.resumeUrl || undefined, run: function () { openDoc(RESUME); } },
         { label: 'about.txt', note: 'who lives here', run: function () { goTo(paintAbout); } },
         { label: 'play', note: 'wireframe asteroids', run: function () { goTo(paintPlay); } },
         { label: 'help', note: 'all the commands', run: function () { goTo(paintHelp); } }
