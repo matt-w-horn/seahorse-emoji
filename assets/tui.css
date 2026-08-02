@@ -399,8 +399,13 @@ a:hover { color: var(--foreground); }
 #title-chip { top: -9px; left: 16px; }
 #title-chip .site { color: var(--accent); font-weight: 700; letter-spacing: .08em; }
 #title-chip .stripe { color: var(--accent); }
-#acc-chip { top: -9px; right: 16px; cursor: pointer; }
-#acc-chip:hover { color: var(--accent); }
+/* a real <button> so keyboard/AT users can reach the theme cycle; the resets
+   undo the vendored chunky-button look, .chip supplies the rest */
+#acc-chip {
+  top: -9px; right: 16px; cursor: pointer;
+  border: none; font-weight: 400; transition: none; appearance: none;
+}
+#acc-chip:hover { color: var(--accent); background: var(--background); }
 #keys-chip { bottom: -9px; left: 16px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
 #page-chip { bottom: -9px; right: 16px; }
 #page-chip.err { color: var(--err); }
@@ -479,6 +484,17 @@ a:hover { color: var(--foreground); }
 /* `plain` reading mode (the `plain` command reloads with ?plain): tui.js skips
    booting, so hide the terminal chrome and leave the server-rendered .prejs. */
 html.plain #promptline, html.plain #echoline, html.plain .chip { display: none; }
+
+/* touch-first mode (html.touch, set by tui.js on no-hover coarse-pointer
+   devices): the CLI prompt is dropped, tap targets grow, and the keys chip
+   doubles as the back button (the .tap class marks its back states). */
+html.touch #promptline { display: none; }
+html.touch .menurow { padding: .55em 0; }
+html.touch #keys-chip { padding: 2px 8px; bottom: -11px; }
+#keys-chip.tap {
+  cursor: pointer; color: var(--accent);
+  text-decoration: underline; text-underline-offset: 3px;
+}
 
 .prejs { max-width: 80ch; }
 .prejs h1 { color: var(--accent); }

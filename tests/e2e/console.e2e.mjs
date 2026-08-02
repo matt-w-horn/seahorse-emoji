@@ -4,15 +4,20 @@
 //
 //   BASE_URL   site to test        (default http://127.0.0.1:1313)
 //   CHROME_BIN path to Chrome      (default: first of the known locations)
+//   MOBILE=1   phone viewport, keyboard still primary (hybrid device)
+//   TOUCH=1    touch-first device (coarse pointer, no hover): runs the
+//              touch scenarios instead of the keyboard ones
 //
 // Exercises deep-link render, URL sync, Back/Forward, lazy fragment fetch +
 // cache, lazy game import, the block cursor, plain mode, the index.html alias,
-// and asserts zero CSP violations / console errors.
+// and asserts zero CSP violations / console errors. Under TOUCH=1: html.touch,
+// the hidden prompt, tap navigation, the ‹ back chip, and tap-to-skip boot.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
 const BASE = (process.env.BASE_URL || 'http://127.0.0.1:1313').replace(/\/$/, '');
 const MOBILE = !!process.env.MOBILE;   // MOBILE=1 emulates a phone viewport
+const TOUCH = !!process.env.TOUCH;     // TOUCH=1 emulates a touch-first device
 const PORT = 9333;
 const CHROME = process.env.CHROME_BIN || [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -63,6 +68,11 @@ function check(name, cond, extra = '') {
   if (cond) { passN++; console.log(`  PASS ${name}`); }
   else { failN++; console.log(`  FAIL ${name} ${extra}`); }
 }
+function finish() {
+  console.log(`\n=== ${passN} passed, ${failN} failed ===`);
+  ws.close(); chrome.kill();
+  process.exit(failN ? 1 : 0);
+}
 
 async function main() {
   let target;
@@ -100,11 +110,77 @@ async function main() {
     }
   };
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable'); await send('Log.enable');
-  if (MOBILE) {
+  // the user-data-dir persists across runs; never let a cached page test a stale build
+  await send('Network.setCacheDisabled', { cacheDisabled: true });
+  if (MOBILE || TOUCH) {
     await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
-    console.log('(mobile viewport: 390x844)');
+    console.log(TOUCH ? '(touch device: 390x844, coarse pointer, no hover)' : '(mobile viewport: 390x844)');
   }
+  if (TOUCH) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const noHOverflow = async () => (await evalJs('document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1')) === true;
+  // tap a menu row by its label, as a finger would; true if a row matched
+  const tapRow = (label) => evalJs('(function(){var rows=document.querySelectorAll("#screen .menurow");for(var i=0;i<rows.length;i++){if(rows[i].textContent.indexOf(' + JSON.stringify(label) + ')!==-1){rows[i].click();return true;}}return false;})()');
+  const chipText = () => evalJs('document.getElementById("keys-chip").textContent');
+  const chipIsTap = () => evalJs('document.getElementById("keys-chip").classList.contains("tap")');
+  const tapChip = () => evalJs('document.getElementById("keys-chip").click()');
+
+  if (TOUCH) {
+    console.log('\n[T1] touch mode on a deep link (/resume/)');
+    await nav(`${BASE}/resume/`);
+    check('coarse-pointer emulation active', await evalJs('window.matchMedia("(hover: none) and (pointer: coarse)").matches'));
+    check('html.touch set', await evalJs('document.documentElement.classList.contains("touch")'));
+    check('promptline hidden', (await evalJs('getComputedStyle(document.getElementById("promptline")).display')) === 'none');
+    check('input not focused (no virtual keyboard)', (await evalJs('document.activeElement && document.activeElement.id')) !== 'in');
+    check('keys chip is the back button', (await chipText()) === '‹ back');
+    check('keys chip styled tappable (.tap)', await chipIsTap());
+    check('resume BODY rendered', /software engineer/i.test(await evalJs('document.getElementById("screen").innerText')));
+    check('no horizontal overflow (touch resume)', await noHOverflow());
+
+    console.log('\n[T2] tap ‹ back -> home menu, natively scrollable');
+    await tapChip(); await sleep(500);
+    check('back tap went home', await evalJs('location.pathname') === '/');
+    check('home menu painted', (await evalJs('document.querySelectorAll("#screen .menurow").length')) >= 5);
+    check('menu does not lock scrolling', !(await evalJs('document.getElementById("screen").classList.contains("lock")')));
+    check('home chip labels tapping, not keys', (await chipText()) === 'tap an item to open');
+    check('home chip is not a back button', !(await chipIsTap()));
+    check('touch hint shown', /tap anything underlined/i.test(await evalJs('document.getElementById("screen").innerText')));
+
+    console.log('\n[T3] tap navigation: home -> posts -> post -> back out');
+    check('tapped posts/', await tapRow('posts/')); await sleep(500);
+    check('URL became /posts/', await evalJs('location.pathname') === '/posts/');
+    check('posts chip is the back button', (await chipText()) === '‹ back');
+    await evalJs('document.querySelector("#screen .menurow").click()'); await sleep(900);
+    const postPath = await evalJs('location.pathname');
+    check('tap opened a post', /^\/posts\/./.test(postPath), postPath);
+    check('post BODY rendered', ((await evalJs('document.getElementById("screen").innerText')) || '').length > 400);
+    await tapChip(); await sleep(500);
+    check('back tap returned to /posts/', await evalJs('location.pathname') === '/posts/');
+    await tapChip(); await sleep(500);
+    check('back tap returned home', await evalJs('location.pathname') === '/');
+
+    console.log('\n[T4] game by tap: chip stays a working back button');
+    check('tapped play', await tapRow('play')); await sleep(900);
+    check('canvas mounted', (await evalJs('!!document.getElementById("gamecanvas")')) === true);
+    check('game chip offers back', /‹ back/.test(await chipText()));
+    check('game chip styled tappable (.tap)', await chipIsTap());
+    await tapChip(); await sleep(500);
+    // the game keeps the URL at '/', so leaving it is visible only in the DOM
+    check('back tap left the game (canvas unmounted)', (await evalJs('!!document.getElementById("gamecanvas")')) === false);
+    check('home menu repainted', (await evalJs('document.querySelectorAll("#screen .menurow").length')) >= 5);
+
+    console.log('\n[T5] boot: tap to skip');
+    await send('Page.navigate', { url: `${BASE}/` }); await sleep(600);
+    check('boot chip says tap to skip', (await chipText()) === 'tap to skip');
+    await evalJs('document.getElementById("screen").click()'); await sleep(400);
+    check('tap skipped boot to the menu', (await evalJs('document.querySelectorAll("#screen .menurow").length')) >= 5);
+    check('input still unfocused after skip', (await evalJs('document.activeElement && document.activeElement.id')) !== 'in');
+
+    console.log('\n[T6] no CSP violations / exceptions');
+    check('no CSP violations', cspViolations.length === 0, cspViolations.slice(0, 2).join(' | '));
+    check('no uncaught exceptions', exceptions.length === 0, exceptions.slice(0, 2).join(' | '));
+    check('no console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '));
+    return finish();
+  }
 
   console.log('\n[1] deep link /resume/');
   netUrls.length = 0;
@@ -199,8 +275,6 @@ async function main() {
   check('no uncaught exceptions', exceptions.length === 0, exceptions.slice(0, 2).join(' | '));
   check('no console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '));
 
-  console.log(`\n=== ${passN} passed, ${failN} failed ===`);
-  ws.close(); chrome.kill();
-  process.exit(failN ? 1 : 0);
+  finish();
 }
 main().catch((e) => { console.error('DRIVER ERROR', e); chrome.kill(); process.exit(2); });

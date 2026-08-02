@@ -1,2 +1,6 @@
 User-agent: *
+# bare-content fragments the console fetches (see [outputFormats.fragment] in
+# hugo.toml): duplicate copies of every page with no <head>, so keep them out
+# of the index
+Disallow: /*index.fragment.html$
 Sitemap: {{ "sitemap.xml" | absURL }}

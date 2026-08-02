@@ -19,7 +19,7 @@ progressive enhancement over the server-rendered fallback.
 ```bash
 npm test                             # unit tests (node --experimental-strip-types --test tests/*.test.ts)
 npm run typecheck                    # tsc --noEmit
-npm run e2e                          # browser console e2e (tests/e2e/console.e2e.mjs)
+npm run e2e                          # browser console e2e (tests/e2e/console.e2e.mjs; MOBILE=1 / TOUCH=1 variants)
 hugo server                          # local dev server with live reload
 hugo --minify                        # production build (as CI does it; set HUGO_ENVIRONMENT=production)
 sh scripts/build-resume-pdf.sh       # regenerate static/resume.pdf from scripts/resume-pdf/resume.html
@@ -31,6 +31,9 @@ required; CI pins `0.163.3`.
 
 ## CI/CD
 
+`.github/workflows/ci.yml` gates PRs (and re-checks pushes to `main`): `npm ci` →
+typecheck → unit tests → `hugo --minify` → the browser e2e three ways against the built
+site (desktop, `MOBILE=1` phone viewport, `TOUCH=1` coarse-pointer touch mode).
 `.github/workflows/hugo.yml` runs on push to `main`: install Hugo extended 0.163.3 →
 `npm ci` → `npm run typecheck` → `npm test` → `hugo --minify` → deploy to GitHub Pages. There is no lint
 step. `baseURL` comes from `hugo.toml` (`https://matthorn.io/`), **not** Pages metadata —
@@ -73,6 +76,10 @@ a deploy.
   and same-origin; cross-host images must use the allowed GitHub-raw path.
   `frame-ancestors`/HSTS/COOP are intentionally omitted — they need real response headers,
   which GitHub Pages can't set.
+- **Touch-first mode**: on no-hover coarse-pointer devices tui.ts adds `html.touch`
+  (same pattern as `html.plain`), which hides the CLI prompt line; menus scroll natively
+  instead of locking, and the keys chip becomes the back button (`setKeys` takes a touch
+  label; `‹`-prefixed labels are tappable back states).
 - `hugo.toml` sets `markup.goldmark.renderer.unsafe = true` because posts embed raw HTML
   (centered `<img>` blocks).
 - The homepage `<head>` in `layouts/index.html` is **duplicated** from the theme partial —
