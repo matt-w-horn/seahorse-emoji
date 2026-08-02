@@ -539,3 +539,59 @@ body {
 #frame:has(#gamecanvas) #echoline { display: none; }
 #frame:has(#gamecanvas) #promptline { margin-top: 0; }
 html.touch #frame:has(#gamecanvas) { padding-bottom: 0; }
+
+/* The HUD is DOM over the canvas rather than text drawn into it: it inherits
+   the terminal's font and palette variables, stays crisp at any device pixel
+   ratio, and is real text. pointer-events stay off so drags reach the canvas;
+   only the mute button takes them back. */
+.ghud {
+  position: absolute; inset: 0; pointer-events: none;
+  font-size: 0.82rem; line-height: 1.4; z-index: 2;
+}
+.ghud-tl { position: absolute; top: 0.6rem; left: 1rem; color: var(--dim); }
+.ghud-tr { position: absolute; top: 0.6rem; right: 1rem; display: flex; gap: 0.6rem; align-items: center; }
+.ghud-bl { position: absolute; bottom: 0.6rem; left: 1rem; color: var(--dim); }
+.ghud-mult { margin-left: 0.5rem; }
+.ghud-lives { color: var(--dim); letter-spacing: 0.15em; }
+/* The canvas version of this control had a deliberately finger-sized hit box
+   padded out around a small glyph. A 0.82rem note in a button is about 20x24,
+   well under the 44px a thumb needs, so the target is widened here rather than
+   the glyph. Muting strikes the note through: a combining solidus on U+266A
+   renders inconsistently across monospace faces. */
+.ghud-sound {
+  pointer-events: auto; background: none; border: 0; cursor: pointer;
+  font: inherit; line-height: 1;
+  min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin: -0.6rem -0.5rem;
+}
+.ghud-sound.muted { text-decoration: line-through; }
+/* The attract emblem is drawn at the centre of the scene and projects to a
+   fixed pixel size (the projection is screen_px = world * FOCAL / z, so it does
+   not scale with the viewport). The copy sits below it, hence the offset;
+   without it the title lands on top of the icosahedron. */
+.ghud-mid {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 0.35rem; text-align: center;
+  padding-top: min(230px, 34vh);
+}
+.ghud.playing .ghud-mid { display: none; }
+.ghud-title { font-weight: 700; font-size: 1.05rem; letter-spacing: 0.08em; }
+.ghud-hint { color: var(--dim); }
+.ghud-banner {
+  position: absolute; left: 0; right: 0; top: 28%; text-align: center;
+  font-weight: 700; font-size: 1.4rem; letter-spacing: 0.1em;
+  opacity: 0; transition: opacity 90ms linear;
+}
+/* the damage flash is a border rather than a full-screen wash, so it reads at
+   the edge of vision without hiding the rock that caused it */
+.ghud-flash {
+  position: absolute; inset: 0; border: 4px solid transparent;
+  opacity: 0; transition: opacity 60ms linear;
+}
+.ghud-pops { position: absolute; inset: 0; }
+.ghud-pop { position: absolute; left: 0; top: 0; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ghud-banner, .ghud-flash { transition: none; }
+}
