@@ -44,13 +44,13 @@ A renderer of about fifty lines turns the ops into raw ESC/POS commands. No driv
 
 The one thing that needed real calibration: by default the printer leaves a thin white seam between text lines, which ruins block art. ESC/POS lets you set the line spacing directly, and there's a value where rows of `█` fuse into a continuous field. I found it with a test page, and ended up writing the whole byte-level protocol into the repo docs while I was at it.
 
-One more detail, because I do security for a living: the renderer treats the model's spec as untrusted input. Sizes are clamped, rows are truncated to the column budget, control characters are stripped so they can't turn into printer commands, and output is capped at 150 rows, about 45 cm of paper. I wasn't going to let a language model send unfiltered bytes at hardware, even a receipt printer.
+One more detail, because I do security for a living: the renderer treats the model's spec as untrusted input. It clamps sizes, truncates rows to the column budget, strips control characters so they can't turn into printer commands, and caps output at 150 rows, about 45 cm of paper. I wasn't going to let a language model send unfiltered bytes at hardware, even a receipt printer.
 
 ## Keeping it from printing the same sunset every day
 
 The failure mode of a daily generative loop is convergence. Left alone, it will happily print a nice sunset every morning forever. So every piece's title and a one-line style note go into a rolling fourteen-day history, and the prompt requires each new piece to differ sharply from everything in it. That pressure alone produces a surprising range: landscapes, geometric abstraction, giant-type posters, constellation maps, diagrams.
 
-There's one deliberate exception. On a day that earns it (a holiday after its eve, an event still unfolding) the model may answer an earlier piece instead, and it records the link. Those links show up as markers in the history it reads on later days, and a fresh marker raises the bar for the next one. There are no dice rolls or cooldowns in code; the model sees its own record and judges. That's where the fireworks came from. On the 3rd it printed the eve; this morning it decided the Fourth had earned a sequel and answered it.
+There's one deliberate exception. On a day that earns it (a holiday after its eve, an event still unfolding) the model may answer an earlier piece instead, and it records the link. Those links show up as markers in the history it reads on later days, and a fresh marker raises the bar for the next one. The code has no dice rolls or cooldowns; the model sees its own record and judges. That's where the fireworks came from. On the 3rd it printed the eve; this morning it decided the Fourth had earned a sequel and answered it.
 
 ## The boring reliability parts
 

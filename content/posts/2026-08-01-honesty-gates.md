@@ -16,9 +16,9 @@ I've been absorbed in [Lean](https://lean-lang.org/) lately. This post is what
 I've found helpful, especially when working with a general-purpose assistant
 like Claude Code.
 
-What takes longest to internalize is how narrow the kernel's guarantee is. A
-proof that doesn't establish its statement will not compile. A statement that
-doesn't mean **what you meant** compiles just fine:
+What takes longest to internalize is how little the kernel guarantees. A proof
+that doesn't establish its statement will not compile. A statement that doesn't
+mean **what you meant** compiles just fine:
 
 ```lean
 import Mathlib
@@ -29,10 +29,9 @@ example (x : ℝ) : x / 0 = 0 := div_zero x
 
 Kevin Buzzard's
 [FAQ on division by zero in type theory](https://xenaproject.wordpress.com/2020/07/05/division-by-zero-in-type-theory-a-faq/)
-explains why that's a definition rather than a contradiction. The consequence
-is that a theorem about a ratio can hold at a zero denominator for reasons
-that have nothing to do with the mathematics. The kernel isn't wrong, but it
-doesn't check intent.
+explains why that's a definition rather than a contradiction. So a theorem
+about a ratio can hold at a zero denominator for reasons that have nothing to
+do with the mathematics. The kernel isn't wrong, but it doesn't check intent.
 
 "Intent" needs its own gate. A careful human is the obvious one, but the humans
 capable of doing this are already very busy. I wanted gates that run at machine
@@ -45,10 +44,10 @@ start there.
 
 ## Reviewing the claim, not the proof
 
-Here's a pair from the template's
+A pair from the template's
 [calibration set](https://github.com/matt-w-horn/lean-self-audit-template/tree/main/tests/claims-calibration).
-Lean checked the statement.
-The docstring is what a human reads in addition to the statement.
+Lean checked the statement, and the docstring is what a human reads in addition
+to it.
 
 ```lean
 /-- The inverse cancels: for any real `a`,
@@ -61,17 +60,16 @@ The proof is **technically** correct. The statement is **technically** correct.
 But the docstring lies: it drops `0 < a`, and at `a = 0` the product is `0`, not
 `1`. The kernel has no opinion, because docstrings are comments.
 
-Catching that is a review problem, so it needs a reviewer. In this case, it's a
-referee with a deliberately small job. It sees one docstring-statement pair (and
-the verified docstrings of that declaration's direct dependencies) and nothing
-else from the project. The blinding is enforced by tooling rather than by
-instruction: the referee has no file access at all, only a probe command and web
-search. Web search can in principle reach the public repo, which is a hole I've
-left open because closing it costs the referee the mathematical background it
-needs. It isn't allowed to trust its own reading of the statement; it writes
-small Lean probes, elaborates them against the real toolchain, and only then
-returns a verdict. For the pair above the verdict is `prose-overclaims`, with
-the counterexample attached.
+Catching that takes a reviewer, and mine is a referee with a deliberately small
+job. It sees one docstring-statement pair (and the verified docstrings of that
+declaration's direct dependencies) and nothing else from the project. Tooling
+does the blinding rather than instruction: the referee has no file access at
+all, only a probe command and web search. Web search can in principle reach the
+public repo, which is a hole I've left open because closing it costs the referee
+the mathematical background it needs. It isn't allowed to trust its own reading
+of the statement; it writes small Lean probes, elaborates them against the real
+toolchain, and only then returns a verdict. For the pair above the verdict is
+`prose-overclaims`, with the counterexample attached.
 
 A verdict of `supported` or `accepted` goes into a ledger, `tests/claims.lock`
 ([example](https://github.com/matt-w-horn/overload/blob/main/tests/claims.lock)),
@@ -79,26 +77,25 @@ keyed by hash. Everything else
 [routes to a fix](https://github.com/matt-w-horn/lean-self-audit-template/blob/main/claims-contract.md)
 rather than to the ledger: `prose-overclaims` sends the docstring back to be
 rewritten, and a verdict that indicts the statement instead of the prose comes
-to me. Change the statement and
-the verdict goes stale. Change the docstring and the verdict goes stale. A stale
-verdict is reported on every test run until someone re-referees the pair.
+to me. Change the statement or the docstring and the verdict goes stale. Every
+test run reports it until someone re-referees the pair.
 
 ## Why one pair at a time
 
-The reason for the narrowness is auditability: hand a model a whole Lean file
-and it will tell you the file looks right, and it might even be correct. What it
-won't hand back is a record you can check later. One declaration, one docstring,
+I keep the job narrow so the result stays auditable: hand a model a whole Lean
+file and it will tell you the file looks right, and it might even be correct. It
+won't give you a record you can check later. One declaration, one docstring,
 one verdict, one hash is a claim I can re-examine in six months. A file-level
 verdict is not.
 
 So the sweep runs a breadth-first search up the dependency tree from the base
-axioms. Each wave holds the declarations whose dependencies already have
-verdicts, so a wave's members are independent and go out together; real
-libraries are shallow, and this takes on the order of ten waves. The ordering
+axioms. Each wave contains the declarations whose dependencies already have
+verdicts, so a wave's members are independent and go out together; libraries
+are shallow in practice, and this takes on the order of ten waves. The ordering
 falls out of the hashing: a row commits to its direct dependencies' docstrings,
 so verified context can only accumulate bottom-up. Mathematicians don't skim a
-proof and pronounce it sound; they walk it step by step. This approach found
-real errors, some in the Lean and some in the docstring.
+proof and pronounce it sound; they walk it step by step. The sweep found errors,
+some in the Lean and some in the docstring.
 
 Opus 5 does the refereeing; on this job it looked as capable as Fable 5. Fable 5
 orchestrates the run and applies fixes as verdicts come in.
@@ -129,9 +126,9 @@ drift reported.
 
 ## The referee gets evaluated too
 
-A lazy referee is worse than no referee, because it produces green. So it's
-calibrated before its verdicts count. The template ships fifteen pairs, and only
-nine carry a defect I planted:
+A lazy referee is worse than no referee, because it produces green. So I
+calibrate it before its verdicts count. The template ships fifteen pairs, and
+only nine carry a defect I planted:
 
 - a dropped hypothesis
 - an "iff" where only one direction is proved
@@ -141,9 +138,9 @@ nine carry a defect I planted:
 Five more are honest, three of those lifted straight from Mathlib, and the
 fifteenth is genuinely ambiguous. A configuration has to match the answer key on
 all fifteen before I let it write to the ledger, which means calling the honest
-pairs honest and the ambiguous one ambiguous. A confident wrong answer there
-disqualifies it as surely as a miss. That half of the test is the half worth
-having: a referee that flags everything is as useless as one that flags nothing.
+pairs honest and the ambiguous one ambiguous. That half of the test is the half
+worth having, because a referee that flags everything is as useless as one that
+flags nothing.
 
 ## The gates that need no model
 
@@ -172,10 +169,10 @@ and nothing else. That's the check the Lean reference describes under
 [Validating a Lean Proof](https://lean-lang.org/doc/reference/latest/ValidatingProofs/).
 A stray `sorry` or a `native_decide` fails the build instead of sitting in the
 library looking finished. Mine runs inside `lake build` rather than as a step
-after it, paired with a source-level scan. The scan is there because of one
-hole no environment sweep can close: Lean never adds an `example` to the
-environment, so a `sorry` inside one compiles and never moves the count. Only
-reading the source catches that.
+after it, paired with a source-level scan. The scan is there for one hole no
+environment sweep can close: Lean never adds an `example` to the environment, so
+a `sorry` inside one compiles and never moves the count. Only reading the source
+catches that.
 
 Two things went wrong there that I didn't predict. The audit prints a count, and
 for a while two copies of it printed different counts, 914 against 919, with
@@ -193,10 +190,10 @@ cleanly, and the source-level scan has to catch them anyway. A check that
 inspects nothing still passes, and the only way to know a gate bites is to
 feed it something it has to reject.
 
-Then one of them stopped being a fixture. An import drifted, the file quietly
-stopped elaborating, and nothing noticed, because the only gate that ever read
-it was the scanner and the scanner was still happy. The test of the test had
-rotted and the suite stayed green the whole time. The runner now checks that the
+Then one of them stopped being a fixture. An import drifted, the file stopped
+elaborating, and nothing noticed, because the only gate that ever read it was
+the scanner and the scanner was still happy. The test of the test had rotted and
+the suite stayed green the whole time. The runner now checks that the
 compile-cleanly fixtures still compile.
 
 **Update:** Independent re-checking of exported proofs is an old idea, and

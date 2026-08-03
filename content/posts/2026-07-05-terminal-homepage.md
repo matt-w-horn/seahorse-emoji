@@ -12,19 +12,19 @@ guest@matthorn.io:~$ cd posts
 guest@matthorn.io:~/posts$ cat terminal
 ```
 
-There is also a small asteroids game in wireframe 3D. Type `play` to find it.
+There's also a small asteroids game in wireframe 3D. Type `play` to find it.
 
-It is about 1,550 lines of vanilla TypeScript over a Hugo static site. There
-is no framework. Every page is still an ordinary server-rendered page. If you
-turn JavaScript off, the site works the same. The terminal is decoration on
-top.
+Underneath, it's about 1,550 lines of vanilla TypeScript over a Hugo static
+site, and there's no framework. Every page is still an ordinary
+server-rendered page: turn JavaScript off and the site works the same. The
+terminal is decoration on top.
 
-One constraint shaped the code: a strict Content Security Policy with
+One constraint decided most of the design: a strict Content Security Policy,
 `script-src 'self'` and no inline scripts. Page data reaches the terminal
-through a JSON block the browser will not execute. The pure parts (path
-resolution, the game math) run without a DOM, so Node's built-in test runner
+through a JSON block the browser won't execute. Because the pure parts (path
+resolution, the game math) run without a DOM, Node's built-in test runner
 covers them.
 
-I am not sure a terminal is good navigation. It is slower than links for most
+I'm not sure a terminal is good navigation. It's slower than links for most
 visitors, and the fallback pages probably get more traffic than the shell. It
 stays because I like it. Type `help` and tell me which commands are missing.
