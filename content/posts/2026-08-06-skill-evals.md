@@ -4,11 +4,14 @@ date = 2026-08-06
 author = "Matt Horn"
 +++
 
-Three skills for the questions I'd rather work through at my own desk than ask
-out loud: whether my record supports what I want to do next, whether the money
-is there yet, and whether the thing I just wrote is any good. They live in
-[matt-w-horn/skills](https://github.com/matt-w-horn/skills), separate from the
-[Lean ones](/posts/2026-08-01-honesty-gates/).
+The same audit task, run twice. With the skill loaded: 84 tool calls over 25
+minutes, and four files left behind — a plan, an assumptions register, a facts
+register, and a return series it went and fetched. Without it: 10 calls, six
+minutes, nothing on disk, and about the same word count of prose.
+
+Three skills for the decisions that take more than one conversation. They live
+in [matt-w-horn/skills](https://github.com/matt-w-horn/skills), separate from
+the [Lean ones](/posts/2026-08-01-honesty-gates/).
 
 | Skill | What it does |
 |---|---|
@@ -16,30 +19,27 @@ is there yet, and whether the thing I just wrote is any good. They live in
 | `financial-planning` | Builds and stress-tests a saving schedule, retirement timing, and drawdown. |
 | `writing-axes` | Routes a writing task through reader, goal, and axis before drafting, then applies that axis's rules. |
 
-They're written for a model that can already dispatch subagents, write and test
-its own code, and go find the facts it needs, so what they add is discipline
-rather than knowledge. Nearly all of it is one idea: **what's in the context
-window when the work happens decides the work.**
+Start with `financial-planning`. It aims at a plan a careful skeptic would sign.
 
-The judge gets an empty one. `financial-planning` red-teams its own plan with a
-subagent that didn't write it, since "the author of a model has already
-rationalized its weakest assumptions, and by this stage you are the author."
-Reference files stay unread until the stage that needs them. Career paths come
-from parallel agents primed with different lenses, then get checked by hand for
-whether they really differ.
+All three are written for a model that can already dispatch subagents, write
+and test its own code, and go looking for facts. They spend their length
+scheduling what it reads, and when.
 
-One rule sits outside that: the safe answer is the failure. No survival
-percentages, no balanced non-answers. `life-paths` ends on a bet and what would
-change it.
+So the judge gets an empty context. `financial-planning` red-teams its finished
+plan with a subagent that didn't write it, since "the author of a model has
+already rationalized its weakest assumptions, and by this stage you are the
+author." Reference files stay closed until the stage that needs them. Career
+paths come from four to six parallel agents under different lenses; then you
+write each path's bet in one sentence and compare them, and two that match are
+one path in different clothes.
 
-Each also knows where to stop. `life-paths` asks you to look hard at your own
-record, and sometimes what surfaces isn't a planning problem; the instruction
-then is to "stop being a process and be present." Honest and kind are
-compatible, it says, and the skill requires both.
+No path ships without a falsifier, the observable sign, checkable within a few
+years, that this path is wrong for you. A restated risk doesn't count.
 
-Does it show up? On one audit eval the run with the skill made 84 tool calls
-over 25 minutes and left four written artifacts behind. Without it: 10 calls,
-six minutes, nothing on disk, and about the same volume of prose.
+`life-paths` asks you to look hard at your own record, and sometimes what
+surfaces is a crisis at home or health news rather than a planning problem. The
+instruction there is to "stop being a process and be present." Planning resumes
+later or not at all.
 
 ```
 /plugin marketplace add https://github.com/matt-w-horn/skills.git
