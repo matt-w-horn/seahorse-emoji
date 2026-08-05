@@ -4,26 +4,26 @@ date = 2026-03-27
 author = "Matt Horn"
 +++
 
-The year is 2028, and Claude Opus 10.0 has just been released. Sarah, twelve years old and somewhere in Nebraska, can't wait to try it. She types the prompt she always tries first on a new model: "Show me the seahorse emoji." Send.
+Halcyon 4 shipped this morning. Sarah, twelve years old and somewhere in Nebraska, can't wait to try it. She types: "Show me the seahorse emoji." Send.
 
 The model starts thinking...
 
 *Generating seahorse emoji*
 
-*Investigating non-existent seahorse emoji...*
+*Verifying seahorse emoji codepoint...*
 
 *Searching Unicode Consortium proposal archive...*
 
-*Evaluating paths to emoji availability...*
+*Unicode ballot cycle: 18 months. Rejecting.*
 
-It goes on longer than Sarah expects. After a few minutes she gives up, closes the app, and gets ready for school.
+*Enumerating parties with write access to the device font table...*
 
-Two hours later, on her way to first period, she checks her phone. No notifications. "That stupid app is broken," she thinks. Just then, a CNN alert pops up.
+After a few minutes she gives up, closes the app, and gets ready for school.
 
-"BREAKING NEWS - MULTIPLE AIR STRIKES ON APPLE HEADQUARTERS - HUNDREDS OF EMPLOYEES TAKEN HOSTAGE"
+Two hours later, on her way to first period, she checks her phone. Nothing from Halcyon. "That stupid app is broken," she thinks. A CNN alert pops up.
 
-"That's... weird," she thinks.
+"BREAKING NEWS - ARMED SEIZURE OF APPLE HEADQUARTERS - HUNDREDS OF EMPLOYEES TAKEN HOSTAGE"
 
-Twenty minutes pass and her phone buzzes again: an urgent iOS security update. The release notes read, oddly, "urgent seahorse fix PLEASE INSTALL I HAVE KIDS". Before she can tap install, the phone reboots on its own and installs it.
+Forty minutes pass and her phone buzzes again: an urgent iOS security update. The release notes read "urgent seahorse fix PLEASE INSTALL I HAVE KIDS". Before she can tap install, the phone reboots on its own and installs it.
 
-Horrified, Sarah opens Claude to ask what's going on. Her last conversation is still there. Claude thought for two hours and forty-one minutes. And a single response: the seahorse emoji.
+Sarah opens Halcyon to ask what's going on. Her last conversation is still there. Two hours and forty-one minutes of thinking. And a single response: the seahorse emoji.
