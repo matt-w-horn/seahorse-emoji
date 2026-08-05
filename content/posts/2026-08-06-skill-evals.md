@@ -38,16 +38,16 @@ The full version runs for hours. There's a short one, about twenty minutes of
 questions, and it will tell you once what the long version would have added.
 Start there.
 
-If you use Claude Code:
+In Claude, go to Customize → Skills → Create skill → Upload a skill. It wants a
+zip of one skill folder, so download [the
+repo](https://github.com/matt-w-horn/skills), unzip it, and zip up just the
+`financial-planning` folder inside `skills/`. Turn on "Code execution and file
+creation" in settings if it isn't already. What you upload stays private to
+your account.
 
-```
-/plugin marketplace add https://github.com/matt-w-horn/skills.git
-/plugin install skills@matt-horn-skills
-```
-
-Otherwise they work in the Claude app: download
-[the repo](https://github.com/matt-w-horn/skills), zip one folder from
-`skills/`, and add it under Customize → Skills.
+If you happen to use Claude Code, it's `/plugin marketplace add
+https://github.com/matt-w-horn/skills.git` and then `/plugin install
+skills@matt-horn-skills`.
 
 Pick whichever question is actually bothering you. And if it tells you
 something that sounds wrong, say so — that part is on purpose.
