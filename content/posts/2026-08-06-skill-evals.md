@@ -46,8 +46,7 @@ six minutes, nothing on disk, and about the same volume of prose.
 /plugin install skills@matt-horn-skills
 ```
 
-A new session picks them up. Your numbers go to a model like anything else you
-type.
+A new session picks them up.
 
 If a skill fires when it shouldn't, that's the interesting bug. Send me the
 query.
