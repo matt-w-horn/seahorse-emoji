@@ -1,6 +1,6 @@
 +++
-title = "Three skills for the stuff you've been putting off"
-date = 2026-08-06
+title = "Three skills for home office"
+date = 2026-08-05
 author = "Matt Horn"
 +++
 
