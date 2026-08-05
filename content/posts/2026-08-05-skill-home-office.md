@@ -8,8 +8,8 @@ There is probably a 401k somewhere with your name on it that you have never
 once opened. This is far more common than the people who talk about money let
 on.
 
-These are three skills for Claude folders of instructions it picks up and
-follows for the questions that don't fit in one conversation.
+These are three skills for Claude, folders of instructions it picks up and
+follows, for the questions that don't fit in one conversation.
 
 | Skill | What it's for |
 |---|---|
@@ -30,7 +30,7 @@ meant to tell you what your record actually supports, commit to a real
 recommendation, and then treat your disagreement with it as information rather
 than error. You own the decision. It just has to show its work.
 
-When what surfaces isn't a planning problem a crisis at home, health news
+When what surfaces isn't a planning problem, like a crisis at home or health news,
 the instruction is to "stop being a process and be present." Planning resumes
 later or not at all.
 
@@ -47,4 +47,4 @@ https://github.com/matt-w-horn/skills.git` and then `/plugin install
 skills@matt-horn-skills`.
 
 Pick whichever question is actually bothering you. And if it tells you
-something that sounds wrong, say so that part is on purpose.
+something that sounds wrong, say so. That part is on purpose.
