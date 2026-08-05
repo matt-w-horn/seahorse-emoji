@@ -69,6 +69,21 @@ async function nav(url) { await send('Page.navigate', { url }); await sleep(1200
 const typeCmd = (c) => evalJs('(function(){var i=document.getElementById("in");i.focus();i.value=' + JSON.stringify(c) + ';i.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));})()');
 const escKey = () => evalJs('document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}))');
 
+// The post-body assertions read their canary word out of the built fragment at
+// run time instead of hardcoding one. A hardcoded word ('glasswing') outlived
+// the sentence it came from: the post got rewritten, the word went away, and
+// two assertions failed on content while the fetch checks beside them stayed
+// green — so the suite reported a rendering bug that did not exist. The longest
+// word is taken because a short one risks matching the home screen and passing
+// for the wrong reason; the home-screen check in [6] is what proves it doesn't.
+async function fragmentCanary(path) {
+  const html = await (await fetch(`${BASE}${path}`)).text();
+  const words = (html.replace(/<[^>]*>/g, ' ').match(/\b[A-Za-z]{10,}\b/g) || [])
+    .sort((a, b) => b.length - a.length);
+  if (!words.length) throw new Error(`no canary word found in ${path}`);
+  return words[0];
+}
+
 let passN = 0, failN = 0;
 function check(name, cond, extra = '') {
   if (cond) { passN++; console.log(`  PASS ${name}`); }
@@ -225,8 +240,10 @@ async function main() {
   netUrls.length = 0;
   await typeCmd('cat mythos'); await sleep(700);
   const mythosFrag = '/posts/2026-04-11-mythos/index.fragment.html';
+  const canary = await fragmentCanary(mythosFrag);
+  const canaryRe = new RegExp(canary, 'i');
   check('fetched mythos fragment', netUrls.filter((u) => u.includes(mythosFrag)).length === 1);
-  check('post BODY rendered (fragment injected)', /glasswing/i.test(await evalJs('document.getElementById("screen").innerText')));
+  check('post BODY rendered (fragment injected)', canaryRe.test(await evalJs('document.getElementById("screen").innerText')), `canary=${canary}`);
   check('no horizontal overflow (post)', await noHOverflow());
   check('URL is the post permalink', await evalJs('location.pathname') === '/posts/2026-04-11-mythos/');
   netUrls.length = 0;
@@ -294,10 +311,13 @@ async function main() {
   check('title updates to post on nav', /epidemiology/i.test(await evalJs('document.title')));
   await escKey(); await sleep(500);
   check('title returns to site title at home', !/epidemiology/i.test(await evalJs('document.title')));
+  // Calibration for the canary: if it were on screen at home too, the two
+  // body-rendered assertions would pass without proving anything.
+  check('canary absent at home (canary discriminates)', !canaryRe.test(await evalJs('document.getElementById("screen").innerText')), `canary=${canary}`);
 
   console.log('\n[7] /posts/<slug>/index.html shows the post');
   await nav(`${BASE}/posts/2026-04-11-mythos/index.html`); await sleep(1200);
-  check('alias shows the post, not home', /glasswing/i.test(await evalJs('document.getElementById("screen").innerText')));
+  check('alias shows the post, not home', canaryRe.test(await evalJs('document.getElementById("screen").innerText')), `canary=${canary}`);
 
   console.log('\n[8] ?plain: plain content, terminal chrome hidden, no boot');
   await nav(`${BASE}/resume/?plain`); await sleep(600);
