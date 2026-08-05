@@ -49,9 +49,9 @@ A push to `main` deploys the site.
 
 ## About
 
-I'm Matt Horn. I've worked in software and security engineering, most of it on identity, access management, resilience and cloud infrastructure; the resume
-below has the list. More recently I've been focused on AI/ML infrastructure and its
-security problems.
+I'm Matt Horn. I've worked in software and security engineering, most of it on
+identity, access management, resilience, and cloud infrastructure. More recently
+I've been focused on AI/ML infrastructure and its security problems.
 
 I write here occasionally: essays on security and AI, and once in a while some very
 short fiction.
@@ -60,26 +60,27 @@ short fiction.
 
 Also published at [matthorn.io](https://matthorn.io).
 
-- [When a Correct Proof is a Lie: Auditing Intent in Lean](./content/posts/2026-08-01-honesty-gates.md) - August 1, 2026
+- [The A320 power transfer unit](./content/posts/2026-08-04-a320-ptu.md) - August 4, 2026
+- [When a correct proof is a lie: honesty gates for a Lean library](./content/posts/2026-08-01-honesty-gates.md) - August 1, 2026 — why a machine-checked proof can still misdescribe itself, and the gates that catch it
 - [A lesson engine in plain files](./content/posts/2026-07-24-lesson-engine.md) - July 24, 2026
 - [This homepage is a terminal](./content/posts/2026-07-05-terminal-homepage.md) - July 5, 2026
 - [My receipt printer prints an original artwork every morning](./content/posts/2026-07-04-morningprint.md) - July 4, 2026
-- [Security Is Becoming an Epidemiology Problem](./content/posts/2026-04-11-mythos.md) - April 11, 2026
+- [Security is becoming an epidemiology problem](./content/posts/2026-04-11-mythos.md) - April 11, 2026 — AI-discovered vulnerability chains, disclosure as inoculation, and why nobody can say when the defensive work is finished
 - [The Seahorse Emoji](./content/posts/2026-03-27-seahorse-emoji.md) - March 27, 2026
 
 ## Resume
 
 **Software Engineer** | Google | July 2025 - Present
 
-**Member of Technical Staff (L5)** | OpenAI | August 2024 - April 2025
+**Member of Technical Staff** | OpenAI | August 2024 - April 2025
 
-**Senior Software Engineer (L6 / SDE III)** | Amazon Web Services | November 2022 - August 2024
+**Senior Software Engineer** | Amazon Web Services | November 2022 - August 2024
 
-**Staff Software Engineer (IC4)** | Twilio | July 2021 - October 2022
+**Staff Software Engineer** | Twilio | July 2021 - October 2022
 
-**Software Development Engineer (L5 / SDE II)** | Amazon | July 2019 - July 2021
+**Software Development Engineer** | Amazon | July 2019 - July 2021
 
-**Software Engineer (L3, promoted to L4)** | Google | December 2015 - June 2019
+**Software Engineer** | Google | December 2015 - June 2019
 
 **Software Developer** | Trifecta Technologies | December 2014 - December 2015
 
@@ -101,10 +102,15 @@ Minors in Mathematics and Music Theory. Recipient of the Dr. Anthony J. Marino J
 
 matt [at] matthorn [dot] io
 
+## License
+
+Site content (the posts and the resume) is CC BY-ND 4.0; see
+[LICENSE](LICENSE). The vendored `terminal` theme is MIT and the vendored
+terminal-css is Unlicense, with attributions in [NOTICE](NOTICE).
+
 ## Provenance
 
-Everything here (the posts, the resume, all of it) is my personal work,
-written on personal time using personal equipment and personal accounts. It is
-not affiliated with, sponsored by, or endorsed by Google, Anthropic, or any
-past or present employer. Views are my own. Copyright (c) 2026 Matt Horn. See
-[NOTICE](NOTICE).
+Everything here — the posts, the resume, all of it — is my own work, written on
+my own time and equipment. It is not affiliated with, sponsored by, or endorsed
+by any past or present employer, or by Anthropic. Views are my own. Copyright
+(c) 2026 Matt Horn. See [NOTICE](NOTICE).
