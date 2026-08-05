@@ -4,10 +4,14 @@ date = 2026-08-06
 author = "Matt Horn"
 +++
 
-The same audit task, run twice. With the skill loaded: 84 tool calls over 25
-minutes, and four files left behind — a plan, an assumptions register, a facts
-register, and a return series it went and fetched. Without it: 10 calls, six
-minutes, nothing on disk, and about the same word count of prose.
+Ask a model for a retirement plan and you get a retirement plan: sections,
+numbers, a conclusion. Reading it won't tell you whether any of it was checked.
+
+Here's one audit task, run twice. With the skill loaded, 84 tool calls over
+25 minutes, and four files on disk afterwards — a plan, an assumptions
+register, a facts register, and a return series it went and fetched. Without
+it, 10 calls, six minutes, and nothing written down. The two answers ran to
+about the same length.
 
 Three skills for the decisions that take more than one conversation. They live
 in [matt-w-horn/skills](https://github.com/matt-w-horn/skills), separate from
