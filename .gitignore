@@ -1,6 +1,19 @@
-public/
-resources/
-.hugo_build.lock
-.DS_Store
+# Hugo generated files (github/gitignore community/Golang/Hugo.gitignore).
+# Leading slashes anchor to the site root; only resources/_gen is generated.
+/public/
+/resources/_gen/
+/assets/jsconfig.json
+hugo_stats.json
+/.hugo_build.lock
+
+# Dependencies
 node_modules/
-assets/jsconfig.json
+
+# Secrets and local credentials (.env.example stays tracked).
+.env
+.env.*
+!.env.example
+
+# Claude Code working files (also global; repeated so clones get it too).
+.claude/
+CLAUDE.md
