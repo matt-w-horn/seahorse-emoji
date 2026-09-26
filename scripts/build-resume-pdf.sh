@@ -1,6 +1,8 @@
 #!/bin/sh
 # Renders scripts/resume-pdf/resume.html to static/resume.pdf via headless Chrome.
 # Keep resume.html in sync with content/resume.md by hand; rerun after edits.
+# The committed static/resume.pdf is currently the export of the resume Google
+# Doc, not this render; running this script replaces it with the HTML render.
 set -eu
 cd "$(dirname "$0")/.."
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
