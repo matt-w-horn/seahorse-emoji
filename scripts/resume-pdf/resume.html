@@ -4,34 +4,36 @@
 <meta charset="utf-8">
 <title>Matt Horn — Resume</title>
 <style>
-  @page { size: letter; margin: 0.75in 0.85in; }
+  @page { size: letter; margin: 0.6in 0.75in; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: 10.5pt;
-    line-height: 1.45;
+    font-size: 9.5pt;
+    line-height: 1.35;
     color: #1a1a1a;
   }
-  header { text-align: center; margin-bottom: 14pt; }
+  header { text-align: center; margin-bottom: 10pt; }
   h1 { font-size: 20pt; font-weight: normal; letter-spacing: 1px; }
-  .contact { font-size: 9.5pt; color: #444; margin-top: 2pt; }
+  .tagline { font-size: 11pt; margin-top: 2pt; }
+  .contact { font-size: 9pt; color: #444; margin-top: 2pt; }
   h2 {
-    font-size: 11pt;
+    font-size: 10.5pt;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     border-bottom: 0.75pt solid #999;
-    margin: 12pt 0 6pt;
+    margin: 10pt 0 5pt;
     padding-bottom: 2pt;
     font-weight: normal;
   }
-  .role { margin-bottom: 8pt; break-inside: avoid; }
-  .role-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .role { margin-bottom: 6pt; }
+  .role-head { display: flex; justify-content: space-between; align-items: baseline; break-after: avoid; }
   .role-title { font-weight: bold; }
   .role-org { font-style: italic; }
-  .role-dates { font-size: 9.5pt; color: #444; white-space: nowrap; padding-left: 12pt; }
+  .role-dates { font-size: 9pt; color: #444; white-space: nowrap; padding-left: 12pt; }
+  .sub { font-style: italic; margin-top: 4pt; }
   ul { margin: 2pt 0 0 14pt; }
-  li { margin-bottom: 1.5pt; }
-  .note { font-size: 9pt; color: #555; font-style: italic; }
+  li { margin-bottom: 1.5pt; break-inside: avoid; }
+  .note { font-size: 9pt; color: #555; }
   a { color: #1a1a1a; }
   p.pub { margin-bottom: 4pt; }
 </style>
@@ -40,121 +42,151 @@
 
 <header>
   <h1>Matt Horn</h1>
-  <div class="contact">matthorn.io &nbsp;·&nbsp; matt [at] matthorn [dot] io</div>
+  <div class="tagline"><strong>Software &amp; Security Engineer</strong> | Distributed Systems &amp; AI</div>
+  <div class="contact">Sunnyvale, CA &nbsp;·&nbsp; matt [at] matthorn [dot] io &nbsp;·&nbsp; <a href="https://www.linkedin.com/in/matt-horn-718611197/">linkedin.com/in/matt-horn-718611197</a> &nbsp;·&nbsp; <a href="https://github.com/matt-w-horn">github.com/matt-w-horn</a> &nbsp;·&nbsp; <a href="https://matthorn.io">matthorn.io</a></div>
 </header>
 
-<h2>Experience</h2>
+<h2>Profile Summary</h2>
+
+  <ul>
+    <li>Software and Security Engineer with 12 years of experience building AI serving infrastructure, sovereign cloud deployments, and identity data planes at Google, OpenAI, AWS, and Twilio.</li>
+    <li>Specializes in distributed systems reliability, AI model serving, identity and access management, incident response, DoS and denial-of-wallet mitigation, and ABAC, using load shedding, deadlines and retries, idempotency, and policy as code.</li>
+    <li>Broad toolkit covering languages (C++, Python, Java, Lean 4), cloud and containers (Google Cloud, AWS, Kubernetes, Terraform), and data stores (Spanner, Postgres, DynamoDB, Aurora MySQL).</li>
+    <li>Strong cross-functional collaborator, partnering with security, product, and hundreds of integrating service teams to unblock launches and resolve issues under live incident pressure.</li>
+    <li>Technical leader who has run teams of about 6 engineers, served as interim manager, and conducted around 100 interviews.</li>
+  </ul>
+
+<h2>Technical Skills</h2>
+
+  <ul>
+    <li><strong>Languages:</strong> C++, Python, Java, TypeScript, JavaScript, SQL, Lean 4, Apex</li>
+    <li><strong>Distributed Systems:</strong> load shedding, deadlines and retries, idempotency, load testing, A/B testing</li>
+    <li><strong>Messaging &amp; Observability:</strong> Kafka, Amazon SQS, Google Cloud Pub/Sub, Datadog, Sentry, black-box monitoring (probers)</li>
+    <li><strong>Reliability:</strong> incident response, postmortems, dashboards and alerting, profiling, distributed tracing</li>
+    <li><strong>Security:</strong> AWS IAM, ABAC, just-in-time access, policy as code, threat modeling, C++ memory safety, privacy, data residency</li>
+    <li><strong>Security &amp; Compliance:</strong> denial-of-service and denial-of-wallet mitigation, insider-risk access controls, red teaming, PCI DSS, sanctions screening, AML risk scoring, GRC compliance automation</li>
+    <li><strong>AI Infrastructure:</strong> Gemini and Vertex AI model serving, vLLM, AI accelerator capacity, Amazon Bedrock</li>
+    <li><strong>AI Tooling:</strong> LLM-assisted code analysis, Claude Code</li>
+    <li><strong>Formal Verification:</strong> Lean 4, machine-checked proofs, LLM-assisted proof development</li>
+    <li><strong>Cloud &amp; Infrastructure:</strong> Google Cloud (GKE, Vertex AI), AWS (DynamoDB, SQS, Lambda, Aurora MySQL, CloudFormation, Glue), Azure</li>
+    <li><strong>Containers &amp; APIs:</strong> Kubernetes, Docker, Terraform, GitHub Actions, FastAPI, REST APIs, gRPC</li>
+    <li><strong>Frameworks, Storage &amp; Data:</strong> Salesforce (Lightning, SOQL), Spanner, Postgres, MySQL, DynamoDB, Redis, Databricks, ETL pipelines</li>
+  </ul>
+
+<h2>Work Experience</h2>
 
 <div class="role">
   <div class="role-head">
-    <span><span class="role-title">Software Engineer</span>, <span class="role-org">Google</span></span>
+    <span><span class="role-title">Software Engineer</span>, <span class="role-org">Google</span> <span class="note">Sunnyvale, CA</span></span>
     <span class="role-dates">July 2025 – Present</span>
   </div>
   <ul>
-    <li>Google Cloud AI: improving reliability, scaling, security, and error handling for the infrastructure serving Gemini and other models.</li>
-    <li>Previous project: supporting Google Cloud Dedicated, Google's sovereign cloud offering for European customers, including reliability-monitoring infrastructure adopted by peer teams.</li>
-    <li>Java readability mentor.</li>
+    <li>Protected distributed-systems reliability, security, and privacy across Gemini and Vertex AI serving infrastructure, securing C++ serving paths against abuse and outages and extending model serving into an isolated cloud, improving trust in Google's AI platforms.</li>
+    <li>Collaborated across Cloud Security, Billing, Product, Privacy, and Legal on design reviews, launch readiness, and oncall handoffs, while leading code reviews, mentoring around 10 engineers, onboarding new TLs/leaders, and presenting findings to engineering peers and senior stakeholders to align priorities and secure approvals.</li>
+  </ul>
+  <p class="sub"><em>Gemini serving data plane: distributed systems reliability and security (April 2026 - Present)</em></p>
+  <ul>
+    <li>Hardened the C++ serving path against denial-of-service and denial-of-wallet cost exhaustion through deadline propagation, early rejection of expired requests, adaptive load shedding, and consumption caps, keeping the service available during overload.</li>
+    <li>Diagnosed an AI accelerator defect via trace analysis, utilization correlation, and metric discrepancies, patched it with HTTP cancellation propagation, and drove the incident and postmortem with flag-flip mitigation and extensive safety testing.</li>
+    <li>Moved retries onto a standard framework with exponential backoff, jitter, and service-wide retry budgets through a major refactor, then A/B load-tested identical synthetic traffic across replicas without customer data.</li>
+    <li>Shipped the production fix for an out-of-memory incident using heap profiling, core dumps, and agentic analysis, adding memory-efficiency improvements, load shedding, observability, task scaling, and a crash-to-root-cause dashboard.</li>
+    <li>Delivered data residency through region-pinned request tagging and location-aware backend selection, plus privacy and memory safety through absl::Span migration and ASan/MSan CI gating.</li>
+  </ul>
+  <p class="sub"><em>Vertex AI on Google Cloud Dedicated, an isolated sovereign cloud (July 2025 - March 2026)</em></p>
+  <ul>
+    <li>Designed the infrastructure plan for Vertex AI Model Garden serving in Google Cloud Dedicated, a fully isolated sovereign cloud with no public Google Cloud dependency, and drove its first test control-plane deployment by establishing IAM, ACL, and turn-up procedures where no runbook existed.</li>
+    <li>Mapped service dependencies through build-graph traversal and service-interface enumeration using agentic Gemini analysis, structured JSON, parallel package fan-out, and Python scripts, producing a 100+ task backlog executed in parallel.</li>
+    <li>Built the team's first black-box monitoring using golden-path synthetic probes against per-region endpoints and probe-derived availability signals for future SLOs, setting the standard for Vertex services in that cloud.</li>
+    <li>Enforced dependency-injection standards through custom reflection-based presubmit tests and drove AI coding tool adoption through setup guides and custom agents.</li>
   </ul>
 </div>
-
 <div class="role">
   <div class="role-head">
-    <span><span class="role-title">Member of Technical Staff</span>, <span class="role-org">OpenAI</span></span>
-    <span class="role-dates">August 2024 – April 2025</span>
+    <span><span class="role-title">Member of Technical Staff</span>, <span class="role-org">OpenAI</span> <span class="note">San Francisco, CA</span></span>
+    <span class="role-dates">September 2024 – April 2025</span>
   </div>
   <ul>
-    <li>Security engineering on the internal access-management platform: observability, reliability, and performance.</li>
-    <li>Automated identity-hygiene and compliance checks; intermittent on-call for company-wide security support.</li>
+    <li>Stepped into a reliability emergency on the internal just-in-time access service used by nearly all employees, diagnosing latency spikes and unattributed failures and hardening monitoring via Datadog APM tracing, RED metrics, and data-health validation pipelines, cutting p99 latency by over an order of magnitude.</li>
+    <li>Instrumented p99 latency and error rates in Datadog with custom metrics, profiling, tracing, and composite monitors, establishing the monitoring baseline for security services and cutting recovery time from hours to minutes in one case.</li>
+    <li>Eliminated duplicate records and constraint violations through idempotency keys, ON CONFLICT upserts, SELECT FOR UPDATE locks, and isolation-level tuning, while maintaining the policy-as-code pipeline on a custom Terraform provider and GitHub Actions and co-authoring the postmortem for a policy-migration incident.</li>
+    <li>Automated inactive service-account detection with Databricks and PySpark by joining Entra ID sign-in logs and IAM credential-last-used reports, served on the company-wide security on-call rotation, and enforced least-privilege approvals through Terraform access checks.</li>
   </ul>
 </div>
-
 <div class="role">
   <div class="role-head">
-    <span><span class="role-title">Senior Software Engineer (L6 / SDE III)</span>, <span class="role-org">Amazon Web Services</span></span>
+    <span><span class="role-title">Senior Software Development Engineer, AWS Identity (IAM control plane)</span>, <span class="role-org">Amazon Web Services</span> <span class="note">Denver, CO</span></span>
     <span class="role-dates">November 2022 – August 2024</span>
   </div>
   <ul>
-    <li>Led strategy and guided implementation for attribute-based access control (ABAC) across the AWS Identity platform, serving 600+ integrating teams.</li>
-    <li>Used an early version of Claude on Bedrock to find integration errors across consumer teams at a scale static analysis couldn't reach, before LLM code analysis was a product category.</li>
-    <li>Cut on-call load by automating issue resolution and moving configuration to code; contributed to identifying and resolving zero-day exploits.</li>
+    <li>Directed 6 engineers as tech lead of an IAM control plane authorizing every AWS API call at hundreds of millions per second per AWS public figures, owning policy-evaluation RFCs, caching design, p99.9 latency targets, and availability budgets.</li>
+    <li>Treated availability as a security property, automating issue resolution through auto-rollback and alerting, migrating configuration to CDK and CloudFormation, and adding monitoring and tests across every AWS region, cutting the team's on-call load.</li>
+    <li>Drove attribute-based access control (ABAC) strategy across organizations, principals, tags, and tag policies for hundreds of AWS service teams integrating with IAM, repairing broken authorization-stack integrations via static code analysis.</li>
+    <li>Found zero-day vulnerabilities through red teaming, mitigating them through patches and re-architecture, and in 2023 applied Claude on Amazon Bedrock to catch integration errors missed by static analysis.</li>
   </ul>
 </div>
-
 <div class="role">
   <div class="role-head">
-    <span><span class="role-title">Staff Software Engineer (IC4)</span>, <span class="role-org">Twilio</span></span>
+    <span><span class="role-title">Staff Software Engineer</span>, <span class="role-org">Twilio</span> <span class="note">Denver, CO</span></span>
     <span class="role-dates">July 2021 – October 2022</span>
   </div>
   <ul>
-    <li>Led the organization-wide modernization of Twilio's core billing and usage platform, including its migration to Amazon Aurora MySQL — written up on the <a href="https://aws.amazon.com/blogs/database/how-twilio-modernized-its-billing-platform-on-amazon-aurora-mysql/">AWS Database Blog</a>.</li>
-    <li>Tightened internal access controls around highly sensitive billing data to reduce insider risk, and kept PCI-DSS compliance intact through the migration.</li>
+    <li>Managed 6 engineers as tech lead and 4 months as interim engineering manager on the billing platform, migrating it to Amazon Aurora MySQL while processing over 1 billion daily billing transactions — written up on the <a href="https://aws.amazon.com/blogs/database/how-twilio-modernized-its-billing-platform-on-amazon-aurora-mysql/">AWS Database Blog</a>.</li>
+    <li>Diagnosed defects in a half-finished Kafka-to-SQS migration at maximum utilization, using queueing theory to predict throughput limits, win prioritization for the fix, and avert month-end close delays and message loss.</li>
+    <li>Owned the ETL workstream for revenue data on AWS Glue with Spark, guaranteeing correctness through reconciliation jobs and working with security to approve a technology new to Twilio.</li>
+    <li>Hardened a legacy billing service through query and pagination rebuilds, UTC normalization and spring-forward regression tests, lower log costs, and restricted billing-data access under PCI DSS.</li>
   </ul>
 </div>
-
 <div class="role">
   <div class="role-head">
-    <span><span class="role-title">Software Development Engineer (L5 / SDE II)</span>, <span class="role-org">Amazon</span></span>
+    <span><span class="role-title">Software Development Engineer</span>, <span class="role-org">Amazon</span> <span class="note">Denver, CO</span></span>
     <span class="role-dates">July 2019 – July 2021</span>
   </div>
   <ul>
-    <li>Designed and built microservices on the Amazon.com retail stack, focused on protecting customer PII and staying available through peak events (Prime Day, holiday traffic).</li>
+    <li>Shipped retail web service changes to hundreds of millions of customers on a legacy stack with limited rollback, spanning order and fulfillment pipelines, frontend, and backend to enable ordering experiences like digital items linked to physical items returned together.</li>
   </ul>
 </div>
-
 <div class="role">
   <div class="role-head">
-    <span><span class="role-title">Software Engineer (L3, promoted to L4)</span>, <span class="role-org">Google</span></span>
+    <span><span class="role-title">Software Engineer</span>, <span class="role-org">Google</span> <span class="note">Boulder, CO</span></span>
     <span class="role-dates">December 2015 – June 2019</span>
   </div>
   <ul>
-    <li>Payments compliance engineering: sanctions screening, AML risk scoring that unblocked product launches in new markets, and a customer-tiering service designed as an L3 that is still in production a decade later.</li>
-    <li>Automated document requests for sanctions reviews, cutting manual review volume by more than half and raising customer response rates by double digits.</li>
-    <li>Took over a Street View imagery quality-control tool mid-project when its tech lead departed; built the entire frontend solo and launched it to the global operations team reviewing incoming imagery.</li>
-    <li>Java readability granter (65+ reviews granted).</li>
+    <li>Migrated sanctions screening from the legacy Google Payments case-review platform over 6 months and 9,000+ lines of code, automating document requests and cutting manual first-level operations reviews 61%.</li>
+    <li>Built a prototype migration tool and co-wrote a framework guide used by 50 teams, advanced an A/B testing framework for Payments latency regressions, and led a tool reviewing 26,000 Street View images weekly, cutting page latency from 8-9 to 1-2 seconds.</li>
+    <li>Designed a nightly batch service ranking Payments customers into 5 monthly-volume tiers, live since 2016 and still in production in 2026, and completed 65 Java readability code reviews in 6 months as a certified reviewer.</li>
   </ul>
 </div>
-
 <div class="role">
   <div class="role-head">
-    <span><span class="role-title">Software Developer</span>, <span class="role-org">Trifecta Technologies</span></span>
+    <span><span class="role-title">Software Developer</span>, <span class="role-org">Trifecta Technologies</span> <span class="note">Allentown, PA</span></span>
     <span class="role-dates">December 2014 – December 2015</span>
   </div>
   <ul>
-    <li>Salesforce consulting: full-stack e-commerce and operations systems (Apex, Lightning, SOQL) for enterprise clients on tight deadlines.</li>
+    <li>Developed Salesforce e-commerce and booking systems for an events client using Apex, SOQL, and JavaScript.</li>
   </ul>
 </div>
 
+<h2>Projects</h2>
+
 <div class="role">
   <div class="role-head">
-    <span><span class="role-title">Software Developer</span>, <span class="role-org">Right Reason Technologies</span> <span class="note">(part-time through college, full-time in 2014)</span></span>
-    <span class="role-dates">2011 – December 2014</span>
+    <span><span class="role-title"><a href="https://github.com/matt-w-horn/overload">Overload</a></span></span>
+    <span class="role-dates">July 2026</span>
   </div>
   <ul>
-    <li>eLearning platform: built a drag-and-drop workflow editor for automated grading, maintained reporting subsystems, improved database query performance.</li>
+    <li>Built an Apache 2.0 open-source Lean 4 library with 700 verified theorems and definitions on retry-driven congestion collapse and safe retry limits, using Claude Code while owning modeling and verification, with the paper in Google's publication review.</li>
   </ul>
 </div>
 
-<div class="role">
-  <div class="role-head">
-    <span><span class="role-title">Research Assistant</span>, <span class="role-org">The University of Texas at Dallas</span></span>
-    <span class="role-dates">June 2012 – August 2012</span>
-  </div>
-</div>
-
-<h2>Publications</h2>
-
-<p class="pub">W. E. Wong, T. Gidvani, A. Lopez, R. Gao, and M. Horn, "Evaluating Software Safety Standards: A Systematic Review and Comparison," in <em>2014 IEEE Eighth International Conference on Software Security and Reliability-Companion</em>, San Jose, CA, 2014, pp. 78–87. <a href="https://doi.org/10.1109/SERE-C.2014.25">doi.org/10.1109/SERE-C.2014.25</a></p>
-
-<h2>Education</h2>
+<h2>Education &amp; Publications</h2>
 
 <div class="role">
   <div class="role-head">
-    <span><span class="role-title">Bachelor of Science, Computer Science</span>, <span class="role-org">Muhlenberg College</span></span>
-    <span class="role-dates">2010 – 2014</span>
+    <span><span class="role-title">Bachelor of Science, Computer Science</span>, <span class="role-org">Muhlenberg College</span> <span class="note">Allentown, PA</span></span>
+    <span class="role-dates">August 2010 – May 2014</span>
   </div>
-  <ul>
-    <li>Minors in Mathematics and Music Theory. Recipient of the Dr. Anthony J. Marino Jr. Award in Computing Science (2013).</li>
-  </ul>
+<p class="pub">Minors in Mathematics and Music Theory. Recipient of the Dr. Anthony J. Marino Jr. Award in Computing Science (2013).</p>
+<p class="pub">W. E. Wong, T. Gidvani, A. Lopez, R. Gao, and M. Horn, "Evaluating Software Safety Standards: A Systematic Review and Comparison," in <em>2014 IEEE Eighth International Conference on Software Security and Reliability-Companion</em>, San Jose, CA, 2014, pp. 78-87. <a href="https://doi.org/10.1109/SERE-C.2014.25">doi.org/10.1109/SERE-C.2014.25</a></p>
 </div>
 
 </body>
