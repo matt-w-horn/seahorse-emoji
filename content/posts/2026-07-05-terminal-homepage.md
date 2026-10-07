@@ -12,24 +12,30 @@ guest@matthorn.io:~/posts$ cat terminal
 ```
 
 If you're reading this as an ordinary page, that shell is at [the site
-root](/). `play` runs an asteroids game in wireframe 3D.
+root](/). Type `play` there for an asteroids game in wireframe 3D.
+
+Hugo renders every page as ordinary HTML, and that's what you get with
+JavaScript off. On a phone the prompt is hidden and you tap the menus; without
+WebGL the game refuses to start and says so.
 
 The terminal is about 1,100 lines of TypeScript with no framework and no
 runtime dependencies; the game adds about another 2,100 on top of
-[ogl](https://github.com/oframe/ogl). Hugo renders every page as ordinary
-HTML, and that's what you get with JavaScript off. On a phone the prompt is
-hidden and you tap the menus; without WebGL the game refuses to start and says
-so.
+[ogl](https://github.com/oframe/ogl).
 
-One constraint shaped the code: a strict Content Security Policy with
-`script-src 'self'` and no inline scripts. That rules out the usual move of
-templating page data into an executable inline `<script>`. It does not rule
-out a `<script>` element whose `type` is not a JavaScript MIME type: the HTML
-parser keeps that as an inert data block, so it never executes and
-`script-src` never applies to it. The page data rides in one of those, and the
-terminal reads it back out of the DOM on boot. That means no inline hashes to
-maintain, and no reason to reach for a nonce, which has to be fresh on every
-response and a page built once as a file hands the same bytes to everyone.
+I wrote the code under one constraint: a strict Content Security Policy, the
+rules a browser enforces on what a page can load and run. Mine allows script
+only from the site's own origin (`script-src 'self'`) and forbids inline
+scripts. So I couldn't do the usual thing and template the page data into an
+executable inline `<script>`. A `<script>` element whose `type` is not a
+JavaScript MIME type is still allowed: the HTML parser keeps it as an inert
+data block, so it never executes and `script-src` never applies to it. I put
+the page data in one of those, and the terminal reads it back out of the DOM
+on boot. A policy can admit an inline script in two ways: by a hash, the
+digest of the script's text listed in the policy, or by a nonce, a random
+token that the policy and the script both carry. With the data block I have no
+inline hashes to maintain and no reason to use a nonce. A nonce has to be
+fresh on every response, and a page built once as a file hands the same bytes
+to everyone.
 
 The plain pages are still the fast path, and every one is a link away. The
 terminal stays because I like it.
