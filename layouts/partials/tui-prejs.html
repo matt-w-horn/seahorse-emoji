@@ -18,14 +18,13 @@
     {{ range $posts }}
     <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> <span class="dim">{{ .Date.Format "2006-01-02" }}</span></li>
     {{ end }}
-    {{ with $resume }}<li><a href="{{ .RelPermalink }}">Resume</a></li>{{ end }}
   </ul>
   <p class="dim">{{ site.Copyright }}</p>
 {{- else if eq $page.Type "posts" -}}
   {{- if $page.IsPage -}}
     <article>
       <h1>{{ $page.Title }}</h1>
-      <p class="dim"><time datetime="{{ $page.Date.Format "2006-01-02" }}">{{ $page.Date.Format "2006-01-02" }}</time>{{ with $page.Params.Author }} · {{ . }}{{ end }}</p>
+      <p class="dim permalink"><time datetime="{{ $page.Date.Format "2006-01-02" }}">{{ $page.Date.Format "2006-01-02" }}</time>{{ with $page.Params.Author }} · {{ . }}{{ end }}</p>
       {{ $page.Content }}
       <p class="dim"><a href="{{ "/posts/" | relURL }}">All posts</a> · <a href="{{ "/" | relURL }}">Home</a></p>
     </article>
@@ -35,9 +34,8 @@
       {{ range $posts }}
       <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> <span class="dim">{{ .Date.Format "2006-01-02" }}</span></li>
       {{ end }}
-      {{ with $resume }}<li><a href="{{ .RelPermalink }}">Resume</a></li>{{ end }}
     </ul>
-    <p class="dim"><a href="{{ "/" | relURL }}">Home</a></p>
+    <p class="dim"><a href="{{ "/" | relURL }}">Home</a>{{ with $resume }} · <a href="{{ .RelPermalink }}">Resume</a>{{ end }}</p>
   {{- end -}}
 {{- else -}}
   {{- /* a standalone page, e.g. /resume/ */ -}}

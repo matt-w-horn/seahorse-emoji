@@ -12,6 +12,11 @@ h1, h2, h3, h4, h5, h6 {
   display: block;
   font-size: calc(var(--font-size) * 1.1);
   letter-spacing: 0.04em;
+  text-wrap: balance;
+}
+
+p, blockquote, li {
+  text-wrap: pretty;
 }
 
 /* system monospace only: with no rule naming the Fira Code family, the

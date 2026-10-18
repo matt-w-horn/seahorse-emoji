@@ -23,15 +23,15 @@ If you'd like one of your own, you need a receipt printer and a Raspberry Pi, an
 - An ngrok tunnel with basic auth in front of the Pi
 - A Google Apps Script on a daily trigger, doing everything else
 
-Apps Script is Google's hosted JavaScript platform, which can run a function on a schedule. It runs on Google's servers, so the script needs a public address to reach the Pi, and ngrok is a service that gives a machine on a private network one.
+Apps Script, Google's hosted JavaScript platform, runs a function on a schedule from Google's servers; ngrok gives the Pi on my private network a public address the script can reach.
 
-I had the printer and the Pi left over from a calendar printer and an AI morning briefing, both of which I deleted. The daily art job is the one I kept.
+I had the printer and the Pi left over from an earlier calendar printer and morning briefing experiment, which I eventually retired. The daily art print is the project that stuck.
 
 ## How a language model draws on a receipt
 
 Every morning the script builds a small brief: the date, the season, the current weather, and one-line notes on the last fourteen pieces it printed. It sends the brief to the model with a system prompt that describes the medium: a monospace grid 48 columns wide in the default font, one-bit black, and only the characters in CP437. The model can run a couple of web searches for what's happening today, and it has to come back with one committed idea.
 
-The model returns a spec. I use structured output, the API feature that holds a model's reply to a JSON schema, so it can't return anything else:
+The model returns a spec using structured output, the API feature that holds a reply to a JSON schema so it can't return anything else:
 
 ```json
 {
@@ -48,7 +48,7 @@ A renderer of about fifty lines turns the ops into raw commands in ESC/POS, Epso
 
 I had to calibrate one thing. By default the printer leaves a thin white seam between text lines, which ruins block art. ESC/POS lets you set the line spacing directly, and at one value the rows of `█` fuse into a continuous field. I found that value with a test page, and I wrote up the full byte-level protocol in the repo docs.
 
-The renderer treats the model's spec as untrusted input. It strips control characters so they can't turn into printer commands: in ESC/POS, commands share one byte stream with the text, and each command starts with a control character. It truncates rows to the column budget, clamps scale factors, and caps the whole job at 150 rows. All of that runs in Apps Script, upstream of the Pi, so it bounds what my own prompt can produce and nothing else. The tunnel is exposed, though: anyone who gets past the basic auth is talking straight to the printer at `/dev/usb/lp0`. I left it there because the worst case behind it is a wasted roll of paper.
+The renderer treats the model's spec as untrusted input. It strips control characters so they can't turn into printer commands (in ESC/POS, commands share one byte stream with the text, and each command starts with a control character), truncates rows to the column budget, clamps scale factors, and caps the whole job at 150 rows. All of those checks run in Apps Script before the payload reaches the Pi, keeping a runaway prompt from feeding the printer a whole roll of paper.
 
 ## Keeping it from printing the same sunset every day
 
@@ -58,9 +58,9 @@ I made one exception on purpose. When the day gives it a reason (a holiday after
 
 ## Why the flag is set last
 
-Apps Script is the right amount of infrastructure for this: there is no server, scheduling is free, and the only thing I maintain is the Pi. I got retries for free as well. The script sets the "already printed today" flag only after a successful print, so a failed run leaves it unset and an hourly trigger will retry on bad mornings. I get a rate-limited email when something is actually broken.
+Apps Script is the right amount of infrastructure for this: no server, free scheduling, and the only thing I maintain is the Pi. Retries come free as well. The script sets the "already printed today" flag only after a successful print, so a failed run leaves it unset and an hourly trigger retries on bad mornings. I get a rate-limited email when something is actually broken.
 
-I wrote the source in TypeScript and bundle it with esbuild (a JavaScript bundler) into one file, because Apps Script has no module system. A local harness POSTs test prints straight to the Pi, so I can iterate on the renderer without redeploying anything.
+I wrote the source in TypeScript and bundle it into one file with esbuild, a JavaScript bundler, because Apps Script has no module system. A local harness POSTs test prints straight to the Pi, so I can iterate on the renderer without redeploying anything.
 
 ## Run your own
 
