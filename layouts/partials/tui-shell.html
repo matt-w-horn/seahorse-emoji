@@ -34,7 +34,7 @@
 <meta property="og:image" content="{{ "og-image.png" | absURL }}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="627">
-<meta property="og:image:alt" content="matthorn.io — software and security engineering, styled as a terminal prompt">
+<meta property="og:image:alt" content="matthorn.io: software and security engineering, styled as a terminal prompt">
 <meta name="twitter:card" content="summary_large_image">
 {{ if $isPost }}{{ with .Date }}<meta property="article:published_time" content="{{ .Format "2006-01-02T15:04:05Z07:00" }}">{{ end }}
 <meta property="article:author" content="{{ or .Params.author site.Title }}">{{ end }}
@@ -71,6 +71,13 @@
 {{ $tuiCss := resources.Get "tui.css" | minify }}
 <style>{{ os.ReadFile "static/terminal.css" | safeCSS }}{{ os.ReadFile "static/style.css" | safeCSS }}{{ $tuiCss.Content | safeCSS }}</style>
 <noscript><style>#promptline, #echoline, .chip { display: none; }</style></noscript>
+{{- /* Core: esbuild bundles tui.ts + its static import of tui-parse.ts into
+      one classic (iife) script; the dynamic import(gameScriptUrl) stays a
+      runtime import. Placed in <head> with defer + blocking="render" so the
+      browser fetches it in parallel with HTML parsing and holds first paint
+      until boot replaces .prejs. */ -}}
+{{ $core := resources.Get "js/tui.ts" | js.Build (dict "minify" true "format" "iife" "target" "es2020") | fingerprint }}
+<script src="{{ $core.RelPermalink }}" defer blocking="render"></script>
 </head>
 <body>
 
@@ -86,7 +93,7 @@
       <span id="ps1"></span>
       <input id="in" type="text" autocomplete="off" autocapitalize="none"
              spellcheck="false" aria-label="terminal input" />
-      <span id="caret" aria-hidden="true"></span>
+      <span id="caret" class="hidden" aria-hidden="true"></span>
     </div>
     <span class="chip" id="keys-chip"></span>
     <span class="chip" id="page-chip"></span>
@@ -130,11 +137,5 @@
 {{ if .IsHome }}<template id="tpl-about">{{ .Content }}</template>
 {{ else if .IsPage }}<template id="tpl-{{ .File.ContentBaseName }}">{{ .Content }}</template>
 {{ end }}
-
-{{- /* Core: esbuild bundles tui.ts + its static import of tui-parse.ts into
-      one classic (iife) script; the dynamic import(gameScriptUrl) stays a
-      runtime import. */ -}}
-{{ $core := resources.Get "js/tui.ts" | js.Build (dict "minify" true "format" "iife" "target" "es2020") | fingerprint }}
-<script src="{{ $core.RelPermalink }}" defer></script>
 </body>
 </html>

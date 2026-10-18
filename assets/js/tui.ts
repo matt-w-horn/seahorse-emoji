@@ -231,7 +231,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     tail.className = 'tail';
     tail.textContent = '$';
     ps1.appendChild(tail);
-    if (caret) { caretBase = input.offsetLeft; syncCaret(); }   // prompt width changed
+    if (caret) { caretBase = input.offsetLeft; placeCaret(); }   // prompt width changed
   }
 
   // Each view passes its keyboard hint plus a touch variant; a touch label
@@ -366,6 +366,11 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       n.textContent = '   ' + it.note;
       el.appendChild(n);
     }
+    (el as HTMLElement).addEventListener('mouseenter', function () {
+      if (!touchUI && menu && it.idx !== undefined && menu.sel !== it.idx) {
+        moveMenuSel(it.idx - menu.sel);
+      }
+    });
     (el as HTMLElement).addEventListener('click', function (e: MouseEvent) {
       if (it.href && (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0)) return; // new tab etc.
       e.preventDefault();
@@ -403,11 +408,11 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     menu = menus.home || (menus.home = {
       sel: 0,
       items: [
-        { label: 'posts/', note: POSTS.length + ' pieces of writing', href: DATA!.postsUrl, run: function () { goTo(paintPosts); } },
-        { label: 'resume.md', note: 'jobs', href: DATA!.resumeUrl || undefined, run: function () { openDoc(RESUME); } },
-        { label: 'about.txt', note: 'who lives here', run: function () { goTo(paintAbout); } },
+        { label: 'posts/', note: POSTS.length + ' essays & technical notes', href: DATA!.postsUrl, run: function () { goTo(paintPosts); } },
+        { label: 'resume.md', note: 'Google · OpenAI · AWS · Twilio', href: DATA!.resumeUrl || undefined, run: function () { openDoc(RESUME); } },
+        { label: 'about.txt', note: 'background & contact', run: function () { goTo(paintAbout); } },
         { label: 'play', note: 'wireframe asteroids', run: function () { goTo(paintPlay); } },
-        { label: 'help', note: 'all the commands', run: function () { goTo(paintHelp); } }
+        { label: 'help', note: 'commands & shortcuts', run: function () { goTo(paintHelp); } }
       ].filter(function (it) { return it.label !== 'resume.md' || RESUME; })
     });
     clearScreen();
@@ -422,7 +427,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     screen.appendChild(gapEl());
     screen.appendChild(rowEl(touchUI
       ? 'Tap anything underlined to open it.'
-      : 'Arrows and enter, tap anything underlined, or type a command.', 'dim'));
+      : 'Use arrows and Enter, click an item, or type a command below.', 'dim'));
     screen.appendChild(gapEl());
     screen.appendChild(rowEl(DATA!.copyright, 'dim'));
   }
@@ -432,7 +437,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     menu = menus.posts || (menus.posts = {
       sel: 0,
       items: POSTS.map(function (p): MenuItem {
-        return { label: p.slug + '.md', note: p.date, href: p.url, run: function () { openDoc(p); } };
+        return { label: p.slug + '.md', note: p.title, href: p.url, run: function () { openDoc(p); } };
       }).concat([{ label: '..', note: 'back', run: goBack }])
     });
     clearScreen();
@@ -443,10 +448,10 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     screen.appendChild(rowEl('~/posts', 't-title'));
     screen.appendChild(gapEl());
     paintMenuItems();
-    screen.appendChild(gapEl());
-    screen.appendChild(rowEl(touchUI
-      ? 'Posts open in a scrollable reader; ‹ back (bottom left) returns.'
-      : 'Posts open in a scrollable reader; esc brings you back.', 'dim'));
+    if (touchUI) {
+      screen.appendChild(gapEl());
+      screen.appendChild(rowEl('Posts open in a scrollable reader; ‹ back (bottom left) returns.', 'dim'));
+    }
   }
 
   function paintHelp() {
@@ -462,12 +467,11 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     });
     screen.appendChild(gapEl());
     if (touchUI) {
-      screen.appendChild(rowEl('tap a command above to run it; ‹ back (bottom left) goes back.', 'dim'));
+      screen.appendChild(rowEl('Tap a command above to run it; ‹ back (bottom left) returns.', 'dim'));
     } else {
-      screen.appendChild(rowEl('anywhere: esc goes back, the path above the prompt is tappable.', 'dim'));
-      screen.appendChild(rowEl('while reading: scroll naturally, or space for a screenful.', 'dim'));
+      screen.appendChild(rowEl('Shortcuts: Esc goes back, Space scrolls a page, Tab autocompletes.', 'dim'));
     }
-    screen.appendChild(rowEl('prefer an ordinary website? every page here is one: try plain.', 'dim'));
+    screen.appendChild(rowEl('Prefer a standard webpage? Run plain (or add ?plain to any URL).', 'dim'));
   }
 
   function paintAbout() {
@@ -566,13 +570,16 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     setPath(crumbs);
 
     screen.appendChild(headingEl(doc.title));
-    screen.appendChild(rowEl([
-      { text: doc.date ? doc.date + ' · ' : '', cls: 'dim' },
-      { text: 'permalink', href: doc.url, cls: 'dim' }
-    ], 'permalink'));
+    if (doc.date) {
+      screen.appendChild(rowEl([
+        { text: doc.date + ' · ', cls: 'dim' },
+        { text: 'permalink', href: doc.url, cls: 'dim' }
+      ], 'permalink'));
+    }
     var mount = document.createElement('div');
     screen.appendChild(mount);
     loadContent(doc.tpl || ('tpl-' + doc.slug), doc.contentUrl, mount);
+    screen.appendChild(gapEl());
     screen.appendChild(rowEl(touchUI ? '(end) · ‹ back (bottom left) returns' : '(end) · esc goes back', 'dim'));
 
     setKeys('scroll to read · space: a screenful · esc: back', '‹ back');
@@ -629,21 +636,21 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
   }
 
   var commands: { [k: string]: Command } = {
-    help: { desc: 'this list', fn: function () { goTo(paintHelp); } },
-    ls: { desc: 'list a directory (ls posts/)', fn: function (args) {
+    help: { desc: 'show available commands', fn: function () { goTo(paintHelp); } },
+    ls: { desc: 'list directory contents (ls posts/)', fn: function (args) {
       var r = resolve('ls', args[0], POSTS);
       if (r.kind === 'home') { goHome(); echo('~: posts/  resume.md  about.txt  help'); return; }
       if (r.kind === 'posts') { goTo(paintPosts); echo('~/posts: ' + POSTS.length + ' files, listed on screen'); return; }
       echo('ls: ' + (r as MissingResolved).name + ': no such directory', 'err');
     } },
-    cd: { desc: 'move around (cd posts, cd ..)', fn: function (args) {
+    cd: { desc: 'change directory (cd posts, cd ..)', fn: function (args) {
       var r = resolve('cd', args[0], POSTS);
       if (r.kind === 'home') { goHome(); echo('-> ~'); return; }
       if (r.kind === 'back') { goBack(); echo('-> back'); return; }
       if (r.kind === 'posts') { goTo(paintPosts); echo('-> ~/posts'); return; }
       echo('cd: ' + (r as MissingResolved).name + ': no such directory', 'err');
     } },
-    cat: { desc: 'read a file (cat about.txt)', fn: function (args) {
+    cat: { desc: 'open a file or post (cat resume.md)', fn: function (args) {
       var r = resolve('cat', args[0], POSTS);
       if (r.kind === 'usage') { echo('usage: cat <file>', 'err'); return; }
       if (r.kind === 'home') { goHome(); return; }
@@ -656,16 +663,16 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       }
       echo('cat: ' + (r as MissingResolved).name + ': no such file', 'err');
     } },
-    resume: { desc: 'read the resume', fn: function () { openDoc(RESUME); } },
-    posts: { desc: 'the posts directory', fn: function () { goTo(paintPosts); echo('-> ~/posts'); } },
-    home: { desc: 'back to ~', fn: function () { goHome(); echo('-> ~'); } },
+    resume: { desc: 'open resume.md', fn: function () { openDoc(RESUME); } },
+    posts: { desc: 'list all posts', fn: function () { goTo(paintPosts); echo('-> ~/posts'); } },
+    home: { desc: 'return to ~', fn: function () { goHome(); echo('-> ~'); } },
     back: { desc: 'go back one screen', fn: goBack },
-    play: { desc: 'wireframe asteroids', fn: function () { goTo(paintPlay); } },
-    motd: { desc: 'a note from my receipt printer', fn: function () { goTo(paintMotd); } },
-    theme: { desc: 'cycle color theme', fn: cycleTheme },
-    plain: { desc: 'a plain, no-terminal view of this page', fn: function () { window.location.href = location.pathname + '?plain'; } },
-    whoami: { desc: 'who runs this place', fn: function () { echo('matt (guest is you)'); } },
-    clear: { desc: 'redraw the screen', fn: function () { echo(''); setPage(''); render(currentRoute!); } }
+    play: { desc: 'launch wireframe asteroids', fn: function () { goTo(paintPlay); } },
+    motd: { desc: 'daily print from morningprint', fn: function () { goTo(paintMotd); } },
+    theme: { desc: 'cycle color palette', fn: cycleTheme },
+    plain: { desc: 'reload without terminal chrome (?plain)', fn: function () { window.location.href = location.pathname + '?plain'; } },
+    whoami: { desc: 'print current session user', fn: function () { echo('matt (guest is you)'); } },
+    clear: { desc: 'redraw current screen', fn: function () { echo(''); setPage(''); render(currentRoute!); } }
   };
 
   function makeRun(name: string) { return function () { run(name); }; }
@@ -787,8 +794,8 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     if (now < wheelLock) return;
     if (Math.abs(e.deltaY) < 4) return;
     wheelAcc += e.deltaY;
-    if (wheelAcc > 90) { wheelAcc = 0; wheelLock = now + 320; moveMenuSel(1); }
-    else if (wheelAcc < -90) { wheelAcc = 0; wheelLock = now + 320; moveMenuSel(-1); }
+    if (wheelAcc > 45) { wheelAcc = 0; wheelLock = now + 110; moveMenuSel(1); }
+    else if (wheelAcc < -45) { wheelAcc = 0; wheelLock = now + 110; moveMenuSel(-1); }
   }
   function setWheel(on: boolean) {
     if (on === wheelOn) return;
@@ -864,15 +871,20 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     caret.style.height = input.offsetHeight + 'px';
   }
 
+  function placeCaret() {
+    if (!caret) return;
+    if (document.activeElement !== input) { caret.classList.add('hidden'); return; }
+    caret.classList.remove('hidden');
+    var i = input.selectionStart;
+    if (i == null) i = input.value.length;
+    caret.style.left = (caretBase + i * chWidth - input.scrollLeft) + 'px';
+  }
+
   function syncCaret() {
     if (!caret || caretRaf) return;
     caretRaf = requestAnimationFrame(function () {
       caretRaf = 0;
-      if (document.activeElement !== input) { caret!.classList.add('hidden'); return; }
-      caret!.classList.remove('hidden');
-      var i = input.selectionStart;
-      if (i == null) i = input.value.length;
-      caret!.style.left = (caretBase + i * chWidth - input.scrollLeft) + 'px';
+      placeCaret();
     });
   }
 
@@ -880,11 +892,12 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     ['input', 'keyup', 'click', 'select'].forEach(function (ev) {
       input.addEventListener(ev, syncCaret);
     });
-    input.addEventListener('focus', function () { caretBase = input.offsetLeft; syncCaret(); });
+    input.addEventListener('focus', function () { caretBase = input.offsetLeft; placeCaret(); });
     input.addEventListener('blur', function () { caret!.classList.add('hidden'); });
     window.addEventListener('resize', function () { measureCaret(); caretBase = input.offsetLeft; syncCaret(); });
     measureCaret();
     caretBase = input.offsetLeft;
+    placeCaret();
   }
 
   /* ---------- boot: POST screen, skippable ---------- */
@@ -896,7 +909,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     booted = true;
     bootTimers.forEach(clearTimeout);
     render(currentRoute!);   // currentRoute is home (boot only runs for a fresh '/')
-    if (!touchUI) input.focus();   // focusing in a tap's context would raise the keyboard
+    if (!touchUI) { input.focus(); caretBase = input.offsetLeft; placeCaret(); }
   }
 
   window.addEventListener('popstate', function (e) {
@@ -913,20 +926,22 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
 
   if (initRoute.name === 'home' && !reduced) {
     clearScreen();   // remove the server-rendered fallback block
+    setPath([{ text: '~' }]);
     setKeys('any key skips', 'tap to skip');
     POST_LINES.forEach(function (l, i) {
-      bootTimers.push(setTimeout(function () {
+      if (i === 0) screen.appendChild(rowEl(l, 'dim'));
+      else bootTimers.push(setTimeout(function () {
         screen.appendChild(rowEl(l, 'dim'));
-      }, 120 * i));
+      }, 65 * i));
     });
     bootTimers.push(setTimeout(function () {
       clearScreen();
       screen.appendChild(artEl(FIG, 'matthorn.io'));
-      bootTimers.push(setTimeout(bootSkip, 450));
-    }, 120 * POST_LINES.length + 260));
+      bootTimers.push(setTimeout(bootSkip, 260));
+    }, 65 * POST_LINES.length + 150));
     screen.addEventListener('click', bootSkip, { once: true });
   } else {
     render(initRoute);   // deep link or reduced-motion: paint straight in, no BIOS
-    if (!touchUI) input.focus();
+    if (!touchUI) { input.focus(); caretBase = input.offsetLeft; placeCaret(); }
   }
 })();

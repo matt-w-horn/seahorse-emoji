@@ -6,9 +6,7 @@ author = "Matt Horn"
 
 There is probably a 401k somewhere with your name on it that you have never
 once opened. This is far more common than the people who talk about money let
-on.
-
-These are three skills for Claude, folders of instructions it picks up and
+on; below are three skills for Claude, folders of instructions it picks up and
 follows, for the questions that don't fit in one conversation.
 
 | Skill | What it's for |
@@ -18,11 +16,11 @@ follows, for the questions that don't fit in one conversation.
 | [writing-axes](https://github.com/matt-w-horn/skills/blob/main/skills/writing-axes/SKILL.md) | The thing you've been rewriting for a week. |
 
 They ask a lot before they answer anything. [financial-planning](https://github.com/matt-w-horn/skills/blob/main/skills/financial-planning/SKILL.md)
-looks up this year's actual contribution limits instead of recalling them, and
-it writes down every assumption it makes and what happens if that assumption
-is wrong. Then it hands the finished plan to a second copy of itself whose
-only job is to find what's wrong with it. That takes 84 tool calls where
-answering off the top of its head takes 10.
+looks up this year's actual contribution limits instead of recalling them,
+writes down every assumption it makes and what happens if that assumption is
+wrong, and hands the finished plan to a second copy of itself whose only job is
+to find what's wrong with it. That takes 84 tool calls where answering off the
+top of its head takes 10.
 
 [life-paths](https://github.com/matt-w-horn/skills/blob/main/skills/life-paths/SKILL.md) has a rule I'd want from a person. It treats both "You can do
 anything" and "be realistic, lower your sights" as failures of evidence. It's
@@ -52,5 +50,6 @@ If you happen to use Claude Code, it's `/plugin marketplace add
 https://github.com/matt-w-horn/skills.git` and then `/plugin install
 skills@matt-horn-skills`.
 
-Pick whichever question is actually bothering you. And if the skill tells you
-something that sounds wrong, say so. That part is on purpose.
+Start with whichever question is actually on your mind. And if a skill pushes
+back with something that doesn't sit right, push back on it. That part is on
+purpose.

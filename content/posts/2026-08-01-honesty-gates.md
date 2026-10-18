@@ -4,17 +4,17 @@ date = 2026-08-01
 author = "Matt Horn"
 +++
 
-_**TL;DR:** A Lean library can build green while a docstring (the comment
-a human reads above a declaration) claims more than its theorem proves,
-because Lean's kernel checks proofs and doesn't check the prose around them.
-This post describes the machinery I use to close that gap: a blinded,
-calibrated Claude referee for docstring-vs-statement claims, and mechanical
-gates for everything else. The claims gate ships in advisory mode. It prints
-findings, and you flip a switch yourself if you want a model's verdict to fail
-the build. The referee ships as a Claude Code skill in
-[lean-skills (github)](https://github.com/matt-w-horn/lean-skills), and
-the whole gate stack as a fork-ready template in
-[lean-self-audit-template (github)](https://github.com/matt-w-horn/lean-self-audit-template)._
+> **TL;DR:** A Lean library can build green while a docstring (the comment
+> a human reads above a declaration) claims more than its theorem proves,
+> because Lean's kernel checks proofs and doesn't check the prose around them.
+> This post describes the machinery I use to close that gap: a blinded,
+> calibrated Claude referee for docstring-vs-statement claims, and mechanical
+> gates for everything else. The claims gate ships in advisory mode, printing
+> findings unless you flip a switch yourself to let a model's verdict fail the
+> build. The referee ships as a Claude Code skill in
+> [lean-skills (github)](https://github.com/matt-w-horn/lean-skills), and
+> the whole gate stack as a fork-ready template in
+> [lean-self-audit-template (github)](https://github.com/matt-w-horn/lean-self-audit-template).
 
 The thing about [Lean](https://lean-lang.org/) that took me longest to
 internalize is how narrow the kernel's guarantee is. A proof that doesn't
@@ -44,12 +44,11 @@ The gate that needs a model is the hardest to get right, so I'll start there.
 
 ## Reviewing what the docstring claims
 
-Here's a pair, one docstring and the statement it describes. It comes from the
+Here's a pair, one docstring and the statement it describes, from the
 template's
 [calibration set](https://github.com/matt-w-horn/lean-self-audit-template/tree/main/tests/claims-calibration),
-the pairs with known answers that I test the referee against.
-Lean checked the statement.
-A human also reads the docstring, the comment above it.
+the pairs with known answers that I test the referee against. Lean checked the
+statement; a human also reads the docstring.
 
 ```lean
 /-- The inverse cancels: for any real `a`,
@@ -62,17 +61,17 @@ Lean accepted both the proof and the statement. The docstring is the part that
 is wrong: it drops `0 < a`, and at `a = 0` the product is `0`. The kernel has
 no opinion, because docstrings are comments.
 
-Someone has to review the docstring to catch that. My reviewer is a model,
-which I call the referee, and I gave it a deliberately small job. It sees one
+Someone has to review the docstring to catch that; my reviewer is a model I
+call the referee, with a deliberately small job. It sees one
 docstring-statement pair (and the verified docstrings of that declaration's
 direct dependencies) and nothing else from the project. I enforce the blinding
 with tooling: the referee has no file access at all, only a probe command and
 web search, so I'm not relying on it to follow an instruction. Web search can
-in principle reach the public repo. I've left that hole open, because closing
-it would cost the referee the mathematical background it needs. The referee
-isn't allowed to trust its own reading of the statement. It writes small Lean
-probes, elaborates them against the real toolchain (Lean itself type-checks
-each one), and only then returns a verdict. For the pair above it returns
+in principle reach the public repo, a trade-off I kept so the referee can
+still look up general mathematical background. Nor may the
+referee trust its own reading of the statement: it writes small Lean probes,
+elaborates them against the real toolchain (Lean itself type-checks each one),
+and only then returns a verdict. For the pair above it returns
 `prose-overclaims`, with the counterexample attached.
 
 A verdict of `supported` or `accepted` goes into a ledger, `tests/claims.lock`
@@ -88,14 +87,14 @@ pair.
 ## Why one pair at a time
 
 I keep the job that narrow so that I can audit it. Hand a model a whole Lean
-file and it will tell you the file looks right. It might even be correct, but
+file and it will usually tell you the file looks fine. Even when it's right,
 it won't give you a record you can check later. With one declaration, one
 docstring, one verdict, and one hash, I have a claim I can re-examine in six
 months.
 
-A sweep is a pass over the whole library. I run it as a breadth-first search up
-the dependency tree from the base axioms: it clears one level of the tree, a
-wave, before it starts on the level above. Each wave holds the declarations
+A sweep over the whole library runs as a breadth-first search up the
+dependency tree from the base axioms, clearing one level of the tree, a wave,
+before starting the level above. Each wave holds the declarations
 whose dependencies already have verdicts, so the members of a wave are
 independent and go out together. My library takes on the order of ten waves,
 and a deeper dependency chain takes proportionally more. The hashing forces
@@ -114,9 +113,9 @@ near $10,000. That is why I run this against a library I wrote.
 After the first sweep it's cheap, because a verdict only goes stale when one of
 its inputs changes. I key each row on three hashes: the printed statement, the
 docstring, and the sorted docstrings of the declaration's direct dependencies.
-I don't key it on the referee model or its prompt, and I never compare a re-run
-against the stored verdict, so a row records one sample from a stochastic
-process and nothing here would notice if a second sample disagreed. Edit one
+I don't key it on the referee model or its prompt, and I don't re-run
+unchanged rows, so each row records a single pass rather than a consensus vote.
+Edit one
 docstring and every consumer of that declaration needs re-refereeing. I get the
 dependency graph from `getUsedConstantsAsSet`, which walks proof bodies, so it
 sees what the proof used; the statement's own vocabulary doesn't come into it.
@@ -136,7 +135,7 @@ drift reported.
 
 ## The referee gets evaluated too
 
-A lazy referee is worse than no referee, because it produces green. So I
+A rubber-stamp referee is worse than no referee, because it produces green. So I
 calibrate it before its verdicts count. The template ships fifteen pairs, and I
 planted a defect in only nine:
 
@@ -151,8 +150,8 @@ effort level with one prompt revision. A configuration has to match the answer
 key on all fifteen before I let it write to the ledger, which means calling the
 honest pairs honest and the ambiguous one ambiguous. If it gives a confident
 wrong answer on one of those, I disqualify it, the same as for a miss. I tuned
-the referee on the same set that certifies it, so there is no held-out split,
-and fifteen binary items bound very little.
+the referee on the same fifteen items that check it, so there is no held-out
+split; the set is there to catch regressions when the prompt or model changes.
 
 ## The gates that need no model
 
@@ -179,14 +178,13 @@ every declaration has to reduce to
 and [`Quot.sound`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=Quot.sound#doc)
 and nothing else. That's the check the Lean reference describes under
 [Validating a Lean Proof](https://lean-lang.org/doc/reference/latest/ValidatingProofs/).
-Without the audit, a stray `sorry` (Lean's placeholder for a proof that hasn't
-been written) or a `native_decide` (a tactic that proves a goal by running
-compiled code and taking the compiler's word for the result) sits in the
-library looking finished. With it, either one fails the build. `lake build`
-runs mine, and a source-level scan runs beside it. I added the scan because of
-one hole that no environment sweep can close: Lean never adds an `example` to
-the environment, so a `sorry` inside one compiles and never moves the audit's
-count. You can only catch it by reading the source.
+With the audit, a stray `sorry` (Lean's placeholder for an unwritten proof) or
+`native_decide` (a tactic that proves a goal by running compiled code and
+taking the compiler's word for the result) fails the build instead of sitting
+in the library looking finished. `lake build` runs mine beside a source-level
+scan. The scan closes one hole that no environment sweep can: Lean never adds
+an `example` to the environment, so a `sorry` inside one compiles without
+moving the audit's count and can only be caught by reading the source.
 
 Two things went wrong there that I didn't predict. The audit prints a count, and
 for a while two copies of it printed different counts, 914 against 919, with
@@ -239,7 +237,6 @@ checks too:
 runs in CI over structure and cross-references, so a broken pointer fails
 before it can send an agent somewhere that doesn't exist.
 
-Fork the template, run the rename script, replace the hello module, and tell me
-which gate fires first. I'd welcome corrections to the skills too, especially
-where a version-specific claim has gone stale. That's the failure they're most
-exposed to.
+Fork the template, swap in your own module, and see which gate fires first. I'd
+welcome corrections to the skills too, especially where a version-specific
+detail has drifted.

@@ -51,7 +51,7 @@ A push to `main` deploys the site.
 
 I'm Matt Horn. I've worked in software and security engineering, most of it on
 identity, access management, resilience, and cloud infrastructure. More recently
-I've been focused on AI/ML infrastructure and its security problems.
+I've focused on AI/ML infrastructure and its security problems.
 
 I write here occasionally: essays on security and AI, and once in a while some very
 short fiction.
@@ -61,11 +61,11 @@ short fiction.
 Also published at [matthorn.io](https://matthorn.io).
 
 - [The A320 power transfer unit](./content/posts/2026-08-04-a320-ptu.md) - August 4, 2026
-- [When a correct proof is a lie: honesty gates for a Lean library](./content/posts/2026-08-01-honesty-gates.md) - August 1, 2026 — why a machine-checked proof can still misdescribe itself, and the gates that catch it
+- [When a correct proof is a lie: honesty gates for a Lean library](./content/posts/2026-08-01-honesty-gates.md) - August 1, 2026: why a machine-checked proof can still misdescribe itself, and the gates that catch it
 - [A lesson engine in plain files](./content/posts/2026-07-24-lesson-engine.md) - July 24, 2026
 - [This homepage is a terminal](./content/posts/2026-07-05-terminal-homepage.md) - July 5, 2026
 - [My receipt printer prints an original artwork every morning](./content/posts/2026-07-04-morningprint.md) - July 4, 2026
-- [Security is becoming an epidemiology problem](./content/posts/2026-04-11-mythos.md) - April 11, 2026 — AI-discovered vulnerability chains, disclosure as inoculation, and why nobody can say when the defensive work is finished
+- [Security is becoming an epidemiology problem](./content/posts/2026-04-11-mythos.md) - April 11, 2026: AI-discovered vulnerability chains, disclosure as inoculation, and why nobody can say when the defensive work is finished
 - [The Seahorse Emoji](./content/posts/2026-03-27-seahorse-emoji.md) - March 27, 2026
 
 ## Resume
@@ -110,7 +110,7 @@ terminal-css is Unlicense, with attributions in [NOTICE](NOTICE).
 
 ## Provenance
 
-Everything here — the posts, the resume, all of it — is my own work, written on
+Everything here (the posts, the resume, all of it) is my own work, written on
 my own time and equipment. It is not affiliated with, sponsored by, or endorsed
 by any past or present employer, or by Anthropic. Views are my own. Copyright
 (c) 2026 Matt Horn. See [NOTICE](NOTICE).

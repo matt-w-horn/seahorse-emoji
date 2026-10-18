@@ -13,6 +13,9 @@ disableKinds = ["taxonomy", "term"]
   # posts embed raw HTML (centered <img> blocks)
   unsafe = true
 
+[markup.highlight]
+  style = "gruvbox"
+
 # Every page also renders a bare-content "fragment" the console fetches on
 # demand (lazy nav). Declaring [outputs].home REPLACES its defaults, so rss
 # must be re-listed or the home feed vanishes.
