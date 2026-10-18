@@ -34,7 +34,7 @@ test('HOURLY_THEMES covers all 24 hours across 12 non-green stations', () => {
 // Only --foreground on --background is checked here: --dim text measures
 // 5.0-6.3:1 and five accents 6.1-6.8:1, so this is not a claim about
 // every token.
-test('every theme puts foreground text at WCAG AAA contrast (>= 7.0:1)', () => {
+test('every theme puts foreground text at WCAG AAA contrast (>= 7.0:1) and derives a complete game palette', () => {
   for (const spec of ALL_THEMES) {
     // local-time constructor: seedLabel formats local time, so a UTC instant
     // would change the date in zones at UTC+10 and beyond
@@ -46,6 +46,16 @@ test('every theme puts foreground text at WCAG AAA contrast (>= 7.0:1)', () => {
     assert.match(info.seedLabel, /^2026-10-18T\d{2}:00$/);
     assert.match(formatOklch(info.bgOklch), /^oklch\(\d+% \d+\.\d{2} \d+°\)$/);
     assert.match(formatOklch(info.accOklch), /^oklch\(\d+% \d+\.\d{2} \d+°\)$/);
+    assert.equal(info.gamePalette.sizeCols.length, 3);
+    assert.equal(info.gamePalette.kindCols.length, 3);
+    assert.ok(info.gamePalette.accent.startsWith('#'));
+    assert.ok(info.gamePalette.hostile.startsWith('#'));
+    if (spec.hours[0] >= 0 && info.bgOklch.h >= 200 && info.bgOklch.h <= 270) {
+      assert.ok(
+        info.accOklch.h < 60 || info.accOklch.h > 115,
+        `${spec.id} should not pair a blue background (${info.bgOklch.h}°) with a yellow accent (${info.accOklch.h}°)`,
+      );
+    }
   }
 });
 

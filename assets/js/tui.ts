@@ -521,12 +521,11 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     screen.appendChild(rowEl(MOTD_INTRO, 'dim'));
     screen.appendChild(artEl(MOTD, 'a sunrise over waves, drawn in block characters'));
     screen.appendChild(gapEl());
-    screen.appendChild(rowEl('My receipt printer wakes up before I do and prints one original', 'wrapcol'));
-    screen.appendChild(rowEl('artwork, themed to the day. This sunrise is its house style.', 'wrapcol'));
+    screen.appendChild(rowEl('My receipt printer wakes up before I do and prints one original artwork, themed to the day. This sunrise is its house style.', 'wrapcol'));
     screen.appendChild(gapEl());
     var post = findPost('morningprint');
-    if (post) screen.appendChild(rowEl(['the full story:  ', { text: post.slug + '.md', click: function () { openDoc(post); } }]));
-    screen.appendChild(rowEl(['the code:        ', { text: 'github.com/matt-w-horn/morningprint', href: 'https://github.com/matt-w-horn/morningprint' }]));
+    if (post) screen.appendChild(rowEl(['the full story:  ', { text: post.slug + '.md', click: function () { openDoc(post); } }], 'motd-kv'));
+    screen.appendChild(rowEl(['the code:        ', { text: 'github.com/matt-w-horn/morningprint', href: 'https://github.com/matt-w-horn/morningprint' }], 'motd-kv'));
   }
 
   var gameMod: typeof GameModule | null = null;
@@ -767,8 +766,8 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     screen.appendChild(rowEl('~/theme · hourly palette & perceptual color theory', 't-title'));
     var sub = document.createElement('div');
     sub.className = 'tlab-sub';
-    sub.textContent = 'Palettes rotate every two hours across 12 non-green perceptual OKLCH stations. Game wireframes derive from the active root tokens via hue rotation.';
     screen.appendChild(sub);
+    loadContent('tpl-theme', DATA!.themeContentUrl, sub, DATA!.themeUrl);
 
     var wrap = document.createElement('div');
     wrap.className = 'tlab-wrap';

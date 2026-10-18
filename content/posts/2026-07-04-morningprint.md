@@ -1,10 +1,10 @@
 +++
-title = "My receipt printer prints an original artwork every morning"
+title = "Daily CP437 block art on a kitchen receipt printer"
 date = 2026-07-04
 author = "Matt Horn"
 +++
 
-A thermal printer in my kitchen prints one original piece of block art every morning, drawn in CP437, the IBM PC character set from 1981. A language model composes each piece from ordinary inputs: the date, the weather, whatever's happening today. It commits to one composition, and the printer prints it once. There are no drivers and no image files anywhere in the pipeline.
+A thermal printer in my kitchen prints one piece of block art every morning, drawn in CP437, the IBM PC character set from 1981. A language model composes each piece from ordinary inputs: the date, the weather, whatever's happening today. It commits to one composition, and the printer prints it once. There are no drivers and no image files anywhere in the pipeline.
 
 Here's what came out of the printer yesterday and this morning:
 
@@ -19,11 +19,9 @@ If you'd like one of your own, you need a receipt printer and a Raspberry Pi, an
 ## The setup
 
 - An Epson TM-T20III, the 80mm thermal printer restaurants use for kitchen orders
-- A Raspberry Pi Zero W running a ~40-line Python `http.server` that pipes whatever bytes it receives into `/dev/usb/lp0`
-- An ngrok tunnel with basic auth in front of the Pi
+- A Raspberry Pi Zero W running a ~40-line Python `http.server` that writes authenticated ESC/POS payloads from the script to `/dev/usb/lp0`
+- An authenticated ngrok tunnel in front of the Pi
 - A Google Apps Script on a daily trigger, doing everything else
-
-Apps Script, Google's hosted JavaScript platform, runs a function on a schedule from Google's servers; ngrok gives the Pi on my private network a public address the script can reach.
 
 I had the printer and the Pi left over from an earlier calendar printer and morning briefing experiment, which I eventually retired. The daily art print is the project that stuck.
 
@@ -31,7 +29,7 @@ I had the printer and the Pi left over from an earlier calendar printer and morn
 
 Every morning the script builds a small brief: the date, the season, the current weather, and one-line notes on the last fourteen pieces it printed. It sends the brief to the model with a system prompt that describes the medium: a monospace grid 48 columns wide in the default font, one-bit black, and only the characters in CP437. The model can run a couple of web searches for what's happening today, and it has to come back with one committed idea.
 
-The model returns a spec using structured output, the API feature that holds a reply to a JSON schema so it can't return anything else:
+The model returns a spec using structured output constrained to a strict JSON schema:
 
 ```json
 {
@@ -56,11 +54,11 @@ A daily generative loop tends to converge. Left alone, it settles on a nice suns
 
 I made one exception on purpose. When the day gives it a reason (a holiday after its eve, an event still unfolding), the model may answer an earlier piece instead, and the script records the link in the history. The model sees those links as markers in the brief on later days. I wrote no dice rolls or cooldowns, and nothing rate-limits the callbacks either: the marker is text in the next day's brief, and the model decides whether to answer again. It has usually preferred to move on. That is how I got the fireworks: on the 3rd it printed the eve, and this morning it answered it.
 
-## Why the flag is set last
+## Scheduling, retries, and the local harness
 
 Apps Script is the right amount of infrastructure for this: no server, free scheduling, and the only thing I maintain is the Pi. Retries come free as well. The script sets the "already printed today" flag only after a successful print, so a failed run leaves it unset and an hourly trigger retries on bad mornings. I get a rate-limited email when something is actually broken.
 
-I wrote the source in TypeScript and bundle it into one file with esbuild, a JavaScript bundler, because Apps Script has no module system. A local harness POSTs test prints straight to the Pi, so I can iterate on the renderer without redeploying anything.
+I wrote the source in TypeScript and bundle it into one file with esbuild because Apps Script has no module system. A local harness POSTs test prints straight to the Pi, so I can iterate on the renderer without redeploying anything.
 
 ## Run your own
 

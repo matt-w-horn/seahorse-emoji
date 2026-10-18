@@ -139,6 +139,12 @@ async function main() {
   }
   if (TOUCH) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const noHOverflow = async () => (await evalJs('document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1')) === true;
+  // All .note elements matching sel share the same left column (within 2px)
+  const notesAligned = async (sel) => (await evalJs('(function(){var ns=document.querySelectorAll(' + JSON.stringify(sel) + ');if(ns.length<2)return false;var x0=ns[0].getBoundingClientRect().left;for(var i=1;i<ns.length;i++){if(Math.abs(ns[i].getBoundingClientRect().left-x0)>2)return false;}return true;})()')) === true;
+  // Every post row in ~/posts stays compact (never crushed into 5+ lines); on
+  // narrow screens the title stacks onto its own line below the filename, and
+  // on desktop all post titles share one left column.
+  const postsReadable = async () => (await evalJs('(function(){var rows=document.querySelectorAll("#screen a.menurow");if(!rows.length)return false;var narrow=window.innerWidth<=620;var x0=null;for(var i=0;i<rows.length;i++){var r=rows[i].getBoundingClientRect();var n=rows[i].querySelector(".note");if(!n||r.height>95)return false;var nr=n.getBoundingClientRect();if(narrow){if(nr.top<r.top+12)return false;}else{if(x0===null)x0=nr.left;else if(Math.abs(nr.left-x0)>2)return false;}}return true;})()')) === true;
   // tap a menu row by its label, as a finger would; true if a row matched
   const tapRow = (label) => evalJs('(function(){var rows=document.querySelectorAll("#screen .menurow");for(var i=0;i<rows.length;i++){if(rows[i].textContent.indexOf(' + JSON.stringify(label) + ')!==-1){rows[i].click();return true;}}return false;})()');
   const chipText = () => evalJs('document.getElementById("keys-chip").textContent');
@@ -161,6 +167,8 @@ async function main() {
     await tapChip(); await sleep(500);
     check('back tap went home', await evalJs('location.pathname') === '/');
     check('home menu painted', (await evalJs('document.querySelectorAll("#screen .menurow").length')) >= 5);
+    check('home menu notes aligned in one column', await notesAligned('#screen .menurow .note'));
+    check('home banner subtitle stays on one line', (await evalJs('(function(){var r=document.querySelector("#screen .art + .row");return !!r && r.offsetHeight < 28;})()')) === true);
     check('menu does not lock scrolling', !(await evalJs('document.getElementById("screen").classList.contains("lock")')));
     check('home chip labels tapping, not keys', (await chipText()) === 'tap an item to open');
     check('home chip is not a back button', !(await chipIsTap()));
@@ -170,6 +178,7 @@ async function main() {
     check('tapped posts/', await tapRow('posts/')); await sleep(500);
     check('URL became /posts/', await evalJs('location.pathname') === '/posts/');
     check('posts chip is the back button', (await chipText()) === '‹ back');
+    check('posts rows readable on mobile (not crushed)', await postsReadable());
     await evalJs('document.querySelector("#screen .menurow").click()'); await sleep(900);
     const postPath = await evalJs('location.pathname');
     check('tap opened a post', /^\/posts\/./.test(postPath), postPath);
@@ -232,6 +241,7 @@ async function main() {
   await typeCmd('posts'); await sleep(400);
   check('URL became /posts/', await evalJs('location.pathname') === '/posts/');
   check('state name posts', (await evalJs('history.state.name')) === 'posts');
+  check('posts rows readable and aligned', await postsReadable());
   await evalJs('history.back()'); await sleep(500);
   check('Back returned to /resume/', await evalJs('location.pathname') === '/resume/');
   check('Back repainted resume body', /software engineer/i.test(await evalJs('document.getElementById("screen").innerText')));
@@ -339,15 +349,23 @@ async function main() {
   check('rapid double-esc landed on home', await evalJs('location.pathname') === '/');
 
   console.log('\n[9b] theme lab (/theme/) & 8-bit ocean canvas');
+  check('home menu notes aligned in one column', await notesAligned('#screen .menurow .note'));
   check('ocean-canvas mounted and sized', (await evalJs('(function(){var c=document.getElementById("ocean-canvas");return !!c && c.width > 50 && c.height > 50;})()')) === true);
-  await typeCmd('theme'); await sleep(400);
+  await typeCmd('theme'); await sleep(500);
   check('URL became /theme/', await evalJs('location.pathname') === '/theme/');
   check('theme command opens ~/theme', /hourly palette/i.test(await evalJs('document.getElementById("screen").innerText')));
+  check('theme prose loaded from Hugo fragment', (await evalJs('(function(){var p=document.querySelector(".tlab-sub p");return !!p && p.textContent.length > 40;})()')) === true);
   check('14 chromatic clock buttons rendered', (await evalJs('document.querySelectorAll(".tlab-hour").length')) === 14);
   check('oklch readouts rendered', /oklch\(/i.test(await evalJs('document.getElementById("screen").innerText')));
+  check('swatch token labels stay single-line', (await evalJs('(function(){var ds=document.querySelectorAll(".tlab-swatch-row .dim");if(!ds.length)return false;for(var i=0;i<ds.length;i++){if(ds[i].offsetHeight>28)return false;}return true;})()')) === true);
   check('no horizontal overflow (theme lab)', await noHOverflow());
+  await evalJs('(function(){var b=document.querySelector(".tlab-hour.active");if(b)b.focus();})()');
+  await evalJs('document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))');
+  await sleep(150);
+  check('focus tracks active clock station after ArrowRight', (await evalJs('(function(){var a=document.activeElement;return !!a && a.classList.contains("tlab-hour") && a.classList.contains("active") && a.getAttribute("aria-pressed")==="true";})()')) === true);
   await escKey(); await sleep(400);
   check('esc from theme lab returns home', await evalJs('location.pathname') === '/');
+  check('focus restored to #in on return to home', (await evalJs('document.activeElement && document.activeElement.id')) === 'in');
 
   console.log('\n[10] no CSP violations / exceptions');
   check('no CSP violations', cspViolations.length === 0, cspViolations.slice(0, 2).join(' | '));

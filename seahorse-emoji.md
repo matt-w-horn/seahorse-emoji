@@ -1,1 +1,1 @@
-[Moved here](./content/posts/2026-03-27-seahorse-emoji.md)
+"The Seahorse Emoji" moved to [content/posts/2026-03-27-seahorse-emoji.md](./content/posts/2026-03-27-seahorse-emoji.md).

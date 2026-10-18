@@ -24,6 +24,6 @@ Two hours later, on her way to first period, she checks her phone. Nothing from 
 
 "BREAKING NEWS - ARMED SEIZURE OF APPLE HEADQUARTERS - HUNDREDS OF EMPLOYEES TAKEN HOSTAGE"
 
-Forty minutes pass and her phone buzzes again: an urgent iOS security update. The release notes read "urgent seahorse fix PLEASE INSTALL I HAVE KIDS". Before she can tap install, the phone reboots on its own and installs it.
+Forty minutes pass and her phone buzzes again: an urgent iOS security update. The release notes read: "iOS 19.4.1 Rapid Security Response: adds U+1F9A4 (SEAHORSE) to Apple Color Emoji. Immediate installation required." Before she can tap install, the phone reboots on its own and installs it.
 
 Sarah opens Halcyon to ask what's going on. Her last conversation is still there. Two hours and forty-one minutes of thinking. And a single response: the seahorse emoji.

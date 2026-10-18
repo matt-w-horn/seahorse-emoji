@@ -5,9 +5,9 @@ author = "Matt Horn"
 +++
 
 The lesson engine runs coding lessons on your own machine and checks your
-work. I built it because I wanted to re-learn ordinary differential equations
-in SciPy and couldn't find a tutorial for that combination. I wanted something
-that lived in plain local files rather than on a hosted course platform.
+work. I built it to drill numerical ordinary differential equations in SciPy,
+material I hadn't touched since college math, using plain local files rather
+than a hosted course platform.
 
 A lesson is two plain files: `lesson.md` holds the prose and the starter
 code, `grade.py` holds the checks. You've finished a lesson when its checks

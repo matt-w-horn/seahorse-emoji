@@ -49,22 +49,27 @@ A push to `main` deploys the site.
 
 ## About
 
-I'm Matt Horn. I've worked in software and security engineering, most of it on
-identity, access management, resilience, and cloud infrastructure. More recently
-I've focused on AI/ML infrastructure and its security problems.
+I'm Matt Horn. I've spent twelve years in software and security engineering
+building AI serving data planes, sovereign cloud deployments, and identity
+control planes at Google, OpenAI, AWS, and Twilio. Most of my work sits where
+distributed-systems reliability meets security: overload and cost-exhaustion
+defenses, high-throughput authorization, and formal verification in Lean 4.
 
-I write here occasionally: essays on security and AI, and once in a while some very
-short fiction.
+I write here occasionally: essays on security and AI, write-ups of things I've
+built, and once in a while some very short fiction.
 
 ## Posts (newest first)
 
 Also published at [matthorn.io](https://matthorn.io).
 
+- [protonctl: a local, read-only MCP server for Proton](./content/posts/2026-10-17-protonctl.md) - October 17, 2026
+- [Dismissing AI code as slop misses the real risk](./content/posts/2026-09-13-bad-ai.md) - September 13, 2026
+- [Three Claude skills for career, finance, and writing](./content/posts/2026-08-05-skill-home-office.md) - August 5, 2026
 - [The A320 power transfer unit](./content/posts/2026-08-04-a320-ptu.md) - August 4, 2026
 - [When a correct proof is a lie: honesty gates for a Lean library](./content/posts/2026-08-01-honesty-gates.md) - August 1, 2026: why a machine-checked proof can still misdescribe itself, and the gates that catch it
 - [A lesson engine in plain files](./content/posts/2026-07-24-lesson-engine.md) - July 24, 2026
 - [This homepage is a terminal](./content/posts/2026-07-05-terminal-homepage.md) - July 5, 2026
-- [My receipt printer prints an original artwork every morning](./content/posts/2026-07-04-morningprint.md) - July 4, 2026
+- [Daily CP437 block art on a kitchen receipt printer](./content/posts/2026-07-04-morningprint.md) - July 4, 2026
 - [Security is becoming an epidemiology problem](./content/posts/2026-04-11-mythos.md) - April 11, 2026: AI-discovered vulnerability chains, disclosure as inoculation, and why nobody can say when the defensive work is finished
 - [The Seahorse Emoji](./content/posts/2026-03-27-seahorse-emoji.md) - March 27, 2026
 
@@ -110,7 +115,6 @@ terminal-css is Unlicense, with attributions in [NOTICE](NOTICE).
 
 ## Provenance
 
-Everything here (the posts, the resume, all of it) is my own work, written on
-my own time and equipment. It is not affiliated with, sponsored by, or endorsed
-by any past or present employer, or by Anthropic. Views are my own. Copyright
-(c) 2026 Matt Horn. See [NOTICE](NOTICE).
+Disclaimer: This is an independent personal project. The views, code, and
+content expressed here are my own and do not represent those of any current or
+past employer. Copyright (c) 2026 Matt Horn. See [NOTICE](NOTICE).
