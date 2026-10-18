@@ -1,7 +1,8 @@
-/* Pistachio preset from https://panr.github.io/terminal-css/ (the theme's
-   documented palette hook; loaded on every theme-rendered page). */
+/* Default non-green Cobalt Sky preset (the theme's documented palette hook;
+   tui.ts switches to the active hourly palette before first paint). */
 :root {
-  --background: #1d2021;
-  --foreground: #ebdbb2;
-  --accent: #8ec07c;
+  --background: #163044;
+  --foreground: #e0eef9;
+  --accent: #67d4ff;
 }
+

@@ -338,6 +338,17 @@ async function main() {
   check('rapid double-esc did not leave the site', (await evalJs('location.origin')) === BASE);
   check('rapid double-esc landed on home', await evalJs('location.pathname') === '/');
 
+  console.log('\n[9b] theme lab (/theme/) & 8-bit ocean canvas');
+  check('ocean-canvas mounted and sized', (await evalJs('(function(){var c=document.getElementById("ocean-canvas");return !!c && c.width > 50 && c.height > 50;})()')) === true);
+  await typeCmd('theme'); await sleep(400);
+  check('URL became /theme/', await evalJs('location.pathname') === '/theme/');
+  check('theme command opens ~/theme', /hourly palette/i.test(await evalJs('document.getElementById("screen").innerText')));
+  check('14 chromatic clock buttons rendered', (await evalJs('document.querySelectorAll(".tlab-hour").length')) === 14);
+  check('oklch readouts rendered', /oklch\(/i.test(await evalJs('document.getElementById("screen").innerText')));
+  check('no horizontal overflow (theme lab)', await noHOverflow());
+  await escKey(); await sleep(400);
+  check('esc from theme lab returns home', await evalJs('location.pathname') === '/');
+
   console.log('\n[10] no CSP violations / exceptions');
   check('no CSP violations', cspViolations.length === 0, cspViolations.slice(0, 2).join(' | '));
   check('no uncaught exceptions', exceptions.length === 0, exceptions.slice(0, 2).join(' | '));

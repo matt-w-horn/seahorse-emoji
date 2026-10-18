@@ -5,6 +5,13 @@
 // Output is DOM-methods only; post/resume content arrives via <template>
 // elements Hugo fills at build time.
 import { resolve, matchPost, completions, type Resolved } from './tui-parse.ts';
+import {
+  ALL_THEMES,
+  themeIndexForHour,
+  inspectTheme,
+  formatOklch,
+  paintOceanCanvas,
+} from './tui-theme.ts';
 import type { TuiData, Post, Route } from './types.ts';
 import type * as GameModule from './tui-game.ts';
 import type { GameHandle } from './tui-game.ts';
@@ -34,7 +41,7 @@ interface Menu { sel: number; items: MenuItem[]; rowEls?: (HTMLAnchorElement | H
 
 // What the screen is showing; ownsKeys hands the keyboard to the view (the game).
 interface ViewState {
-  name: 'boot' | 'home' | 'posts' | 'help' | 'about' | 'motd' | 'game' | 'doc';
+  name: 'boot' | 'home' | 'posts' | 'help' | 'about' | 'motd' | 'game' | 'doc' | 'lab';
   ownsKeys?: boolean;
 }
 
@@ -179,12 +186,19 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
 
   // Mount a doc's content into `mount` (already on screen). Inline <template>
   // (the current page's own doc) -> sync; cached -> sync; else fetch the bare
-  // fragment lazily. On failure the caller's permalink row is the fallback.
-  function loadContent(id: string, url: string, mount: HTMLElement) {
+  // fragment lazily. On failure the error row links pageUrl, the doc's own
+  // page, which carries the same content inline.
+  function loadContent(id: string, url: string, mount: HTMLElement, pageUrl?: string) {
+    function fail(what: string) {
+      clearNode(mount);
+      mount.appendChild(rowEl(pageUrl
+        ? ['(' + what + '; ', { text: 'open the page', href: pageUrl }, ')']
+        : '(' + what + ')', 'err'));
+    }
     var tpl = document.getElementById(id) as HTMLTemplateElement | null;
     if (tpl) { mount.appendChild(tpl.content.cloneNode(true)); return; }
     if (contentCache[id]) { mount.appendChild(contentCache[id].cloneNode(true)); return; }
-    if (!url) { mount.appendChild(rowEl('(missing content; the permalink above has it)', 'err')); return; }
+    if (!url) { fail('missing content'); return; }
     var token = ++loadSeq;
     mount.appendChild(rowEl('loading…', 'dim'));
     fetch(url, { credentials: 'same-origin' })
@@ -196,10 +210,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
         clearNode(mount); mount.appendChild(frag);
         updateScrollChip();
       })
-      .catch(function () {
-        if (token !== loadSeq) return;
-        clearNode(mount); mount.appendChild(rowEl('(content unavailable; the permalink above has it)', 'err'));
-      });
+      .catch(function () { if (token === loadSeq) fail('content unavailable'); });
   }
 
   /* ---------- chrome ---------- */
@@ -265,6 +276,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       case 'home':   return DATA!.homeUrl || '/';
       case 'posts':  return DATA!.postsUrl;
       case 'resume': return DATA!.resumeUrl;
+      case 'lab':    return DATA!.themeUrl;
       case 'doc':    var p = bySlug(route.slug!); return p ? p.url : null;
       default:       return null;   // help/about/motd/game: keep current URL
     }
@@ -276,6 +288,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     if (route.name === 'resume') return 'Resume :: ' + base;
     if (route.name === 'posts') return 'Posts :: ' + base;
     if (route.name === 'about') return 'About :: ' + base;
+    if (route.name === 'lab') return 'Theme Lab :: ' + base;
     return base;   // home, help, motd, game
   }
 
@@ -294,9 +307,15 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       case 'help':   paintHelp();  break;
       case 'motd':   paintMotd();  break;
       case 'game':   paintPlay();  break;
+      case 'lab':    paintThemeLab(); break;
       case 'resume': paintDoc(RESUME!); break;
       case 'doc':    paintDoc(bySlug(route.slug!)!); break;
       default:       paintHome();
+    }
+    if (booted && !touchUI && route.name !== 'game' && (!document.activeElement || document.activeElement === document.body)) {
+      input.focus();
+      caretBase = input.offsetLeft;
+      placeCaret();
     }
   }
 
@@ -325,6 +344,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     var p = norm(path);
     if (p === norm(DATA!.homeUrl || '/')) return { name: 'home' };
     if (p === norm(DATA!.postsUrl)) return { name: 'posts' };
+    if (p === norm(DATA!.themeUrl)) return { name: 'lab' };
     if (DATA!.resumeUrl && p === norm(DATA!.resumeUrl)) return { name: 'resume' };
     var hit = POSTS.filter(function (x) { return norm(x.url) === p; })[0];
     return hit ? { name: 'doc', slug: hit.slug } : { name: 'home' };
@@ -337,6 +357,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     if (fn === paintHelp)  return { name: 'help' };
     if (fn === paintMotd)  return { name: 'motd' };
     if (fn === paintPlay)  return { name: 'game' };
+    if (fn === paintThemeLab) return { name: 'lab' };
     return { name: 'home' };
   }
   function goTo(paintFn: () => void) { go(routeOfPaint(paintFn)); }
@@ -366,11 +387,14 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       n.textContent = '   ' + it.note;
       el.appendChild(n);
     }
-    (el as HTMLElement).addEventListener('mouseenter', function () {
-      if (!touchUI && menu && it.idx !== undefined && menu.sel !== it.idx) {
-        moveMenuSel(it.idx - menu.sel);
-      }
-    });
+    // A hovered or focused row is already on screen, so selecting it must not
+    // scroll: scrolling under a resting pointer hovers the next row, which
+    // would select and scroll again, down the list.
+    function selectThis() {
+      if (menu && it.idx !== undefined && menu.sel !== it.idx) moveMenuSel(it.idx - menu.sel, true);
+    }
+    (el as HTMLElement).addEventListener('mouseenter', function () { if (!touchUI) selectThis(); });
+    (el as HTMLElement).addEventListener('focus', selectThis);
     (el as HTMLElement).addEventListener('click', function (e: MouseEvent) {
       if (it.href && (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0)) return; // new tab etc.
       e.preventDefault();
@@ -391,7 +415,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     if (menu!.rowEls[menu!.sel]) menu!.rowEls[menu!.sel].scrollIntoView({ block: 'nearest' });
   }
 
-  function moveMenuSel(delta: number) {
+  function moveMenuSel(delta: number, noScroll?: boolean) {
     var next = (menu!.sel + delta + menu!.items.length) % menu!.items.length;
     var oldEl = menu!.rowEls![menu!.sel], newEl = menu!.rowEls![next];
     menu!.sel = next;
@@ -399,7 +423,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     if (newEl) {
       newEl.classList.add('sel');
       newEl.querySelector('.sel-mark')!.textContent = '❯ ';
-      newEl.scrollIntoView({ block: 'nearest' });
+      if (!noScroll) newEl.scrollIntoView({ block: 'nearest' });
     }
   }
 
@@ -412,6 +436,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
         { label: 'resume.md', note: 'Google · OpenAI · AWS · Twilio', href: DATA!.resumeUrl || undefined, run: function () { openDoc(RESUME); } },
         { label: 'about.txt', note: 'background & contact', run: function () { goTo(paintAbout); } },
         { label: 'play', note: 'wireframe asteroids', run: function () { goTo(paintPlay); } },
+        { label: 'theme', note: 'hourly oklch & color theory lab', href: DATA!.themeUrl, run: function () { goTo(paintThemeLab); } },
         { label: 'help', note: 'commands & shortcuts', run: function () { goTo(paintHelp); } }
       ].filter(function (it) { return it.label !== 'resume.md' || RESUME; })
     });
@@ -578,7 +603,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     }
     var mount = document.createElement('div');
     screen.appendChild(mount);
-    loadContent(doc.tpl || ('tpl-' + doc.slug), doc.contentUrl, mount);
+    loadContent(doc.tpl || ('tpl-' + doc.slug), doc.contentUrl, mount, doc.url);
     screen.appendChild(gapEl());
     screen.appendChild(rowEl(touchUI ? '(end) · ‹ back (bottom left) returns' : '(end) · esc goes back', 'dim'));
 
@@ -607,40 +632,288 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
   screen.addEventListener('scroll', updateScrollChip);
   window.addEventListener('resize', updateScrollChip);
 
-  /* ---------- commands ---------- */
+  /* ---------- hourly theme, 8-bit ocean canvas & theme lab ---------- */
 
   function findPost(arg: string): Post | null { return matchPost(String(arg || '').toLowerCase(), POSTS); }
 
-  var ACCENTS = [
-    { cls: '', name: 'pistachio' },
-    { cls: 'p-cobalt', name: 'cobalt orange' },
-    { cls: 'p-cobalt-y', name: 'cobalt yellow' },
-    { cls: 'p-cobalt-b', name: 'cobalt blue' }
-  ];
-  var accIdx = 0;
+  var oceanCanvas = document.getElementById('ocean-canvas') as HTMLCanvasElement | null;
   var accChip = document.getElementById('acc-chip') as HTMLElement;
-  accChip.textContent = 'theme: ' + ACCENTS[0].name;   // single source for the initial label
-  function cycleTheme() {
-    // Swap only the palette class. `touch` also lives on <html>, and assigning
-    // className wholesale dropped it, so on a touch device the first theme
-    // change un-hid the CLI prompt line. (`plain` lives there too but was never
-    // at risk: plain mode returns above before the chip is wired.) The default
-    // palette is the empty class, which classList rejects as a token, hence the
-    // guards.
-    var root = document.documentElement;
-    if (ACCENTS[accIdx].cls) root.classList.remove(ACCENTS[accIdx].cls);
-    accIdx = (accIdx + 1) % ACCENTS.length;
-    if (ACCENTS[accIdx].cls) root.classList.add(ACCENTS[accIdx].cls);
-    accChip.textContent = 'theme: ' + ACCENTS[accIdx].name;
-    echo('theme -> ' + ACCENTS[accIdx].name);
+  var bgMotif: 'ocean' | 'crt' | 'off' = 'ocean';
+  var accIdx = themeIndexForHour(new Date().getHours());
+  var hasCycled = false;
+  var oceanPhase = 0;
+  // The first ocean paint builds a per-pixel noise cache (about 100ms for a
+  // 1920x1080 window on a fast laptop), so it waits until after first paint
+  // rather than running inside this render-blocking boot script; later
+  // repaints reuse the cache.
+  var oceanReady = false;
+
+  function renderOcean() {
+    if (!oceanReady || !oceanCanvas || bgMotif !== 'ocean') return;
+    paintOceanCanvas(oceanCanvas, ALL_THEMES[accIdx], oceanPhase);
   }
+
+  function applyTheme(idx: number, announce?: boolean) {
+    var root = document.documentElement;
+    ALL_THEMES.forEach(function (t) { root.classList.remove(t.cls); });
+    accIdx = ((idx % ALL_THEMES.length) + ALL_THEMES.length) % ALL_THEMES.length;
+    var spec = ALL_THEMES[accIdx];
+    // The spec is the palette's only home: write its tokens here. The class
+    // stays because the game's watchTheme observes class changes on <html>.
+    root.style.setProperty('--background', spec.bg);
+    root.style.setProperty('--foreground', spec.fg);
+    root.style.setProperty('--accent', spec.accent);
+    root.style.setProperty('--err', spec.err);
+    root.classList.add(spec.cls);
+    accChip.textContent = 'theme: ' + spec.name;
+    renderOcean();
+    if (announce) echo('theme -> ' + spec.name);
+    if (view.name === 'lab') paintThemeLab();
+  }
+
+  function setMotif(m: 'ocean' | 'crt' | 'off', announce?: boolean) {
+    bgMotif = m;
+    var root = document.documentElement;
+    if (oceanCanvas) oceanCanvas.classList.toggle('hidden', m !== 'ocean');
+    root.classList.toggle('crt-off', m === 'off');
+    if (m === 'ocean') renderOcean();
+    if (announce) echo('motif -> ' + m);
+    if (view.name === 'lab') paintThemeLab();
+  }
+
+  function cycleTheme() {
+    // Swap only the palette class on <html> so `touch` and `crt-off` survive.
+    var cobaltIdx = -1;
+    for (var i = 0; i < ALL_THEMES.length; i++) {
+      if (ALL_THEMES[i].cls === 'p-cobalt') { cobaltIdx = i; break; }
+    }
+    var nextIdx = (!hasCycled && cobaltIdx >= 0 && accIdx !== cobaltIdx)
+      ? cobaltIdx
+      : (accIdx + 1) % ALL_THEMES.length;
+    hasCycled = true;
+    applyTheme(nextIdx, true);
+  }
+
+  // Initialize the hourly palette now (before first paint) and the ocean once
+  // the first frame is out.
+  applyTheme(accIdx, false);
+  requestAnimationFrame(function () {
+    setTimeout(function () { oceanReady = true; renderOcean(); }, 0);
+  });
+
+  // Very slow 8-bit wave drift (~4 FPS tick, ~45s full swell period), paused
+  // under prefers-reduced-motion, hidden tab, or active WebGL game.
+  if (!reduced && oceanCanvas) {
+    setInterval(function () {
+      if (document.hidden || bgMotif !== 'ocean' || view.name === 'game') return;
+      oceanPhase += 0.035;
+      renderOcean();
+    }, 240);
+  }
+
+  var oceanResizeTimer: ReturnType<typeof setTimeout> | null = null;
+  window.addEventListener('resize', function () {
+    if (oceanResizeTimer) clearTimeout(oceanResizeTimer);
+    oceanResizeTimer = setTimeout(renderOcean, 120);
+  });
+
+  function kvRow(parent: HTMLElement, k: string, v: string, vColor?: string) {
+    var kEl = document.createElement('span');
+    kEl.className = 'tlab-k';
+    kEl.textContent = k;
+    var vEl = document.createElement('span');
+    vEl.className = 'tlab-v';
+    vEl.textContent = v;
+    if (vColor) vEl.style.color = vColor;
+    parent.appendChild(kEl);
+    parent.appendChild(vEl);
+  }
+
+  function cardEl(title: string) {
+    var card = document.createElement('div');
+    card.className = 'tlab-card';
+    var t = document.createElement('div');
+    t.className = 'tlab-card-title';
+    t.textContent = title;
+    card.appendChild(t);
+    return card;
+  }
+
+  function labelEl(text: string) {
+    var d = document.createElement('div');
+    d.className = 'dim tlab-label';
+    d.textContent = text;
+    return d;
+  }
+
+  function paintThemeLab() {
+    // A repaint replaces the focused button, so focus returns to the group's
+    // ACTIVE button: the old one would re-apply the previous choice on Enter
+    // after ←/→ or 1/2/0 changed it.
+    var prevFocus = document.activeElement as HTMLElement | null;
+    var focusGroup = prevFocus && prevFocus.classList.contains('tlab-hour') ? '.tlab-hour.active'
+      : prevFocus && prevFocus.classList.contains('tlab-motif-btn') ? '.tlab-motif-btn.active'
+      : null;
+    var focusWasInput = prevFocus === input;
+
+    view = { name: 'lab' }; menu = null;
+    clearScreen();
+    setPath([{ text: '~', go: goHome }, { text: 'theme' }]);
+    setKeys('←/→: step hour · 1/2/0: motif · esc: back', '‹ back');
+
+    var info = inspectTheme(ALL_THEMES[accIdx]);
+    setPage('WCAG ' + info.contrast.toFixed(1) + ':1');
+
+    screen.appendChild(rowEl('~/theme · hourly palette & perceptual color theory', 't-title'));
+    var sub = document.createElement('div');
+    sub.className = 'tlab-sub';
+    sub.textContent = 'Palettes rotate every two hours across 12 non-green perceptual OKLCH stations. Game wireframes derive from the active root tokens via hue rotation.';
+    screen.appendChild(sub);
+
+    var wrap = document.createElement('div');
+    wrap.className = 'tlab-wrap';
+
+    var grid = document.createElement('div');
+    grid.className = 'tlab-grid';
+
+    var card1 = cardEl('01. Hourly Seed & Harmony');
+    var kv1 = document.createElement('div');
+    kv1.className = 'tlab-kv';
+    kvRow(kv1, 'active seed', info.seedLabel + ' (' + info.spec.slot + ')');
+    kvRow(kv1, 'palette', info.spec.name, 'var(--accent)');
+    kvRow(kv1, 'harmony', 'oklch(' + info.bgOklch.h + '° bg / ' + info.accOklch.h + '° accent)');
+    kvRow(kv1, 'wcag 2.1', info.contrast.toFixed(1) + ':1 (' + (info.contrast >= 7 ? 'AAA' : info.contrast >= 4.5 ? 'AA' : 'below AA') + ', foreground on background)');
+    kvRow(kv1, 'character', info.spec.note);
+    card1.appendChild(kv1);
+    card1.appendChild(labelEl('24-hour chromatic clock (click any station or press ←/→):'));
+
+    var clock = document.createElement('div');
+    clock.className = 'tlab-clock';
+    ALL_THEMES.forEach(function (t, idx) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tlab-hour' + (idx === accIdx ? ' active' : '');
+      btn.setAttribute('aria-pressed', String(idx === accIdx));
+      btn.setAttribute('aria-label', t.name + ' (' + t.slot + ')');
+      btn.style.background = t.bg;
+      btn.title = t.name + ' (' + t.slot + ')';
+      var lbl = document.createElement('span');
+      lbl.textContent = t.hours[0] >= 0
+        ? String(t.hours[0]).padStart(2, '0')
+        : (t.id === 'cobalt' ? 'amb' : 'grn');
+      var dot = document.createElement('span');
+      dot.className = 'tlab-hour-dot';
+      dot.style.background = t.accent;
+      btn.appendChild(lbl);
+      btn.appendChild(dot);
+      btn.addEventListener('click', function () {
+        hasCycled = true;
+        applyTheme(idx, true);
+      });
+      clock.appendChild(btn);
+    });
+    card1.appendChild(clock);
+    grid.appendChild(card1);
+
+    var card2 = cardEl('02. Root CSS & Game Derivation');
+    var swatches = document.createElement('div');
+    swatches.className = 'tlab-swatches';
+    var tokenRows = [
+      { token: '--background', color: info.spec.bg, oklch: formatOklch(info.bgOklch), hex: info.spec.bg },
+      { token: '--foreground', color: info.spec.fg, oklch: formatOklch(info.fgOklch), hex: info.spec.fg },
+      { token: '--accent', color: info.spec.accent, oklch: formatOklch(info.accOklch), hex: info.spec.accent },
+      { token: '--dim', color: info.dimHex, oklch: 'mix(fg 62%, bg)', hex: info.dimHex },
+      { token: '--line', color: info.lineHex, oklch: 'mix(fg 22%, bg)', hex: info.lineHex },
+    ];
+    tokenRows.forEach(function (r) {
+      var sRow = document.createElement('div');
+      sRow.className = 'tlab-swatch-row';
+      var chip = document.createElement('span');
+      chip.className = 'tlab-chip';
+      chip.style.background = r.color;
+      var tok = document.createElement('span');
+      tok.className = 'dim';
+      tok.textContent = r.token;
+      var ok = document.createElement('span');
+      ok.textContent = r.oklch;
+      var hx = document.createElement('span');
+      hx.className = 'dim tlab-hex';
+      hx.textContent = r.hex;
+      sRow.appendChild(chip);
+      sRow.appendChild(tok);
+      sRow.appendChild(ok);
+      sRow.appendChild(hx);
+      swatches.appendChild(sRow);
+    });
+    card2.appendChild(swatches);
+    card2.appendChild(labelEl('derivePalette() wireframe game hue rotations:'));
+
+    var rotBar = document.createElement('div');
+    rotBar.className = 'tlab-rot-bar';
+    var gp = info.gamePalette;
+    var rotPills = [
+      { label: '0° ship/acc', color: gp.accent },
+      { label: '-45° rock M', color: gp.sizeCols[1] },
+      { label: '-95° rock S', color: gp.sizeCols[2] },
+      { label: '+150° saucer', color: gp.hostile },
+      { label: '+90° powerup', color: gp.kindCols[0] },
+    ];
+    rotPills.forEach(function (p) {
+      var pill = document.createElement('span');
+      pill.className = 'tlab-rot-pill';
+      pill.style.color = p.color;
+      pill.textContent = p.label;
+      rotBar.appendChild(pill);
+    });
+    card2.appendChild(rotBar);
+    grid.appendChild(card2);
+    wrap.appendChild(grid);
+
+    var card3 = cardEl('03. Background Motif & CRT Raster');
+    var motifSub = document.createElement('div');
+    motifSub.className = 'dim';
+    motifSub.style.fontSize = '12px';
+    motifSub.textContent = 'Select background layer (CRT raster sits behind terminal text so typography stays crisp):';
+    card3.appendChild(motifSub);
+
+    var motifs = document.createElement('div');
+    motifs.className = 'tlab-motifs';
+    var motifOpts: { id: 'ocean' | 'crt' | 'off'; label: string }[] = [
+      { id: 'ocean', label: '[1] 8-Bit Dithered Ocean + CRT' },
+      { id: 'crt', label: '[2] CRT Raster Only' },
+      { id: 'off', label: '[0] Minimal / Off' },
+    ];
+    motifOpts.forEach(function (opt) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tlab-motif-btn' + (bgMotif === opt.id ? ' active' : '');
+      b.setAttribute('aria-pressed', String(bgMotif === opt.id));
+      b.textContent = opt.label;
+      b.addEventListener('click', function () { setMotif(opt.id, true); });
+      motifs.appendChild(b);
+    });
+    card3.appendChild(motifs);
+    wrap.appendChild(card3);
+
+    screen.appendChild(wrap);
+
+    if (focusGroup) {
+      var active = screen.querySelector(focusGroup) as HTMLElement | null;
+      if (active) active.focus();
+    } else if (focusWasInput && !touchUI) {
+      input.focus();
+    }
+  }
+
+  /* ---------- commands ---------- */
 
   var commands: { [k: string]: Command } = {
     help: { desc: 'show available commands', fn: function () { goTo(paintHelp); } },
     ls: { desc: 'list directory contents (ls posts/)', fn: function (args) {
       var r = resolve('ls', args[0], POSTS);
-      if (r.kind === 'home') { goHome(); echo('~: posts/  resume.md  about.txt  help'); return; }
+      if (r.kind === 'home') { goHome(); echo('~: posts/  resume.md  about.txt  theme  help'); return; }
       if (r.kind === 'posts') { goTo(paintPosts); echo('~/posts: ' + POSTS.length + ' files, listed on screen'); return; }
+      if (r.kind === 'lab') { goTo(paintThemeLab); echo('-> ~/theme'); return; }
       echo('ls: ' + (r as MissingResolved).name + ': no such directory', 'err');
     } },
     cd: { desc: 'change directory (cd posts, cd ..)', fn: function (args) {
@@ -648,6 +921,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       if (r.kind === 'home') { goHome(); echo('-> ~'); return; }
       if (r.kind === 'back') { goBack(); echo('-> back'); return; }
       if (r.kind === 'posts') { goTo(paintPosts); echo('-> ~/posts'); return; }
+      if (r.kind === 'lab') { goTo(paintThemeLab); echo('-> ~/theme'); return; }
       echo('cd: ' + (r as MissingResolved).name + ': no such directory', 'err');
     } },
     cat: { desc: 'open a file or post (cat resume.md)', fn: function (args) {
@@ -657,6 +931,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       if (r.kind === 'about') { goTo(paintAbout); return; }
       if (r.kind === 'resume') { openDoc(RESUME); return; }
       if (r.kind === 'posts') { goTo(paintPosts); return; }
+      if (r.kind === 'lab') { goTo(paintThemeLab); return; }
       if (r.kind === 'post') {
         var p = bySlug(r.slug);
         if (p) { openDoc(p); return; }
@@ -669,7 +944,26 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     back: { desc: 'go back one screen', fn: goBack },
     play: { desc: 'launch wireframe asteroids', fn: function () { goTo(paintPlay); } },
     motd: { desc: 'daily print from morningprint', fn: function () { goTo(paintMotd); } },
-    theme: { desc: 'cycle color palette', fn: cycleTheme },
+    lab: { desc: 'open hourly color theory lab', fn: function () { goTo(paintThemeLab); echo('-> ~/theme'); } },
+    theme: { desc: 'open color theory lab or set palette', fn: function (args) {
+      if (!args.length) {
+        if (view.name === 'lab') { cycleTheme(); return; }
+        goTo(paintThemeLab);
+        echo('-> ~/theme');
+        return;
+      }
+      var q = args.join(' ').toLowerCase();
+      if (q === 'lab' || q === 'info') { goTo(paintThemeLab); echo('-> ~/theme'); return; }
+      if (q === 'next' || q === 'cycle') { cycleTheme(); return; }
+      for (var i = 0; i < ALL_THEMES.length; i++) {
+        if (ALL_THEMES[i].id === q || ALL_THEMES[i].name.indexOf(q) !== -1) {
+          hasCycled = true;
+          applyTheme(i, true);
+          return;
+        }
+      }
+      echo('theme: ' + q + ': no such palette (try: theme next)', 'err');
+    } },
     plain: { desc: 'reload without terminal chrome (?plain)', fn: function () { window.location.href = location.pathname + '?plain'; } },
     whoami: { desc: 'print current session user', fn: function () { echo('matt (guest is you)'); } },
     clear: { desc: 'redraw current screen', fn: function () { echo(''); setPage(''); render(currentRoute!); } }
@@ -724,6 +1018,15 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       if (e.key === 'ArrowDown') { moveMenuSel(1); return true; }
       if (e.key === 'ArrowUp') { moveMenuSel(-1); return true; }
       if (e.key === 'Enter') { menu.items[menu.sel].run(); return true; }
+    }
+    if (view.name === 'lab') {
+      if (e.key === 'ArrowRight') { hasCycled = true; applyTheme(accIdx + 1, true); return true; }
+      if (e.key === 'ArrowLeft') { hasCycled = true; applyTheme(accIdx - 1, true); return true; }
+      if (!focused) {
+        if (e.key === '1') { setMotif('ocean', true); return true; }
+        if (e.key === '2') { setMotif('crt', true); return true; }
+        if (e.key === '0') { setMotif('off', true); return true; }
+      }
     }
     if (view.name === 'doc') {
       if (e.key === ' ' || e.key === 'Enter' || e.key === 'PageDown') { scrollDoc(1, true); return true; }
@@ -908,8 +1211,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     if (booted) return;
     booted = true;
     bootTimers.forEach(clearTimeout);
-    render(currentRoute!);   // currentRoute is home (boot only runs for a fresh '/')
-    if (!touchUI) { input.focus(); caretBase = input.offsetLeft; placeCaret(); }
+    render(currentRoute!);   // currentRoute is home (boot only runs for a fresh '/'); render focuses the prompt
   }
 
   window.addEventListener('popstate', function (e) {
@@ -941,7 +1243,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     }, 65 * POST_LINES.length + 150));
     screen.addEventListener('click', bootSkip, { once: true });
   } else {
+    booted = true;
     render(initRoute);   // deep link or reduced-motion: paint straight in, no BIOS
-    if (!touchUI) { input.focus(); caretBase = input.offsetLeft; placeCaret(); }
   }
 })();

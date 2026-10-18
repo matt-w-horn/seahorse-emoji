@@ -108,7 +108,8 @@ test('completions: one source of truth per command', () => {
   const c = completions('cat', POSTS);
   assert.ok(c.includes('about.txt') && c.includes('resume.md') && c.includes('posts/'));
   assert.ok(c.includes('2026-07-04-morningprint'));
-  assert.deepEqual(completions('ls', POSTS), ['posts/']);
-  assert.deepEqual(completions('cd', POSTS), ['posts/']);
+  assert.ok(c.includes('theme'));
+  assert.deepEqual(completions('ls', POSTS), ['posts/', 'theme']);
+  assert.deepEqual(completions('cd', POSTS), ['posts/', 'theme']);
   assert.deepEqual(completions('play', POSTS), []);
 });

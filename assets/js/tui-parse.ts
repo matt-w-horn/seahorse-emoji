@@ -23,6 +23,7 @@ export type Resolved =
   | { kind: 'posts' }
   | { kind: 'about' }
   | { kind: 'resume' }
+  | { kind: 'lab' }
   | { kind: 'post'; slug: string }
   | { kind: 'back' }
   | { kind: 'usage' }
@@ -74,6 +75,9 @@ export function matchPost<T extends PostRef>(
   return null;
 }
 
+// names that open the theme lab, as a directory (ls/cd) or a file (cat)
+const LAB_NAMES = ['theme', 'lab', 'color-lab'];
+
 // Error names carry the RAW argument (trimmed), so messages echo what the user
 // actually typed, never a rewritten form.
 export function resolve(
@@ -95,8 +99,11 @@ export function resolve(
 
   if (cmd === 'ls' || cmd === 'cd') {
     if (segs.length === 0) return { kind: 'home' };
-    if (segs.length === 1 && (segs[0].toLowerCase() === 'posts' || segs[0].toLowerCase() === 'home')) {
-      return segs[0].toLowerCase() === 'home' ? { kind: 'home' } : { kind: 'posts' };
+    if (segs.length === 1) {
+      const s0 = segs[0].toLowerCase();
+      if (s0 === 'home') return { kind: 'home' };
+      if (s0 === 'posts') return { kind: 'posts' };
+      if (LAB_NAMES.indexOf(s0) !== -1) return { kind: 'lab' };
     }
     return { kind: 'missing', what: 'directory', name: raw };
   }
@@ -114,6 +121,7 @@ export function resolve(
       const file = name.toLowerCase().replace(/\.md$/, '').replace(/\.txt$/, '');
       if (file === 'about') return { kind: 'about' };
       if (file === 'resume') return { kind: 'resume' };
+      if (LAB_NAMES.indexOf(file) !== -1) return { kind: 'lab' };
       const hit = matchPost(name.toLowerCase().replace(/\.md$/, ''), posts);
       if (hit) return { kind: 'post', slug: hit.slug };
     }
@@ -127,9 +135,9 @@ export function resolve(
 // the tab completer draw from
 export function completions(cmd: string, posts: readonly PostRef[] = []): string[] {
   if (cmd === 'cat') {
-    return ['about.txt', 'resume.md', 'posts/']
+    return ['about.txt', 'resume.md', 'posts/', 'theme']
       .concat(posts.map(function (p) { return p.slug; }));
   }
-  if (cmd === 'ls' || cmd === 'cd') return ['posts/'];
+  if (cmd === 'ls' || cmd === 'cd') return ['posts/', 'theme'];
   return [];
 }

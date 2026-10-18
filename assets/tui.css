@@ -1,11 +1,13 @@
 /* matthorn.io terminal home. Layers:
-   1. Pistachio preset variables (panr/terminal-css presets.json)
+   1. base variables (palette defaults live in /terminal.css)
    2. panr/terminal-css standalone.css, verbatim (public domain / Unlicense)
    3. headings "one size" component, verbatim
    4. the TUI layout layer */
 
 :root {
-  /* --background/--foreground/--accent come from /terminal.css (single source) */
+  /* --background/--foreground/--accent default from /terminal.css; once the
+     console boots, tui.ts writes all four palette tokens from the active
+     ThemeSpec in tui-theme.ts, the palettes' only home. */
   color-scheme: dark;
   accent-color: var(--accent);
   --font-size: 14px;
@@ -13,11 +15,8 @@
   --radius: 0px;
   --dim: color-mix(in srgb, var(--foreground) 62%, var(--background));
   --line: color-mix(in srgb, var(--foreground) 22%, var(--background));
-  --err: #fb4934;
+  --err: #ff6b8b;
 }
-:root.p-cobalt   { --background: #193549; --foreground: #d8e9f5; --accent: #ff9d00; --err: #ff628c; }
-:root.p-cobalt-y { --background: #193549; --foreground: #d8e9f5; --accent: #ffc600; --err: #ff628c; }
-:root.p-cobalt-b { --background: #193549; --foreground: #d8e9f5; --accent: #4fc4ff; --err: #ff628c; }
 
 /* [[ FONT ]] */
 
@@ -410,50 +409,67 @@ a:hover, a.dim:hover {
   text-decoration-color: var(--foreground);
 }
 
-#wrap { height: 100dvh; box-sizing: border-box; padding: 14px; display: flex; }
+#ocean-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  image-rendering: pixelated;
+}
+#ocean-canvas.hidden,
+html.plain #ocean-canvas,
+body:has(#gamecanvas) #ocean-canvas {
+  display: none;
+}
+
+/* CRT scanlines + RGB phosphor triads sit at z-index: 0 directly over the
+   background ocean layer, underneath #wrap (z-index: 1) so foreground
+   typography, essay bodies, images, and cards stay crisp and un-striped. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.018) 0px,
+      rgba(255, 255, 255, 0.005) 1px,
+      rgba(0, 0, 0, 0.18) 2px,
+      rgba(0, 0, 0, 0.24) 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 70, 90, 0.016) 0px,
+      rgba(70, 255, 130, 0.016) 1px,
+      rgba(80, 150, 255, 0.020) 2px,
+      rgba(0, 0, 0, 0.04) 3px
+    );
+}
+html.plain body::after,
+html.crt-off body::after,
+body:has(#gamecanvas)::after {
+  display: none;
+}
+
+#wrap { position: relative; z-index: 1; height: 100dvh; box-sizing: border-box; padding: 14px; display: flex; }
 #frame {
   position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column;
-  border: 2px solid var(--line); border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: var(--radius);
   padding: 14px 0 12px;
-  background:
-    radial-gradient(ellipse 60% 50% at 16% 12%, color-mix(in srgb, var(--accent) 3.5%, transparent), transparent 70%),
-    radial-gradient(ellipse 55% 50% at 84% 88%, color-mix(in srgb, var(--accent) 2.5%, transparent), transparent 70%),
-    radial-gradient(ellipse 95% 90% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.22) 100%),
-    var(--background);
-}
-#frame::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 0),
-    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--foreground) 4.2%, transparent) 1px, transparent 0),
-    linear-gradient(to right, color-mix(in srgb, var(--accent) 2.4%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--accent) 2.4%, transparent) 1px, transparent 1px);
-  background-size: 120px 120px, 24px 24px, 120px 120px, 120px 120px;
-  mask-image: radial-gradient(ellipse 92% 88% at 50% 48%, #000 40%, transparent 98%);
-}
-#frame::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0 2px,
-    rgba(0, 0, 0, 0.1) 2px 3px
-  );
-}
-#frame:has(#gamecanvas)::before,
-#frame:has(#gamecanvas)::after {
-  display: none;
+  background: transparent;
 }
 .chip, .sel-mark, .ghud { user-select: none; }
 .chip {
-  position: absolute; background: var(--background); padding: 0 8px;
+  position: absolute;
+  background: color-mix(in srgb, var(--background) 85%, transparent);
+  padding: 0 8px;
   font-size: 12px; color: var(--dim); white-space: nowrap;
-  z-index: 1;   /* above the game canvas, which spans the frame's full height */
+  z-index: 2;   /* above the game canvas, which spans the frame's full height */
 }
 #title-chip { top: -9px; left: 16px; }
 #title-chip .site { color: var(--accent); font-weight: 700; letter-spacing: .08em; }
@@ -464,7 +480,7 @@ a:hover, a.dim:hover {
   top: -9px; right: 16px; cursor: pointer;
   border: none; font-weight: 400; transition: color 100ms linear; appearance: none;
 }
-#acc-chip:hover { color: var(--accent); background: var(--background); }
+#acc-chip:hover { color: var(--accent); background: color-mix(in srgb, var(--background) 92%, transparent); }
 #keys-chip { bottom: -9px; left: 16px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
 #page-chip { bottom: -9px; right: 16px; font-variant-numeric: tabular-nums; }
 #page-chip.err { color: var(--err); }
@@ -677,9 +693,14 @@ html.touch #keys-chip { padding: 2px 8px; bottom: -11px; }
 }
 
 .prejs { max-width: 110ch; margin: 0 auto; }
+/* Browsers without blocking="render" would flash the fallback before boot
+   clears it, so it starts hidden. The hold is a timed animation, not
+   display:none, so a script that never boots (failed load, missing
+   #tui-data) still reveals the fallback when the hold ends. */
 @media (scripting: enabled) {
-  html:not(.plain) .prejs { display: none; }
+  html:not(.plain) .prejs { animation: prejs-hold 2s; }
 }
+@keyframes prejs-hold { from, to { visibility: hidden; } }
 .prejs h1 {
   color: var(--accent);
   font-weight: 700;
@@ -797,3 +818,151 @@ html.touch #frame:has(#gamecanvas) { padding-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   .ghud-banner, .ghud-flash { transition: none; }
 }
+
+/* ---------- Theme Lab (~/theme) ---------- */
+.tlab-label { margin-top: 10px; font-size: 11.5px; }
+.tlab-wrap {
+  max-width: 106ch;
+  padding-top: 2px;
+}
+.tlab-sub {
+  color: var(--dim);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.tlab-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.tlab-card {
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--background) 80%, black 20%);
+  min-width: 0;
+}
+.tlab-card-title {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 5px;
+}
+.tlab-kv {
+  display: grid;
+  grid-template-columns: 13ch 1fr;
+  row-gap: 4px;
+  font-size: 12.5px;
+}
+.tlab-k { color: var(--dim); }
+.tlab-v { color: var(--foreground); font-variant-numeric: tabular-nums; min-width: 0; overflow-wrap: anywhere; }
+.tlab-swatches {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 4px;
+}
+.tlab-swatch-row {
+  display: grid;
+  grid-template-columns: 26px 13ch 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.tlab-chip {
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.tlab-clock {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+.tlab-hour {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 2px;
+  padding: 4px 2px 3px;
+  text-align: center;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.tlab-hour:hover,
+.tlab-hour:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+.tlab-hour.active {
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 8px var(--accent);
+  font-weight: 700;
+}
+.tlab-hour-dot {
+  width: 12px;
+  height: 5px;
+  border-radius: 1px;
+}
+.tlab-rot-bar {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.tlab-rot-pill {
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.26);
+  font-variant-numeric: tabular-nums;
+}
+.tlab-motifs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.tlab-motif-btn {
+  appearance: none;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--dim);
+  cursor: pointer;
+}
+.tlab-motif-btn:hover,
+.tlab-motif-btn:focus-visible {
+  color: var(--foreground);
+  border-color: var(--accent);
+  outline: none;
+}
+.tlab-motif-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  font-weight: 700;
+}
+
+@media (max-width: 620px) {
+  .tlab-grid { grid-template-columns: 1fr; gap: 10px; }
+  .tlab-clock { grid-template-columns: repeat(7, 1fr); }
+  .tlab-swatch-row { grid-template-columns: 20px 11ch 1fr; }
+  .tlab-swatch-row .tlab-hex { display: none; }
+}
+
