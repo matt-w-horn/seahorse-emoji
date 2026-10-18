@@ -1,36 +1,27 @@
 +++
-title = "Three skills for the home office"
+title = "Three Claude skills for career, finance, and writing"
 date = 2026-08-05
 author = "Matt Horn"
 +++
 
-There is probably a 401k somewhere with your name on it that you have never
-once opened. This is far more common than the people who talk about money let
-on; below are three skills for Claude, folders of instructions it picks up and
-follows, for the questions that don't fit in one conversation.
+Open-ended questions (what role your track record actually supports, how tax and contribution rules interact across accounts, or why a draft isn't landing) usually fail in a single chat turn because the model answers before it has the constraints. Below are three Claude skills that structure those problems as multi-step workflows with explicit verification passes:
 
 | Skill | What it's for |
 |---|---|
-| [life-paths](https://github.com/matt-w-horn/skills/blob/main/skills/life-paths/SKILL.md) | What you could actually do next, worked out from your record instead of a personality quiz. |
-| [financial-planning](https://github.com/matt-w-horn/skills/blob/main/skills/financial-planning/SKILL.md) | Your real numbers turned into a plan: what you can save, when you could stop, what happens if things go badly. |
-| [writing-axes](https://github.com/matt-w-horn/skills/blob/main/skills/writing-axes/SKILL.md) | The thing you've been rewriting for a week. |
+| [life-paths](https://github.com/matt-w-horn/skills/blob/main/skills/life-paths/SKILL.md) | Career and role decisions worked out from concrete evidence in your record rather than generic advice. |
+| [financial-planning](https://github.com/matt-w-horn/skills/blob/main/skills/financial-planning/SKILL.md) | Your actual numbers turned into a stress-tested plan: savings rates, tax buckets, and downside scenarios. |
+| [writing-axes](https://github.com/matt-w-horn/skills/blob/main/skills/writing-axes/SKILL.md) | Audience-and-goal-first drafting, structural diagnosis, and de-slop review for human-facing prose. |
 
-They ask a lot before they answer anything. [financial-planning](https://github.com/matt-w-horn/skills/blob/main/skills/financial-planning/SKILL.md)
-looks up this year's actual contribution limits instead of recalling them,
+They gather constraints and verify facts before generating an answer. [financial-planning](https://github.com/matt-w-horn/skills/blob/main/skills/financial-planning/SKILL.md)
+looks up this year's actual contribution limits instead of recalling them from weights,
 writes down every assumption it makes and what happens if that assumption is
 wrong, and hands the finished plan to a second copy of itself whose only job is
 to find what's wrong with it. That takes 84 tool calls where answering off the
 top of its head takes 10.
 
-[life-paths](https://github.com/matt-w-horn/skills/blob/main/skills/life-paths/SKILL.md) has a rule I'd want from a person. It treats both "You can do
-anything" and "be realistic, lower your sights" as failures of evidence. It's
-meant to tell you what your record supports, commit to a real recommendation,
-and then treat your disagreement with it as information. You own the decision.
-It just has to show its work.
+[life-paths](https://github.com/matt-w-horn/skills/blob/main/skills/life-paths/SKILL.md) enforces an evidence gate: both ungrounded optimism and reflexively conservative advice count as failures of analysis. It inventories what your record actually supports, commits to a concrete recommendation, and treats your pushback as additional signal. You own the decision; the skill has to show its work.
 
-If what comes up isn't a planning problem, like a crisis at home or health
-news, its instruction is to "stop being a process and be present." Planning
-resumes later or not at all.
+It also defines an explicit scope boundary: if the input is an acute personal or medical emergency rather than a planning problem, the workflow halts instead of forcing a decision tree onto it.
 
 The full version of life-paths runs for hours, so start with the short one.
 It's about twenty minutes of questions, and it will tell you once what the

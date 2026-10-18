@@ -118,6 +118,9 @@
 {{- end }}
 {{- $resumeUrl := "" }}{{ $resumeCU := "" -}}
 {{- with $resume }}{{ $resumeUrl = .RelPermalink }}{{ with .OutputFormats.Get "fragment" }}{{ $resumeCU = .RelPermalink }}{{ end }}{{ end -}}
+{{- $theme := site.GetPage "/theme" -}}
+{{- $themeUrl := "/theme/" | relURL }}{{ $themeCU := "" -}}
+{{- with $theme }}{{ $themeUrl = .RelPermalink }}{{ with .OutputFormats.Get "fragment" }}{{ $themeCU = .RelPermalink }}{{ end }}{{ end -}}
 {{- $aboutCU := "" }}{{ with site.Home.OutputFormats.Get "fragment" }}{{ $aboutCU = .RelPermalink }}{{ end -}}
 {{- /* Game: standalone ESM chunk, loaded on demand by tui.ts via import(). */ -}}
 {{- $game := resources.Get "js/tui-game.ts" | js.Build (dict "minify" true "format" "esm" "target" "es2020") | fingerprint -}}
@@ -125,7 +128,8 @@
     "posts" $m
     "postsUrl" ("/posts/" | relURL)
     "homeUrl" ("/" | relURL)
-    "themeUrl" ("/theme/" | relURL)
+    "themeUrl" $themeUrl
+    "themeContentUrl" $themeCU
     "resumeUrl" $resumeUrl
     "resumeContentUrl" $resumeCU
     "aboutContentUrl" $aboutCU

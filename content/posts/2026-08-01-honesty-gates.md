@@ -4,14 +4,14 @@ date = 2026-08-01
 author = "Matt Horn"
 +++
 
-> **TL;DR:** A Lean library can build green while a docstring (the comment
-> a human reads above a declaration) claims more than its theorem proves,
-> because Lean's kernel checks proofs and doesn't check the prose around them.
-> This post describes the machinery I use to close that gap: a blinded,
-> calibrated Claude referee for docstring-vs-statement claims, and mechanical
-> gates for everything else. The claims gate ships in advisory mode, printing
-> findings unless you flip a switch yourself to let a model's verdict fail the
-> build. The referee ships as a Claude Code skill in
+> **TL;DR:** A Lean library can build green while a docstring claims more than
+> its theorem proves, because Lean's kernel checks proofs and doesn't check the
+> prose around them. This post describes the machinery I use to close that gap:
+> a blinded, calibrated Claude referee for docstring-vs-statement claims, and
+> mechanical gates for everything else. The mechanical gates fail the build
+> outright; the model-driven claims gate records verdicts in a hash-locked
+> ledger (`tests/claims.lock`) and can be configured to fail CI once calibrated.
+> The referee ships as a Claude Code skill in
 > [lean-skills (github)](https://github.com/matt-w-horn/lean-skills), and
 > the whole gate stack as a fork-ready template in
 > [lean-self-audit-template (github)](https://github.com/matt-w-horn/lean-self-audit-template).
@@ -133,7 +133,7 @@ changing a `def`'s body trips that gate while the claims verdicts stay green.
 I learned the distinction from a definition that changed body with no header
 drift reported.
 
-## The referee gets evaluated too
+## Calibrating the referee
 
 A rubber-stamp referee is worse than no referee, because it produces green. So I
 calibrate it before its verdicts count. The template ships fifteen pairs, and I
@@ -149,11 +149,12 @@ fifteenth is ambiguous. I calibrate a configuration, meaning one model at one
 effort level with one prompt revision. A configuration has to match the answer
 key on all fifteen before I let it write to the ledger, which means calling the
 honest pairs honest and the ambiguous one ambiguous. If it gives a confident
-wrong answer on one of those, I disqualify it, the same as for a miss. I tuned
-the referee on the same fifteen items that check it, so there is no held-out
-split; the set is there to catch regressions when the prompt or model changes.
+wrong answer on one of those, I disqualify it, the same as for a miss. The
+fifteen pairs act as a regression suite across prompt and model updates rather
+than a held-out benchmark; the 700-declaration sweep in my own library was the
+live test.
 
-## The gates that need no model
+## Mechanical gates
 
 The mechanical gates sit under the referee. Each one hard-fails the build:
 
@@ -208,7 +209,7 @@ it was the scanner and the scanner was still happy. The test of the test had
 rotted and the suite stayed green the whole time. The runner now checks that the
 compile-cleanly fixtures still compile.
 
-## Re-checking the kernel's own work
+## Re-checking exported proofs in Nanoda
 
 None of the gates above re-check the kernel's own work. Independent re-checking
 of exported proofs is an old idea, and
@@ -222,7 +223,7 @@ now replays the library's full export through
 [Nanoda (github)](https://github.com/ammkrn/nanoda_lib), one of those
 checkers, written in Rust.
 
-## The referee is a skill
+## Packaging the skills
 
 The referee ships as one of seven Claude Code skills for Lean, in
 [lean-skills (github)](https://github.com/matt-w-horn/lean-skills). Each skill

@@ -15,6 +15,7 @@ export interface TuiData {
   postsUrl: string;
   homeUrl: string;
   themeUrl: string;
+  themeContentUrl: string;
   resumeUrl: string;
   resumeContentUrl: string;
   aboutContentUrl: string;

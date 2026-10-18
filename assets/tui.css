@@ -500,6 +500,8 @@ body:has(#gamecanvas)::after {
 /* help/commands rows: hang wrapped description text under the description
    column (14ch = 2 lead + 12 name field) instead of the far-left margin. */
 .row.cmd { padding-left: 14ch; text-indent: -14ch; }
+.row.motd-kv { padding-left: 17ch; text-indent: -17ch; }
+.row.wrapcol { max-width: 63ch; }
 .gap { height: var(--line-height); }
 .dim { color: var(--dim); }
 .err { color: var(--err); }
@@ -518,7 +520,7 @@ body:has(#gamecanvas)::after {
 
 .menurow {
   display: grid;
-  grid-template-columns: 2ch minmax(12ch, max-content) auto;
+  grid-template-columns: 2ch minmax(12ch, max-content) 1fr;
   align-items: baseline;
   width: fit-content;
   min-width: min(100%, 34ch);
@@ -531,10 +533,10 @@ body:has(#gamecanvas)::after {
   cursor: pointer; white-space: pre-wrap;
 }
 #screen:has(.t-title) .menurow {
-  grid-template-columns: 2ch minmax(31ch, max-content) auto;
+  grid-template-columns: 2ch minmax(31ch, max-content) 1fr;
 }
 .menurow:focus-visible { outline: 1px solid var(--accent); outline-offset: 0; }
-.menurow .note { color: var(--dim); font-variant-numeric: tabular-nums; }
+.menurow .note { color: var(--dim); font-variant-numeric: tabular-nums; white-space: normal; padding-left: 3ch; }
 .menurow.sel {
   color: var(--accent);
 }
@@ -736,10 +738,24 @@ html.touch #keys-chip { padding: 2px 8px; bottom: -11px; }
   #title-chip { left: 10px; } #acc-chip { right: 10px; }
   #keys-chip { left: 10px; } #page-chip { right: 10px; }
   .art { font-size: 10px; }
+  .art + .row { font-size: 10px; white-space: nowrap; }
   .menurow, #screen:has(.t-title) .menurow {
-    grid-template-columns: 2ch 1fr auto;
+    grid-template-columns: 2ch 10ch 1fr;
+    width: 100%;
     padding: .4em 6px .4em 2px;
     margin-left: -2px;
+  }
+  .menurow .note { padding-left: 2ch; }
+  #screen:has(.t-title) a.menurow {
+    grid-template-columns: 2ch 1fr;
+    row-gap: 2px;
+  }
+  #screen:has(.t-title) a.menurow .note {
+    grid-column: 2;
+    padding-left: 0;
+  }
+  #screen:has(.t-title) button.menurow {
+    grid-template-columns: 2ch auto 1fr;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -825,10 +841,12 @@ html.touch #frame:has(#gamecanvas) { padding-bottom: 0; }
   max-width: 106ch;
   padding-top: 2px;
 }
-.tlab-sub {
+.tlab-sub,
+#screen .tlab-sub p {
   color: var(--dim);
   font-size: 13px;
-  margin-bottom: 14px;
+  line-height: 1.55;
+  margin: 0 0 14px;
 }
 .tlab-grid {
   display: grid;
@@ -962,7 +980,8 @@ html.touch #frame:has(#gamecanvas) { padding-bottom: 0; }
 @media (max-width: 620px) {
   .tlab-grid { grid-template-columns: 1fr; gap: 10px; }
   .tlab-clock { grid-template-columns: repeat(7, 1fr); }
-  .tlab-swatch-row { grid-template-columns: 20px 11ch 1fr; }
+  .tlab-swatch-row { grid-template-columns: 20px 12.5ch 1fr; }
+  .tlab-swatch-row .dim { white-space: nowrap; }
   .tlab-swatch-row .tlab-hex { display: none; }
 }
 

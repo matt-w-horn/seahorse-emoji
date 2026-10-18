@@ -7,7 +7,7 @@ author = "Matt Horn"
 
 Sunnyvale, CA · [LinkedIn](https://www.linkedin.com/in/matt-horn-718611197/) · [GitHub](https://github.com/matt-w-horn) · [Two-page PDF](/resume.pdf)
 
-12 years of experience building AI serving infrastructure, sovereign cloud deployments, and identity data planes at Google, OpenAI, AWS, and Twilio. Specializes in distributed systems reliability, AI model serving, IAM and ABAC, DoS and denial-of-wallet mitigation, and formal verification in Lean 4; has led teams of 6 engineers, served as interim manager, and conducted around 100 interviews.
+12 years of experience building AI serving infrastructure, sovereign cloud deployments, and identity data planes at Google, OpenAI, AWS, and Twilio. Specializes in distributed systems reliability, AI model serving, IAM and ABAC, DoS and denial-of-wallet mitigation, and formal verification in Lean 4; has led teams of 6 engineers and served as interim manager.
 
 ## Technical Skills
 
@@ -30,8 +30,8 @@ Sunnyvale, CA · [LinkedIn](https://www.linkedin.com/in/matt-horn-718611197/) ·
 
 **Senior Software Development Engineer, AWS Identity (IAM control plane)** · Amazon Web Services · Denver, CO · *November 2022 - August 2024*
 
-- Tech lead for 6 engineers on an IAM control plane authorizing every AWS API call at hundreds of millions per second per AWS public figures, owning policy-evaluation RFCs, caching design, p99.9 latency targets, and availability budgets.
-- Drove ABAC strategy across hundreds of integrating AWS service teams, automated regional rollbacks and alerting to cut on-call load, found zero-day vulnerabilities through red teaming, and applied Claude on Amazon Bedrock in 2023 to catch integration defects missed by static analysis.
+- Tech lead for 6 engineers on an IAM control plane authorizing every AWS API call at hundreds of millions per second, owning policy-evaluation RFCs, caching design, p99.9 latency targets, and availability budgets.
+- Drove ABAC strategy across hundreds of integrating AWS service teams, automated regional rollbacks and alerting to cut on-call load, uncovered and patched critical authorization-bypass defects through internal red teaming, and applied Claude on Amazon Bedrock in 2023 to catch integration defects missed by static analysis.
 
 **Staff Software Engineer** · Twilio · Denver, CO · *July 2021 - October 2022*
 
@@ -44,7 +44,7 @@ Sunnyvale, CA · [LinkedIn](https://www.linkedin.com/in/matt-horn-718611197/) ·
 
 **Software Engineer** · Google · Boulder, CO · *December 2015 - June 2019*
 
-- Migrated Google Payments sanctions screening over 9,000+ lines of code (cutting manual first-level operations reviews 61%), built a 5-tier customer volume batch service live since 2016 and still in production in 2026, cut Street View review tool latency from 8-9s to 1-2s, and completed 65 certified Java readability reviews in 6 months.
+- Migrated Google Payments sanctions screening over 9,000+ lines of code (cutting manual first-level operations reviews 61%), built a 5-tier customer volume batch service live since 2016 and still in production in 2026, and cut Street View review tool latency from 8-9s to 1-2s.
 
 **Software Developer** · Trifecta Technologies · Allentown, PA · *December 2014 - December 2015*
 
@@ -54,7 +54,7 @@ Sunnyvale, CA · [LinkedIn](https://www.linkedin.com/in/matt-horn-718611197/) ·
 
 **[Overload](https://github.com/matt-w-horn/overload)** · *July 2026*
 
-- Apache 2.0 open-source Lean 4 library with 700 verified theorems and definitions on retry-driven congestion collapse and safe retry limits, built with Claude Code while owning modeling and verification (paper in Google publication review).
+- Apache 2.0 open-source Lean 4 library with 700 verified theorems and definitions on retry-driven congestion collapse and safe retry limits, built with Claude Code while owning modeling and verification.
 
 ## Education & Publications
 

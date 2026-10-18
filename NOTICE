@@ -1,14 +1,11 @@
 NOTICE
 
-This repository — the blog posts, the resume, and everything else in it — is
-the personal work of Matt Horn, created on personal time using personal
-equipment and personal accounts.
-
 Copyright (c) 2026 Matt Horn
 
-This work is not affiliated with, sponsored by, or endorsed by Google,
-Anthropic, or any past or present employer of the author. All views and
-content are the author's own.
+Disclaimer: This repository is an independent personal project by Matt Horn. The
+views, code, and content expressed here are the author's own and are not
+affiliated with, sponsored by, or endorsed by Google or any other current or
+past employer.
 
 Third-party components:
 - themes/terminal: hugo-theme-terminal by panr, MIT (see themes/terminal/LICENSE.md)
@@ -16,5 +13,6 @@ Third-party components:
   static/terminal.css, headings in static/style.css): public domain (Unlicense)
 - ogl by Nathan Gordon (oframe), an npm dependency bundled into the game chunk
   by Hugo's esbuild: public domain (Unlicense)
-The CC BY-ND 4.0 license in LICENSE covers this repository's content (posts,
-resume, about); third-party components remain under their own terms.
+
+Original site content in `content/` is licensed under CC BY-ND 4.0 (see
+LICENSE); third-party components remain under their own licenses above.
