@@ -81,10 +81,12 @@
 </head>
 <body>
 
+<canvas id="ocean-canvas" aria-hidden="true"></canvas>
+
 <main id="wrap">
   <div id="frame">
     <span class="chip" id="title-chip"><span class="site">matthorn.io</span></span>
-    <button type="button" class="chip" id="acc-chip" title="cycle color theme">theme: pistachio</button>
+    <button type="button" class="chip" id="acc-chip" title="cycle color theme">theme: cobalt sky</button>
     <div id="screen">
       {{ partial "tui-prejs.html" (dict "page" . "posts" $posts "resume" $resume) }}
     </div>
@@ -123,6 +125,7 @@
     "posts" $m
     "postsUrl" ("/posts/" | relURL)
     "homeUrl" ("/" | relURL)
+    "themeUrl" ("/theme/" | relURL)
     "resumeUrl" $resumeUrl
     "resumeContentUrl" $resumeCU
     "aboutContentUrl" $aboutCU

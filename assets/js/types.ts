@@ -14,6 +14,7 @@ export interface TuiData {
   posts: Post[];
   postsUrl: string;
   homeUrl: string;
+  themeUrl: string;
   resumeUrl: string;
   resumeContentUrl: string;
   aboutContentUrl: string;
@@ -24,7 +25,7 @@ export interface TuiData {
 }
 
 export type RouteName =
-  | 'home' | 'posts' | 'about' | 'help' | 'motd' | 'game' | 'resume' | 'doc';
+  | 'home' | 'posts' | 'about' | 'help' | 'motd' | 'game' | 'resume' | 'doc' | 'lab';
 
 export interface Route {
   name: RouteName;

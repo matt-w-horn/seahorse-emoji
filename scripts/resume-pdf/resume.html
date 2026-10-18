@@ -108,7 +108,7 @@
   <ul>
     <li>Stepped into a reliability emergency on the internal just-in-time access service used by nearly all employees, diagnosing latency spikes and unattributed failures and hardening monitoring via Datadog APM tracing, RED metrics, and data-health validation pipelines, cutting p99 latency by over an order of magnitude.</li>
     <li>Instrumented p99 latency and error rates in Datadog with custom metrics, profiling, tracing, and composite monitors, establishing the monitoring baseline for security services and cutting recovery time from hours to minutes in one case.</li>
-    <li>Eliminated duplicate records and constraint violations through idempotency keys, ON CONFLICT upserts, SELECT FOR UPDATE locks, and isolation-level tuning, while maintaining the policy-as-code pipeline on a custom Terraform provider and GitHub Actions and co-authoring the postmortem for a policy-migration incident.</li>
+    <li>Eliminated duplicate records and constraint violations through idempotency keys and isolation-level tuning, while maintaining the policy-as-code pipeline on a custom Terraform provider and GitHub Actions and co-authoring the postmortem for a policy-migration incident.</li>
     <li>Automated inactive service-account detection with Databricks and PySpark by joining Entra ID sign-in logs and IAM credential-last-used reports, served on the company-wide security on-call rotation, and enforced least-privilege approvals through Terraform access checks.</li>
   </ul>
 </div>

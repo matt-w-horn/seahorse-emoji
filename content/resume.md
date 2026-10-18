@@ -26,7 +26,7 @@ Sunnyvale, CA · [LinkedIn](https://www.linkedin.com/in/matt-horn-718611197/) ·
 **Member of Technical Staff** · OpenAI · San Francisco, CA · *September 2024 - April 2025*
 
 - Stepped into a reliability emergency on the internal just-in-time access service used by nearly all employees, cutting p99 latency by over an order of magnitude and recovery time from hours to minutes through Datadog APM tracing, RED metrics, profiling, and composite monitors.
-- Eliminated duplicate records and constraint violations via idempotency keys, `ON CONFLICT` upserts, and `SELECT FOR UPDATE` locks; maintained the custom Terraform policy-as-code pipeline and automated inactive service-account detection in Databricks and PySpark.
+- Eliminated duplicate records and constraint violations via idempotency keys; maintained the custom Terraform policy-as-code pipeline and automated inactive service-account detection in Databricks and PySpark.
 
 **Senior Software Development Engineer, AWS Identity (IAM control plane)** · Amazon Web Services · Denver, CO · *November 2022 - August 2024*
 
