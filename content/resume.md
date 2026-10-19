@@ -61,7 +61,7 @@ Sunnyvale, CA · [LinkedIn](https://www.linkedin.com/in/matt-horn-718611197/) ·
 **Bachelor of Science, Computer Science** · Muhlenberg College · Allentown, PA · *2010 - 2014*
 Minors in Mathematics and Music Theory · Dr. Anthony J. Marino Jr. Award in Computing Science (2013)
 
-W. E. Wong, T. Gidvani, A. Lopez, R. Gao, and M. Horn, "Evaluating Software Safety Standards: A Systematic Review and Comparison," *2014 IEEE Eighth International Conference on Software Security and Reliability-Companion*, San Jose, CA, pp. 78-87. [doi.org/10.1109/SERE-C.2014.25](https://doi.org/10.1109/SERE-C.2014.25)
+W. E. Wong, T. Gidvani, A. Lopez, R. Gao, and M. Horn, "Evaluating Software Safety Standards: A Systematic Review and Comparison," *2014 IEEE Eighth International Conference on Software Security and Reliability-Companion*, San Francisco, CA, pp. 78-87. [doi.org/10.1109/SERE-C.2014.25](https://doi.org/10.1109/SERE-C.2014.25)
 
 ## Contact
 

@@ -62,6 +62,7 @@ built, and once in a while some very short fiction.
 
 Also published at [matthorn.io](https://matthorn.io).
 
+- [How one Manhattan power room took down FAA air traffic control and disrupted 1,174 flights](./content/posts/2026-10-18-33-thomas-street.md) - October 18, 2026
 - [protonctl: a local, read-only MCP server for Proton](./content/posts/2026-10-17-protonctl.md) - October 17, 2026
 - [Dismissing AI code as slop misses the real risk](./content/posts/2026-09-13-bad-ai.md) - September 13, 2026
 - [Three Claude skills for career, finance, and writing](./content/posts/2026-08-05-skill-home-office.md) - August 5, 2026
@@ -95,7 +96,7 @@ Also published at [matthorn.io](https://matthorn.io).
 
 ## Publications
 
-W. E. Wong, T. Gidvani, A. Lopez, R. Gao, and M. Horn, "Evaluating Software Safety Standards: A Systematic Review and Comparison," in *2014 IEEE Eighth International Conference on Software Security and Reliability-Companion*, San Jose, CA, 2014, pp. 78-87. [doi.org/10.1109/SERE-C.2014.25](https://doi.org/10.1109/SERE-C.2014.25)
+W. E. Wong, T. Gidvani, A. Lopez, R. Gao, and M. Horn, "Evaluating Software Safety Standards: A Systematic Review and Comparison," in *2014 IEEE Eighth International Conference on Software Security and Reliability-Companion*, San Francisco, CA, 2014, pp. 78-87. [doi.org/10.1109/SERE-C.2014.25](https://doi.org/10.1109/SERE-C.2014.25)
 
 ## Education
 

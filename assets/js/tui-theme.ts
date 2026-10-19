@@ -327,8 +327,9 @@ export const BAYER_4X4: readonly (readonly number[])[] = [
 ];
 
 function hash2d(x: number, y: number): number {
-  const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
-  return n - Math.floor(n);
+  let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
 function vnoise(x: number, y: number): number {

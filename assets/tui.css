@@ -35,13 +35,7 @@ html {
 }
 
 body {
-  font-family:
-    "Fira Code",
-    "JetBrains Mono",
-    Monaco,
-    Consolas,
-     "Ubuntu Mono",
-    monospace;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Ubuntu Mono", monospace;
   font-size: var(--font-size);
   font-weight: 400;
   line-height: var(--line-height);
@@ -79,7 +73,6 @@ button {
   padding: 5px 18px;
   border: 4px solid var(--accent);
   border-radius: var(--radius);
-  transition: background 0.15s linear;
   appearance: none;
   cursor: pointer;
   outline: none;
@@ -95,37 +88,7 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
-fieldset {
-  display: inline-block;
-  border: 2px solid var(--foreground);
-  border-radius: calc(var(--radius) * 1.6);
-  padding: 10px;
-}
-
-fieldset *:first-child {
-  margin-top: 0;
-}
-
-fieldset input,
-fieldset select,
-fieldset textarea,
-fieldset label,
-fieldset button {
-  margin-top: calc(var(--line-height) * 0.5);
-  width: 100%;
-}
-
-label {
-  display: inline-block;
-}
-
-label input {
-  margin-top: 0;
-}
-
-input,
-textarea,
-select {
+input {
   background: transparent;
   color: var(--foreground);
   border: 1px solid var(--foreground);
@@ -133,65 +96,6 @@ select {
   padding: 10px;
   font: inherit;
   appearance: none;
-}
-
-input[type="checkbox"] {
-  width: auto;
-}
-
-input:focus-visible,
-input:active,
-textarea:focus-visible,
-textarea:active,
-select:focus-visible,
-select:active {
-  border-color: var(--accent);
-  outline: 1px solid var(--accent);
-  outline-offset: 2px;
-}
-
-input:active,
-textarea:active,
-select:active {
-  box-shadow: none;
-}
-
-select {
-  background-image: linear-gradient(
-      45deg,
-      transparent 50%,
-      var(--foreground) 50%
-    ),
-    linear-gradient(135deg, var(--foreground) 50%, transparent 50%);
-  background-position: calc(100% - 20px), calc(100% - 15px);
-  background-size:
-    5px 5px,
-    5px 5px;
-  background-repeat: no-repeat;
-  padding-right: 40px;
-}
-
-select option {
-  background: var(--background);
-}
-
-input[type="checkbox"],
-input[type="radio"] {
-  vertical-align: middle;
-  padding: 10px;
-  box-shadow: inset 0 0 0 3px var(--background);
-}
-
-input[type="radio"] {
-  display: inline-block;
-  width: 10px !important;
-  height: 10px !important;
-  border-radius: 20px;
-}
-
-input[type="checkbox"]:checked,
-input[type="radio"]:checked {
-  background: var(--accent);
 }
 
 img {
@@ -240,15 +144,8 @@ ol li {
   position: relative;
 }
 
-code,
-kbd {
-  font-family:
-    "Fira Code",
-    "JetBrains Mono",
-    Monaco,
-    Consolas,
-    Ubuntu Mono,
-    monospace !important;
+code {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Ubuntu Mono", monospace !important;
   font-feature-settings: normal;
   background: color-mix(in oklab, var(--foreground) 9%, var(--background));
   color: color-mix(in oklab, var(--foreground) 30%, var(--accent));
@@ -256,18 +153,7 @@ kbd {
   margin: 0 1px;
   font-size: 0.92em;
   border-radius: 3px;
-}
-
-code {
   border: none;
-}
-
-kbd {
-  border-top: 1px solid color-mix(in oklab, var(--accent) 25%, transparent);
-  border-left: 1px solid var(--accent);
-  border-right: 1px solid var(--accent);
-  border-bottom: 3px solid var(--accent);
-  border-radius: 3px;
 }
 
 code code {
@@ -299,26 +185,7 @@ pre code {
 
 sup {
   line-height: 0;
-}
-
-abbr {
-  position: relative;
-  text-decoration-style: wavy;
-  text-decoration-color: var(--accent);
-  cursor: help;
-}
-
-sub {
-  bottom: -0.25em;
-}
-
-sup {
   top: -0.25em;
-}
-
-mark {
-  background: color-mix(in oklab, var(--accent) 45%, transparent);
-  color: var(--foreground);
 }
 
 blockquote {
@@ -351,7 +218,11 @@ td {
 }
 
 th:first-child,
-td:first-child,
+td:first-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
 th:nth-child(2):not(:last-child),
 td:nth-child(2):not(:last-child) {
   white-space: nowrap;
@@ -471,6 +342,7 @@ body:has(#gamecanvas)::after {
   font-size: 12px; color: var(--dim); white-space: nowrap;
   z-index: 2;   /* above the game canvas, which spans the frame's full height */
 }
+.chip:empty { display: none; }
 #title-chip { top: -9px; left: 16px; }
 #title-chip .site { color: var(--accent); font-weight: 700; letter-spacing: .08em; }
 #title-chip .stripe { color: var(--accent); }
@@ -478,7 +350,7 @@ body:has(#gamecanvas)::after {
    undo the vendored chunky-button look, .chip supplies the rest */
 #acc-chip {
   top: -9px; right: 16px; cursor: pointer;
-  border: none; font-weight: 400; transition: color 100ms linear; appearance: none;
+  border: none; font-weight: 400; transition: none; appearance: none;
 }
 #acc-chip:hover { color: var(--accent); background: color-mix(in srgb, var(--background) 92%, transparent); }
 #keys-chip { bottom: -9px; left: 16px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
@@ -619,10 +491,11 @@ body:has(#gamecanvas)::after {
   max-width: min(100%, 114ch);
 }
 #screen img { margin: 18px auto; max-width: min(100%, 760px); height: auto; }
+#screen figure { margin: 22px auto; }
 #screen .table-wrap {
   width: fit-content;
   max-width: min(100%, 84ch);
-  margin: 18px 0;
+  margin: 18px auto;
 }
 #screen .table-wrap table {
   margin: 0;
@@ -630,8 +503,10 @@ body:has(#gamecanvas)::after {
   min-width: min(100%, 54ch);
 }
 #screen td code { white-space: nowrap; }
-#screen .permalink {
+#screen .permalink,
+#screen:has(.permalink) p.permalink {
   font-size: 13px;
+  line-height: var(--line-height);
   margin: 0 0 22px;
 }
 #screen .dim { color: var(--dim); }
@@ -639,12 +514,14 @@ body:has(#gamecanvas)::after {
   margin-top: 28px;
   font-size: 0.9em;
   color: var(--dim);
+  overflow-wrap: anywhere;
 }
 #screen .footnotes hr {
   margin-bottom: 12px;
 }
-#screen .footnotes p, #screen .footnotes ol {
+#screen .footnotes p, #screen .footnotes ol, #screen .footnotes li {
   color: var(--dim);
+  overflow-wrap: anywhere;
 }
 
 #echoline {
@@ -694,25 +571,13 @@ html.touch #keys-chip { padding: 2px 8px; bottom: -11px; }
   text-decoration: underline; text-underline-offset: 3px;
 }
 
-.prejs { max-width: 110ch; margin: 0 auto; }
-/* Browsers without blocking="render" would flash the fallback before boot
-   clears it, so it starts hidden. The hold is a timed animation, not
-   display:none, so a script that never boots (failed load, missing
-   #tui-data) still reveals the fallback when the hold ends. */
+/* Home and section list fallbacks start hidden so they do not flash before
+   the BIOS/menu boots; article pages (<article> inside .prejs) render their
+   prose immediately at 0ms for zero LCP render delay. */
 @media (scripting: enabled) {
   html:not(.plain) .prejs { animation: prejs-hold 2s; }
 }
 @keyframes prejs-hold { from, to { visibility: hidden; } }
-.prejs h1 {
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 1.15rem;
-  line-height: 1.35;
-  letter-spacing: 0;
-  text-transform: none;
-  text-decoration: none;
-  margin: 2px 0 12px;
-}
 .prejs a { color: var(--accent); }
 .prejs li .dim { white-space: nowrap; margin-left: 0.4ch; }
 
@@ -760,12 +625,6 @@ html.touch #keys-chip { padding: 2px 8px; bottom: -11px; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
-}
-
-/* match the site-wide system stack (style.css); the vendored body rule
-   above names Fira Code, which is no longer shipped */
-body {
-  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Ubuntu Mono", monospace;
 }
 
 /* the game fills the whole screen box, padding included, so its edges meet

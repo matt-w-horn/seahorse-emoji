@@ -71,13 +71,6 @@
 {{ $tuiCss := resources.Get "tui.css" | minify }}
 <style>{{ os.ReadFile "static/terminal.css" | safeCSS }}{{ os.ReadFile "static/style.css" | safeCSS }}{{ $tuiCss.Content | safeCSS }}</style>
 <noscript><style>#promptline, #echoline, .chip { display: none; }</style></noscript>
-{{- /* Core: esbuild bundles tui.ts + its static import of tui-parse.ts into
-      one classic (iife) script; the dynamic import(gameScriptUrl) stays a
-      runtime import. Placed in <head> with defer + blocking="render" so the
-      browser fetches it in parallel with HTML parsing and holds first paint
-      until boot replaces .prejs. */ -}}
-{{ $core := resources.Get "js/tui.ts" | js.Build (dict "minify" true "format" "iife" "target" "es2020") | fingerprint }}
-<script src="{{ $core.RelPermalink }}" defer blocking="render"></script>
 </head>
 <body>
 
@@ -92,7 +85,7 @@
     </div>
     <div id="echoline" aria-live="polite"></div>
     <div id="promptline">
-      <span id="ps1"></span>
+      <span id="ps1">guest@matthorn.io:~{{- if eq .Type "posts" }}/posts{{ if .IsPage }}/{{ .File.ContentBaseName }}{{ end }}{{ else if not .IsHome }}/{{ .File.ContentBaseName }}{{ end -}}<span class="tail">$</span></span>
       <input id="in" type="text" autocomplete="off" autocapitalize="none"
              spellcheck="false" aria-label="terminal input" />
       <span id="caret" class="hidden" aria-hidden="true"></span>
@@ -144,5 +137,12 @@
 {{ if .IsHome }}<template id="tpl-about">{{ .Content }}</template>
 {{ else if .IsPage }}<template id="tpl-{{ .File.ContentBaseName }}">{{ .Content }}</template>
 {{ end }}
+
+{{- /* Core: esbuild bundles tui.ts + its static import of tui-parse.ts into
+      one classic (iife) script; the dynamic import(gameScriptUrl) stays a
+      runtime import. Deferred at the end of <body>, not render-blocking:
+      first paint shows .prejs and boot replaces it. */ -}}
+{{ $core := resources.Get "js/tui.ts" | js.Build (dict "minify" true "format" "iife" "target" "es2020") | fingerprint }}
+<script src="{{ $core.RelPermalink }}" defer></script>
 </body>
 </html>
