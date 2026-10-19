@@ -8,7 +8,7 @@
 {{- $page := .page -}}
 <div class="prejs">
 {{- if $page.IsHome -}}
-  <h1>{{ site.Title }}</h1>
+  <h1 class="t-title">{{ site.Title }}</h1>
   <p class="dim">{{ site.Params.subtitle }}. This page is an interactive
   terminal when JavaScript runs; either way, everything is an ordinary
   page you can open directly.</p>
@@ -23,13 +23,13 @@
 {{- else if eq $page.Type "posts" -}}
   {{- if $page.IsPage -}}
     <article>
-      <h1>{{ $page.Title }}</h1>
+      <h1 class="t-title">{{ $page.Title }}</h1>
       <p class="dim permalink"><time datetime="{{ $page.Date.Format "2006-01-02" }}">{{ $page.Date.Format "2006-01-02" }}</time>{{ with $page.Params.Author }} · {{ . }}{{ end }}</p>
       {{ $page.Content }}
       <p class="dim"><a href="{{ "/posts/" | relURL }}">All posts</a> · <a href="{{ "/" | relURL }}">Home</a></p>
     </article>
   {{- else -}}
-    <h1>Posts</h1>
+    <h1 class="t-title">Posts</h1>
     <ul>
       {{ range $posts }}
       <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> <span class="dim">{{ .Date.Format "2006-01-02" }}</span></li>
@@ -40,7 +40,7 @@
 {{- else -}}
   {{- /* a standalone page, e.g. /resume/ */ -}}
   <article>
-    <h1>{{ $page.Title }}</h1>
+    <h1 class="t-title">{{ $page.Title }}</h1>
     {{ $page.Content }}
     <p class="dim"><a href="{{ "/" | relURL }}">Home</a></p>
   </article>
