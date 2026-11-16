@@ -2,6 +2,7 @@
 title = "The Seahorse Emoji"
 date = 2026-03-27
 author = "Matt Horn"
+description = "Very short fiction. A twelve-year-old asks a new AI model for the seahorse emoji, which doesn't exist. Almost three hours later, she gets one."
 +++
 
 Halcyon 4 shipped this morning. Sarah, twelve years old and somewhere in Nebraska, can't wait to try it. She types: "Show me the seahorse emoji." Send.

@@ -2,6 +2,7 @@
 title = "Three Claude skills for career, finance, and writing"
 date = 2026-08-05
 author = "Matt Horn"
+description = "In one chat turn, a model often answers before it has your constraints. In these three skills, the model asks for them and checks facts before it answers."
 +++
 
 Open-ended questions (what role your track record actually supports, how tax and contribution rules interact across accounts, or why a draft isn't landing) usually fail in a single chat turn because the model answers before it has the constraints. Below are three Claude skills that structure those problems as multi-step workflows with explicit verification passes:

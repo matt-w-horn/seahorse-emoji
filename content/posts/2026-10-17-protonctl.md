@@ -2,11 +2,12 @@
 title = "protonctl: a local, read-only MCP server for Proton"
 date = 2026-10-17
 author = "Matt Horn"
+description = "protonctl runs on your computer and lets Claude search and read Proton Mail, Drive, and Calendar. It has no tool that sends, changes, or deletes anything."
 +++
 
 [protonctl](https://github.com/matt-w-horn/protonctl) is a local, read-only MCP server and command-line tool in Rust that lets Claude Code, Claude Desktop, and Cowork search and read your Proton Mail, Proton Drive, and Proton Calendar on macOS and Linux. It is an independent open-source project and is unaffiliated with Proton AG.
 
-You use Proton because your mail, files, and calendar are end-to-end encrypted on Proton's servers. The moment Claude calls a `protonctl` tool to read a message, event, or file, that content is decrypted on your machine and handed to the host app in plaintext. From there it leaves Proton's encryption boundary: the host writes it to local session transcripts on your disk and sends it to Anthropic's servers under your account's terms, and other tools in the same session (web search, a shell, or another connector) can pass it along. Reading an item through `protonctl` exposes it to the host model on the same terms as forwarding it in cleartext to a third party; use `[drive] exclude` in `config.toml` to keep sensitive Drive folders off-limits before any result is built.
+You use Proton because your mail, files, and calendar are end-to-end encrypted on Proton's servers. The moment the agent loop calls a `protonctl` tool to read a message, event, or file, that content is decrypted on your machine and handed to the host app in plaintext. From there it leaves Proton's encryption boundary: the host writes it to local session transcripts on your disk and sends it to Anthropic's servers under your account's terms, and other tools in the same session (web search, a shell, or another connector) can pass it along. Reading an item through `protonctl` exposes it to the host model on the same terms as forwarding it in cleartext to a third party; use `[drive] exclude` in `config.toml` to keep sensitive Drive folders off-limits before any result is built.
 
 ## How it reads without your Proton password
 
@@ -32,7 +33,7 @@ A read-only server doesn't help much if a parser bug or a shell tool can walk ar
 
 Mail attachments and Drive files are often PDFs or Word, RTF, and OpenDocument files. When `protonctl` extracts text from one, it runs the document parser (`PDFKit` and `textutil` on macOS; `poppler` and `pandoc` on Linux) inside an OS sandbox (`sandbox-exec` on macOS; Landlock and `seccomp` on Linux). That sandbox can read system libraries, write nothing, reach no network, and read no Keychain item. Before it runs `proton-drive`, it copies the binary to a private folder and checks Proton's Apple Developer ID signature on that copy (or a pinned SHA-256 on Linux) right before exec, so nothing on `PATH` can swap the binary between check and use. `scripts/install.sh` builds `protonctl` with `#![forbid(unsafe_code)]` and signs it with the macOS hardened runtime so another user process can't inject a library with `DYLD_INSERT_LIBRARIES` and inherit its Keychain approval.
 
-In Claude Code the model also has a shell. Without a fence, a bash command could read `~/Library/CloudStorage/ProtonDrive-*`, talk straight to Bridge's IMAP port, or edit `config.toml` to drop folder exclusions. These settings in `~/.claude/settings.json` close those paths for commands Claude runs:
+In Claude Code the model also has a shell. Without a fence, a bash command could read `~/Library/CloudStorage/ProtonDrive-*`, talk straight to Bridge's IMAP port, or edit `config.toml` to drop folder exclusions. These settings in `~/.claude/settings.json` close those paths for commands that the agent runs:
 
 ```json
 {
@@ -55,7 +56,7 @@ In Claude Code the model also has a shell. Without a fence, a bash command could
 
 ## Why it doesn't redact names locally
 
-I also considered having `protonctl` scrub names, organizations, and places with a local named-entity model before returning tool results to Claude, replacing matches with tokens like `PERSON_001` or `ORG_004`.
+I also considered having `protonctl` scrub names, organizations, and places with a local named-entity model before returning tool results to the model, replacing matches with tokens like `PERSON_001` or `ORG_004`.
 
 The problem is that a local entity model still misses a few percent of names, and even when every name is replaced, a model can usually tell who or what an email is about from the rest of the thread. A redaction mode that looks like a privacy shield while still leaking names and context makes it too easy to point the tool at mail you shouldn't expose at all.
 

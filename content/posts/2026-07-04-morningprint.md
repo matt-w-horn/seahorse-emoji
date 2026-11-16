@@ -2,6 +2,7 @@
 title = "Daily CP437 block art on a kitchen receipt printer"
 date = 2026-07-04
 author = "Matt Horn"
+description = "Each morning, a receipt printer in my kitchen prints one piece of block art. A language model generates each piece from the characters in CP437."
 +++
 
 A thermal printer in my kitchen prints one piece of block art every morning, drawn in CP437, the IBM PC character set from 1981. A language model composes each piece from ordinary inputs: the date, the weather, whatever's happening today. It commits to one composition, and the printer prints it once. There are no drivers and no image files anywhere in the pipeline.
@@ -21,7 +22,7 @@ If you'd like one of your own, you need a receipt printer and a Raspberry Pi, an
 - An Epson TM-T20III, the 80mm thermal printer restaurants use for kitchen orders
 - A Raspberry Pi Zero W running a ~40-line Python `http.server` that writes authenticated ESC/POS payloads from the script to `/dev/usb/lp0`
 - An authenticated ngrok tunnel in front of the Pi
-- A Google Apps Script on a daily trigger, doing everything else
+- An Apps Script on a daily trigger, doing everything else
 
 I had the printer and the Pi left over from an earlier calendar printer and morning briefing experiment, which I eventually retired. The daily art print is the project that stuck.
 
