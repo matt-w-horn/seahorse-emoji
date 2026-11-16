@@ -2,7 +2,7 @@
 title = "When a correct proof is a lie: honesty gates for a Lean library"
 date = 2026-08-01
 author = "Matt Horn"
-description = "Lean checks a proof but not the docstring beside it. I use mechanical gates and a blinded Claude referee to find a docstring that overstates its theorem."
+description = "Lean checks a proof but not the docstring beside it. I use mechanical gates and a blinded referee model to find a docstring that overstates its theorem."
 +++
 
 > **TL;DR:** A Lean library can build green while a docstring claims more than

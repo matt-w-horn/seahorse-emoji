@@ -1,15 +1,15 @@
 +++
-title = "Little Red Dog by the Sea: building a pixel art TV screensaver with Claude"
+title = "Little Red Dog by the Sea: building a pixel art TV screensaver"
 date = 2026-11-14
 author = "Matt Horn"
-description = "Claude wrote the code and art for a screensaver of my dog on a California beach. I explain why a subagent approved a drawing of him with two tails."
+description = "A coding agent wrote the code and art for a screensaver of my dog on a California beach. I explain why a subagent approved a drawing of him with two tails."
 +++
 
 ![One day on the beach, sped up across dawn, daylight, dusk, and night](/img/little-red-dog/hero_day.gif)
 
 *One day on the beach, sped up across dawn, daylight, dusk, and night.*
 
-This week, I learned I could [connect to my Google TV using a coding agent](https://github.com/Gathin23/cleanyourtv), and took the opportunity to start removing some bloatware. I got curious when I saw a few examples of screensavers with [pixel art koi fish](https://github.com/Gathin23/cleanyourtv/tree/main/addons/koi-pond) on GitHub. A few days later, I finished a [pixel art screensaver of my dog](https://github.com/matt-w-horn/little-red-dog-by-the-sea) on a Northern California beach, complete with tides, migrating wildflowers, holidays, and hourly light shifts. Claude wrote all of the code and image files.
+This week, I learned I could [connect to my smart TV using a coding agent](https://github.com/Gathin23/cleanyourtv), and took the opportunity to start removing some bloatware. I got curious when I saw a few examples of screensavers with [pixel art koi fish](https://github.com/Gathin23/cleanyourtv/tree/main/addons/koi-pond) on GitHub. A few days later, I finished a [pixel art screensaver of my dog](https://github.com/matt-w-horn/little-red-dog-by-the-sea) on a Northern California beach, complete with tides, migrating wildflowers, holidays, and hourly light shifts. The agent wrote all of the code and image files.
 
 Gemini's image generation model ([Nano Banana 2](https://ai.google.dev/gemini-api/docs/image-generation), gemini-nano-banana-2.1) cleaned clutter out of my phone photos and sketched early layouts. From there, Claude Fable 5.2 wrote the [Java Android TV app](https://github.com/matt-w-horn/little-red-dog-by-the-sea/tree/main/app) (zero network access, zero Android permissions) alongside the [Python scripts](https://github.com/matt-w-horn/little-red-dog-by-the-sea/tree/main/tools) that generate every shipped pixel under [art/](https://github.com/matt-w-horn/little-red-dog-by-the-sea/tree/main/art).
 
@@ -19,7 +19,7 @@ Most of the design grew out of two hard constraints: a fixed 480x270 canvas scal
 
 Early versions showed harsh horizontal bands across the sky and sea. For the gradients, I used baked [Floyd-Steinberg dithering](https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering) ([tools/scene_dither.py](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/tools/scene_dither.py)) across 48 sky tones, 16 sea tones, and 16 sand tones. Computing it once stops gradients from shimmering on every change (though a little shimmer might be nice in the ocean).
 
-Claude was iterating on this first in Java, where every tweak waited behind a full Gradle build and ADB deploy. To speed up the build, test, and review loop, I moved most of the art pipeline to [Python](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/tools/scene.py), then ported it back to [Java](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/app/src/main/java/io/matthorn/littlereddog/Scene.java) for the app. A frame-hash manifest ([art/reference/manifest.json](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/art/reference/manifest.json)) runs in [unit tests](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/app/src/test/java/io/matthorn/littlereddog/SceneReferenceTest.java) so Java can't drift from Python by a single pixel.
+The agent was iterating on this first in Java, where every tweak waited behind a full Gradle build and ADB deploy. To speed up the build, test, and review loop, I moved most of the art pipeline to [Python](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/tools/scene.py), then ported it back to [Java](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/app/src/main/java/io/matthorn/littlereddog/Scene.java) for the app. A frame-hash manifest ([art/reference/manifest.json](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/art/reference/manifest.json)) runs in [unit tests](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/app/src/test/java/io/matthorn/littlereddog/SceneReferenceTest.java) so Java can't drift from Python by a single pixel.
 
 ![Scene evolution across working history: early flat bands, baked Floyd-Steinberg dithering, and shipped scene](/img/little-red-dog/scene_progression_horizontal.png)
 
@@ -31,9 +31,9 @@ Verification was a challenge. The art kept regressing, especially the 40-pixel-t
 
 Early on, I set a rule: prose confidence doesn't count, and the only evidence is visual.
 
-1. When generating new pixel art, Claude has to load a cleaned reference photo first.
-2. When modifying existing art, Claude has to load the current sprite first.
-3. After each edit, Claude overlays the sprite at 50% opacity over the photo. Finished sheets go to a reviewer subagent to describe aloud what it sees, then approved elements lock so they won't change.
+1. When generating new pixel art, the agent has to load a cleaned reference photo first.
+2. When modifying existing art, the agent has to load the current sprite first.
+3. After each edit, the agent overlays the sprite at 50% opacity over the photo. Finished sheets go to a reviewer subagent to describe aloud what it sees, then approved elements lock so they won't change.
 
 Phone snapshots came with couches, awkward angles, and a patterned wrap on his hind leg. Gemini first isolated each pose onto a blue key background, then traced a flat-region study before we mapped silhouettes onto the grid.
 
@@ -86,9 +86,9 @@ Some problems were hard to spot without a large screen. Early night scenes left 
 
 *Top: zoomed horizon gradients before and after baked 48/16/16 Floyd-Steinberg dithering ([tools/scene_dither.py](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/tools/scene_dither.py)). Bottom: early 0.52x night glare vs. tuned 0.34x blue-cooled sand and dimmed clock ([art/palettes/night.json](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/art/palettes/night.json)).*
 
-Along the way, there was a barely perceptible shudder on the shooting star crossing the sky. Beach art ticks at 8 fps (125 ms), while the shooting star interpolates on every 60 Hz panel refresh (16.7 ms vsync). Claude helped me profile the app with [simpleperf](https://developer.android.com/ndk/guides/simpleperf) over ADB. Drawing one 480x270 frame on the UI thread took 22 ms despite using only 18.8% of one of the TV's four cores, so every 8 Hz art tick missed a vsync deadline and dropped one frame in eight.
+Along the way, there was a barely perceptible shudder on the shooting star crossing the sky. Beach art ticks at 8 fps (125 ms), while the shooting star interpolates on every 60 Hz panel refresh (16.7 ms vsync). The agent helped me profile the app with [simpleperf](https://developer.android.com/ndk/guides/simpleperf) over ADB. Drawing one 480x270 frame on the UI thread took 22 ms despite using only 18.8% of one of the TV's four cores, so every 8 Hz art tick missed a vsync deadline and dropped one frame in eight.
 
-I suggested Claude try a multithreaded pipeline that renders two ticks ahead. Offloading rendering onto a background producer thread inside a four-slot [FrameRing](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/app/src/main/java/io/matthorn/littlereddog/FrameRing.java) buffer, paired with 256-entry [Dim](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/app/src/main/java/io/matthorn/littlereddog/Dim.java) lookup tables on the display thread in [SceneView](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/app/src/main/java/io/matthorn/littlereddog/SceneView.java), stopped the stutter (0 ticks dropped, 0.4 ms average callback delay).
+I suggested that the agent try a multithreaded pipeline that renders two ticks ahead. Offloading rendering onto a background producer thread inside a four-slot [FrameRing](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/app/src/main/java/io/matthorn/littlereddog/FrameRing.java) buffer, paired with 256-entry [Dim](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/app/src/main/java/io/matthorn/littlereddog/Dim.java) lookup tables on the display thread in [SceneView](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/app/src/main/java/io/matthorn/littlereddog/SceneView.java), stopped the stutter (0 ticks dropped, 0.4 ms average callback delay).
 
 ## Context compaction and catastrophic forgetting
 

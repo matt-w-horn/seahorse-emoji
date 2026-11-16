@@ -62,7 +62,7 @@ built, and once in a while some very short fiction.
 
 Also published at [matthorn.io](https://matthorn.io).
 
-- [Little Red Dog by the Sea: building a pixel art TV screensaver with Claude](./content/posts/2026-11-14-little-red-dog.md) - November 14, 2026
+- [Little Red Dog by the Sea: building a pixel art TV screensaver](./content/posts/2026-11-14-little-red-dog.md) - November 14, 2026
 - [How one Manhattan power room took down FAA air traffic control and disrupted 1,174 flights](./content/posts/2026-10-18-33-thomas-street.md) - October 18, 2026
 - [protonctl: a local, read-only MCP server for Proton](./content/posts/2026-10-17-protonctl.md) - October 17, 2026
 - [Dismissing AI code as slop misses the real risk](./content/posts/2026-09-13-bad-ai.md) - September 13, 2026
