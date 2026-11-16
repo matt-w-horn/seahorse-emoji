@@ -22,7 +22,7 @@ If you'd like one of your own, you need a receipt printer and a Raspberry Pi, an
 - An Epson TM-T20III, the 80mm thermal printer restaurants use for kitchen orders
 - A Raspberry Pi Zero W running a ~40-line Python `http.server` that writes authenticated ESC/POS payloads from the script to `/dev/usb/lp0`
 - An authenticated ngrok tunnel in front of the Pi
-- A Google Apps Script on a daily trigger, doing everything else
+- An Apps Script on a daily trigger, doing everything else
 
 I had the printer and the Pi left over from an earlier calendar printer and morning briefing experiment, which I eventually retired. The daily art print is the project that stuck.
 

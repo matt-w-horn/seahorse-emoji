@@ -35,11 +35,11 @@ Early on, I set a rule: prose confidence doesn't count, and the only evidence is
 2. When modifying existing art, the agent has to load the current sprite first.
 3. After each edit, the agent overlays the sprite at 50% opacity over the photo. Finished sheets go to a reviewer subagent to describe aloud what it sees, then approved elements lock so they won't change.
 
-Phone snapshots came with couches, awkward angles, and a patterned wrap on his hind leg. Gemini first isolated each pose onto a blue key background, then traced a flat-region study before we mapped silhouettes onto the grid.
+Phone snapshots came with couches, awkward angles, and a patterned wrap on his hind leg. Nano Banana first isolated each pose onto a blue key background, then traced a flat-region study before we mapped silhouettes onto the grid.
 
-![Side-pose reference pipeline from phone crop to Gemini cleanup, flat study, 3-part sprite, and 50% opacity overlay](/img/little-red-dog/ref_pipeline_side.png)
+![Side-pose reference pipeline from phone crop to Nano Banana cleanup, flat study, 3-part sprite, and 50% opacity overlay](/img/little-red-dog/ref_pipeline_side.png)
 
-*Reference pipeline for the sleeping side pose: cropped phone shot, Gemini cleanup removing the leg wrap, flat-region study, three-part [dog_side.png](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/art/dog_side.png) sprite, and 50% opacity overlay check.*
+*Reference pipeline for the sleeping side pose: cropped phone shot, Nano Banana cleanup removing the leg wrap, flat-region study, three-part [dog_side.png](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/art/dog_side.png) sprite, and 50% opacity overlay check.*
 
 ## Why nine subagents approved a two-tailed dog
 
@@ -58,11 +58,11 @@ Looking into how the harness and vision encoder processed images surfaced two me
 
 Once I saw a pattern, we'd turn it into a guideline for that class of error. We locked standing and sleeping silhouettes to orthographic side-view ratios matching his build (1:1 shoulder-to-rump torso square, legs at 50% of shoulder height, head at 40%), then added a shading rule: "decide where the sun is before you place a single shadow".
 
-When text rules still fell short on the curled pose, adding another camera angle solved it. Gemini re-photographed the overhead shot from a low eye-level angle. Python area-averaged that cutout onto the pixel grid via [Image.Resampling.BOX](https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Resampling.BOX), and a local alignment script flagged outline mismatches in 50% magenta beside magnified quadrant crops.
+When text rules still fell short on the curled pose, adding another camera angle solved it. Nano Banana re-photographed the overhead shot from a low eye-level angle. Python area-averaged that cutout onto the pixel grid via [Image.Resampling.BOX](https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Resampling.BOX), and a local alignment script flagged outline mismatches in 50% magenta beside magnified quadrant crops.
 
-![Curled pose pipeline: overhead photo, Gemini low-angle re-photo, Python BOX grid reduction, magenta outline check, and shipped dog_curl sprite](/img/little-red-dog/ref_pipeline_curl.png)
+![Curled pose pipeline: overhead photo, Nano Banana low-angle re-photo, Python BOX grid reduction, magenta outline check, and shipped dog_curl sprite](/img/little-red-dog/ref_pipeline_curl.png)
 
-*Fixing camera foreshortening on the curled pose: overhead snapshot, Gemini low-angle re-photography, Python box-filter reduction, 50% magenta outline diff, and the shipped [dog_curl.png](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/art/dog_curl.png) sprite.*
+*Fixing camera foreshortening on the curled pose: overhead snapshot, Nano Banana low-angle re-photography, Python box-filter reduction, 50% magenta outline diff, and the shipped [dog_curl.png](https://github.com/matt-w-horn/little-red-dog-by-the-sea/blob/main/art/dog_curl.png) sprite.*
 
 ## Harmonizing six poses under one sun (PR #6)
 

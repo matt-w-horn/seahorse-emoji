@@ -8,7 +8,7 @@ description = "Lean checks a proof but not the docstring beside it. I use mechan
 > **TL;DR:** A Lean library can build green while a docstring claims more than
 > its theorem proves, because Lean's kernel checks proofs and doesn't check the
 > prose around them. This post describes the machinery I use to close that gap:
-> a blinded, calibrated Claude referee for docstring-vs-statement claims, and
+> a calibrated referee model for docstring-vs-statement claims, and
 > mechanical gates for everything else. The mechanical gates fail the build
 > outright; the model-driven claims gate records verdicts in a hash-locked
 > ledger (`tests/claims.lock`) and can be configured to fail CI once calibrated.
