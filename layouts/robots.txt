@@ -1,4 +1,9 @@
 User-agent: *
+# content signals (https://contentsignals.org): search indexes and AI answers
+# may use these pages; model training may not. A stated preference, like the
+# rest of this file: it blocks nothing.
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+Allow: /
 # bare-content fragments the console fetches (see [outputFormats.fragment] in
 # hugo.toml): duplicate copies of every page with no <head>, so keep them out
 # of the index
