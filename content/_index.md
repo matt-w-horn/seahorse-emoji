@@ -1,4 +1,5 @@
 +++
+description = "I'm a software and security engineer. This site has my essays on security and AI, write-ups of things I've built, and some very short fiction."
 +++
 
 I'm Matt Horn. I've spent twelve years in software and security engineering
