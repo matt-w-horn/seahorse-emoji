@@ -2,6 +2,7 @@
 title = "Daily CP437 block art on a kitchen receipt printer"
 date = 2026-07-04
 author = "Matt Horn"
+description = "Each morning, a receipt printer in my kitchen prints one piece of block art. A language model generates each piece from the characters in CP437."
 +++
 
 A thermal printer in my kitchen prints one piece of block art every morning, drawn in CP437, the IBM PC character set from 1981. A language model composes each piece from ordinary inputs: the date, the weather, whatever's happening today. It commits to one composition, and the printer prints it once. There are no drivers and no image files anywhere in the pipeline.

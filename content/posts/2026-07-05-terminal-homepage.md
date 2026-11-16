@@ -2,6 +2,7 @@
 title = "This homepage is a terminal"
 date = 2026-07-05
 author = "Matt Horn"
+description = "On the matthorn.io homepage, you type commands such as ls and cat to read posts. I wrote it in TypeScript under a strict Content Security Policy."
 +++
 
 You can `ls` the posts, `cd` around, and `cat` this one:

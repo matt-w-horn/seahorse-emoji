@@ -2,6 +2,7 @@
 title = "Little Red Dog by the Sea: building a pixel art TV screensaver with Claude"
 date = 2026-11-14
 author = "Matt Horn"
+description = "Claude wrote the code and art for a screensaver of my dog on a California beach. I explain why a subagent approved a drawing of him with two tails."
 +++
 
 ![One day on the beach, sped up across dawn, daylight, dusk, and night](/img/little-red-dog/hero_day.gif)

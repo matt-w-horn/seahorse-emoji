@@ -7,16 +7,19 @@
 {{- $posts := (where site.RegularPages "Type" "posts").ByDate.Reverse -}}
 {{- $resume := site.GetPage "/resume" -}}
 {{- $isPost := and .IsPage (eq .Type "posts") -}}
-{{- $desc := "" -}}
-{{- if .IsHome -}}
-  {{- $desc = site.Params.subtitle -}}
-{{- else -}}
+{{- /* Description: the front matter field first, then the auto-summary (never
+      on the homepage, whose summary is the about text), then the subtitle. */ -}}
+{{- $desc := .Description -}}
+{{- if and (not $desc) (not .IsHome) -}}
   {{- /* plainify leaves entities (&rsquo; etc.); htmlUnescape restores text */ -}}
-  {{- $desc = or .Description (.Summary | plainify | htmlUnescape) -}}
-  {{- if not $desc }}{{ $desc = site.Params.subtitle }}{{ end -}}
+  {{- $desc = .Summary | plainify | htmlUnescape -}}
 {{- end -}}
-{{- /* meta descriptions read best under ~155 chars; the auto-summary is ~70 words */ -}}
-{{- $desc = $desc | truncate 155 -}}
+{{- $desc = or $desc site.Params.subtitle -}}
+{{- /* A summary can start with a newline and span lines. Meta descriptions
+      read best under ~155 chars; the auto-summary is ~70 words. truncate
+      HTML-escapes a plain string, which jsonify would emit as a literal
+      "&amp;" in the JSON-LD, so a second htmlUnescape runs last. */ -}}
+{{- $desc = $desc | replaceRE `\s+` " " | strings.TrimSpace | truncate 155 | htmlUnescape -}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,8 +54,8 @@
     "@type" "WebSite"
     "name" site.Title
     "url" site.Home.Permalink
-    "description" site.Params.subtitle
-    "author" (dict "@type" "Person" "name" site.Title "url" site.Home.Permalink)
+    "description" $desc
+    "author" (dict "@type" "Person" "name" site.Title "url" site.Home.Permalink "sameAs" site.Params.sameAs)
   | jsonify | safeJS }}</script>
 {{ else if $isPost -}}
 <script type="application/ld+json">{{ dict

@@ -2,6 +2,7 @@
 title = "A lesson engine in plain files"
 date = 2026-07-24
 author = "Matt Horn"
+description = "The lesson engine runs coding lessons on your own machine. Each lesson is two plain files, and you finish a lesson when its checks pass."
 +++
 
 The lesson engine runs coding lessons on your own machine and checks your

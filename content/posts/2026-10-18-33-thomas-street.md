@@ -2,6 +2,7 @@
 title = "How one Manhattan power room took down FAA air traffic control and disrupted 1,174 flights"
 date = 2026-10-18
 author = "Matt Horn"
+description = "In 1991, batteries in a power room at AT&T's 33 Thomas Street drained for six hours. The alarm path was broken in four places, so nobody noticed in time."
 +++
 
 <style>

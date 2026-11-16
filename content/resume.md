@@ -1,6 +1,7 @@
 +++
 title = "Resume"
 author = "Matt Horn"
+description = "Matt Horn is a software and security engineer who has worked at Google, OpenAI, AWS, and Twilio. This page is his resume, with a PDF copy."
 +++
 
 **Software & Security Engineer** · Distributed Systems & AI

@@ -2,6 +2,7 @@
 title = "protonctl: a local, read-only MCP server for Proton"
 date = 2026-10-17
 author = "Matt Horn"
+description = "protonctl runs on your computer and lets Claude search and read Proton Mail, Drive, and Calendar. It has no tool that sends, changes, or deletes anything."
 +++
 
 [protonctl](https://github.com/matt-w-horn/protonctl) is a local, read-only MCP server and command-line tool in Rust that lets Claude Code, Claude Desktop, and Cowork search and read your Proton Mail, Proton Drive, and Proton Calendar on macOS and Linux. It is an independent open-source project and is unaffiliated with Proton AG.
