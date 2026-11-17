@@ -1,0 +1,11 @@
+# Rewrites for Cloudflare Workers static assets. Cloudflare reads this file
+# from the build output and does not serve it.
+
+# The terminal fetches each page's content from .../index.fragment.html.
+# Cloudflare answers a URL that ends in .html with a 307 to the URL without
+# .html, so every page that the terminal opened cost two requests. A rule with
+# status 200 is a rewrite: Cloudflare serves the file at the .html URL itself
+# and sends no redirect.
+/index.fragment.html /index.fragment 200
+/:page/index.fragment.html /:page/index.fragment 200
+/posts/:slug/index.fragment.html /posts/:slug/index.fragment 200
