@@ -6,6 +6,18 @@
 # its own default, which says ai-train=yes.
 /*
   Content-Signal: search=yes, ai-input=yes, ai-train=no
+  X-Content-Type-Options: nosniff
+  Content-Security-Policy: frame-ancestors 'none'
+
+# nosniff: a browser must use the Content-Type that it is sent and must not
+# guess another one.
+#
+# frame-ancestors 'none': no other site may show these pages inside a frame.
+# The rest of the Content Security Policy stays in the <meta> tag in
+# layouts/partials/extended_head.html, and a browser applies both. A <meta>
+# tag cannot carry frame-ancestors, so that one directive is sent as a header.
+# The whole policy cannot move here under /*: /sim/a320-ptu/ is a standalone
+# page with an inline script, which script-src 'self' would block.
 
 # No long cache lifetime for the hashed files under /js/ and /css/, on
 # purpose. Cloudflare applies a rule in this file to a 404 for a matching path
