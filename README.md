@@ -1,11 +1,10 @@
 # matthorn.io
 
 [![ci](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/ci.yml/badge.svg)](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/ci.yml)
-[![deploy](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/hugo.yml/badge.svg)](https://github.com/matt-w-horn/seahorse-emoji/actions/workflows/hugo.yml)
 ![license: CC BY-ND 4.0](https://img.shields.io/badge/license-CC%20BY--ND%204.0-blue)
 
 Source for [matthorn.io](https://matthorn.io): a [Hugo](https://gohugo.io/) static site
-deployed to GitHub Pages. The repo is named after
+served from Cloudflare Workers. The repo is named after
 ["The Seahorse Emoji"](./content/posts/2026-03-27-seahorse-emoji.md), the post it
 started as.
 
@@ -31,10 +30,11 @@ npm run e2e        # browser e2e; needs Chrome installed and hugo server running
 hugo --minify      # production build, as CI runs it
 ```
 
-A push to `main` deploys the site.
-[`.github/workflows/hugo.yml`](.github/workflows/hugo.yml) runs the tests, builds with
-`hugo --minify`, and publishes to GitHub Pages. To regenerate `static/resume.pdf`, run
-`sh scripts/build-resume-pdf.sh` (macOS only).
+A push to `main` deploys the site. Cloudflare builds the repo with
+[`scripts/cloudflare-build.sh`](scripts/cloudflare-build.sh): the script runs the
+typecheck and the unit tests, then `hugo --minify`. Cloudflare serves `public/` as the
+static assets of the Worker in [`wrangler.jsonc`](wrangler.jsonc). To regenerate
+`static/resume.pdf`, run `sh scripts/build-resume-pdf.sh` (macOS only).
 
 ## Layout
 
