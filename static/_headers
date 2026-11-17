@@ -12,3 +12,13 @@
 # too. A browser that asks for a new file in the seconds before a deploy has
 # reached every Cloudflare location would keep that 404 for the whole
 # lifetime. With the default, the browser revalidates each file by its ETag.
+
+# The terminal fetches a page's content from .../index.fragment.html. For one
+# hour a browser reuses its copy of a fragment and sends no request. For 30
+# days after that, the browser shows its copy at once and checks for a newer
+# one in the background. So after a post is edited, a browser that holds the
+# old fragment shows it for up to an hour, and then one more time. Cloudflare
+# applies this rule to a 404 as well.
+/*index.fragment.html
+  ! Cache-Control
+  Cache-Control: public, max-age=3600, stale-while-revalidate=2592000
