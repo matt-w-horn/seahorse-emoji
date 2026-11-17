@@ -1,0 +1,18 @@
+// Cloudflare Workers static assets: Cloudflare serves the Hugo output in
+// public/ and no Worker script runs. Workers Builds, Cloudflare's Git
+// integration, builds each push on Cloudflare's side with
+// scripts/cloudflare-build.sh, then runs `npx wrangler deploy`. Only main is
+// built: builds for other branches are off in the Worker's build settings.
+{
+  "name": "matthorn-io",
+  "compatibility_date": "2026-11-16",
+  "assets": {
+    "directory": "./public",
+    // An unknown path gets public/404.html with status 404.
+    "not_found_handling": "404-page"
+  },
+  // No workers.dev address, for production or for previews: the site has one
+  // public origin, and an unmerged branch is never published.
+  "workers_dev": false,
+  "preview_urls": false
+}
