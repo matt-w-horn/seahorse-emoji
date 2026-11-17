@@ -17,5 +17,6 @@
   "preview_urls": false,
   // The site's address. On deploy, Cloudflare points matthorn.io at this
   // Worker and manages the DNS record and the certificate for it.
-  "routes": [{ "pattern": "matthorn.io", "custom_domain": true }]
+  "routes": [{ "pattern": "matthorn.io", "custom_domain": true }],
+  "observability": { "enabled": true }
 }
