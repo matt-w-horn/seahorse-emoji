@@ -1,0 +1,18 @@
+# Response headers for Cloudflare Workers static assets. Cloudflare reads this
+# file from the build output and does not serve it. GitHub Pages ignores it.
+
+# The same content signals as robots.txt. Cloudflare's Markdown for Agents
+# copies this header to its Markdown responses. Without it, Cloudflare sends
+# its own default, which says ai-train=yes.
+/*
+  Content-Signal: search=yes, ai-input=yes, ai-train=no
+
+# Hugo puts a content hash in every file name under /js/ and /css/, so a
+# changed file gets a new URL and a browser can keep the old one.
+/js/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
+/css/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
