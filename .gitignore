@@ -6,6 +6,10 @@
 hugo_stats.json
 /.hugo_build.lock
 
+# Local state of `npx wrangler dev`, which serves public/ with the rules in
+# static/_headers and static/_redirects applied.
+/.wrangler/
+
 # Dependencies
 node_modules/
 

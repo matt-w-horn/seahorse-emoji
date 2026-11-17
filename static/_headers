@@ -34,3 +34,12 @@
 /*index.fragment.html
   ! Cache-Control
   Cache-Control: public, max-age=3600, stale-while-revalidate=2592000
+
+# The images in posts get the same lifetime as the fragments. Without it, a
+# browser asks Cloudflare about every image again on every page view. An image
+# keeps its URL when it is replaced, so the lifetime is short: after a
+# replacement, a browser that holds the old image shows it for up to an hour,
+# and then one more time. Cloudflare applies this rule to a 404 as well.
+/img/*
+  ! Cache-Control
+  Cache-Control: public, max-age=3600, stale-while-revalidate=2592000
