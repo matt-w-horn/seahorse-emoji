@@ -36,7 +36,8 @@ interface PathSeg { text: string; go?: () => void; }
 
 // A selectable menu (home/posts). paintMenuItems stamps idx and fills rowEls
 // so moveMenuSel can restyle rows without a repaint.
-interface MenuItem { label: string; note?: string; href?: string; run: () => void; idx?: number; }
+interface Preload { id: string; url: string; }   // the doc that a menu row opens: its <template> id and fragment URL
+interface MenuItem { label: string; note?: string; href?: string; run: () => void; idx?: number; preload?: Preload; }
 interface Menu { sel: number; items: MenuItem[]; rowEls?: (HTMLAnchorElement | HTMLButtonElement)[]; }
 
 // What the screen is showing; ownsKeys hands the keyboard to the view (the game).
@@ -167,6 +168,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
   function clearNode(el: HTMLElement) { while (el.firstChild) el.removeChild(el.firstChild); }
 
   var contentCache: { [id: string]: DocumentFragment } = {};   // id -> pristine DocumentFragment (cloned per mount)
+  var inFlight: { [id: string]: Promise<DocumentFragment> } = {};   // id -> the one request for it
   var loadSeq = 0;         // stale-async guard: only the newest fetch may inject
 
   // Our CSP enforces require-trusted-types-for 'script', which blocks the HTML
@@ -184,12 +186,33 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     return tpl.content.cloneNode(true) as DocumentFragment;
   }
 
+  // Fetch a fragment into contentCache. A doc that is opening and a preload
+  // of the same doc share one request.
+  function fetchFragment(id: string, url: string): Promise<DocumentFragment> {
+    if (!inFlight[id]) {
+      inFlight[id] = fetch(url, { credentials: 'same-origin' })
+        .then(function (r) { if (!r.ok) throw 0; return r.text(); })
+        .then(function (html) {
+          delete inFlight[id];
+          return (contentCache[id] = parseFragment(html));
+        })
+        .catch(function (e) { delete inFlight[id]; throw e; });
+    }
+    return inFlight[id];
+  }
+
   // Mount a doc's content into `mount` (already on screen). Inline <template>
   // (the current page's own doc) -> sync; cached -> sync; else fetch the bare
-  // fragment lazily. On failure the error row links pageUrl, the doc's own
-  // page, which carries the same content inline.
+  // fragment lazily. While the fetch runs, the mount carries .mount-pending,
+  // and tui.css hides every element after it: the rows below the content
+  // would jump down when the content arrives. "loading…" shows only when the
+  // fetch is slow, because a row that flashes for a few frames reads as a
+  // glitch. On failure the error row links pageUrl, the doc's own page, which
+  // carries the same content inline.
+  var LOADING_ROW_DELAY_MS = 150;
   function loadContent(id: string, url: string, mount: HTMLElement, pageUrl?: string) {
     function fail(what: string) {
+      mount.classList.remove('mount-pending');
       clearNode(mount);
       mount.appendChild(rowEl(pageUrl
         ? ['(' + what + '; ', { text: 'open the page', href: pageUrl }, ')']
@@ -200,17 +223,43 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     if (contentCache[id]) { mount.appendChild(contentCache[id].cloneNode(true)); return; }
     if (!url) { fail('missing content'); return; }
     var token = ++loadSeq;
-    mount.appendChild(rowEl('loading…', 'dim'));
-    fetch(url, { credentials: 'same-origin' })
-      .then(function (r) { if (!r.ok) throw 0; return r.text(); })
-      .then(function (html) {
+    mount.classList.add('mount-pending');
+    var slow = window.setTimeout(function () {
+      if (token === loadSeq && mount.classList.contains('mount-pending')) mount.appendChild(rowEl('loading…', 'dim'));
+    }, LOADING_ROW_DELAY_MS);
+    fetchFragment(id, url)
+      .then(function (frag) {
+        window.clearTimeout(slow);
         if (token !== loadSeq) return;   // user navigated away mid-flight
-        var frag = parseFragment(html);
-        contentCache[id] = frag.cloneNode(true) as DocumentFragment;
-        clearNode(mount); mount.appendChild(frag);
+        clearNode(mount); mount.appendChild(frag.cloneNode(true));
+        mount.classList.remove('mount-pending');
         updateScrollChip();
       })
-      .catch(function () { if (token === loadSeq) fail('content unavailable'); });
+      .catch(function () { window.clearTimeout(slow); if (token === loadSeq) fail('content unavailable'); });
+  }
+
+  // Preload: fetch a doc before the reader opens it, so that opening it paints
+  // in one step. A menu row names the doc that it opens in `preload`. The
+  // selection must rest on a row for PRELOAD_REST_MS first, so a sweep through
+  // the list with the arrow keys or the wheel fetches one doc, not every row
+  // that it passes.
+  type PreloadWhy = 'paint' | 'move';   // the menu was just painted | the reader moved the selection
+  var PRELOAD_REST_MS = 80;
+  var preloadTimer = 0;
+  // Only when the reader moved the selection. A menu that just appeared has a
+  // row selected that nobody chose, and fetching it would count a request for
+  // that doc at the edge for every reader who merely saw the list.
+  function shouldPreload(why: PreloadWhy): boolean {
+    return why === 'move';
+  }
+  function preloadSoon(it: MenuItem | undefined, why: PreloadWhy) {
+    window.clearTimeout(preloadTimer);
+    var p = it && it.preload;
+    if (!it || !p || !p.url || document.getElementById(p.id) || contentCache[p.id]) return;
+    if (!shouldPreload(why)) return;
+    preloadTimer = window.setTimeout(function () {
+      fetchFragment(p!.id, p!.url).catch(function () { /* opening the doc reports the failure */ });
+    }, PRELOAD_REST_MS);
   }
 
   /* ---------- chrome ---------- */
@@ -413,6 +462,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       screen.appendChild(el);
     });
     if (menu!.rowEls[menu!.sel]) menu!.rowEls[menu!.sel].scrollIntoView({ block: 'nearest' });
+    preloadSoon(menu!.items[menu!.sel], 'paint');
   }
 
   function moveMenuSel(delta: number, noScroll?: boolean) {
@@ -425,6 +475,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       newEl.querySelector('.sel-mark')!.textContent = '❯ ';
       if (!noScroll) newEl.scrollIntoView({ block: 'nearest' });
     }
+    preloadSoon(menu!.items[next], 'move');
   }
 
   function paintHome() {
@@ -433,10 +484,10 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
       sel: 0,
       items: [
         { label: 'posts/', note: POSTS.length + ' essays & technical notes', href: DATA!.postsUrl, run: function () { goTo(paintPosts); } },
-        { label: 'resume.md', note: 'Google · OpenAI · AWS · Twilio', href: DATA!.resumeUrl || undefined, run: function () { openDoc(RESUME); } },
-        { label: 'about.txt', note: 'background & contact', run: function () { goTo(paintAbout); } },
+        { label: 'resume.md', note: 'Google · OpenAI · AWS · Twilio', href: DATA!.resumeUrl || undefined, run: function () { openDoc(RESUME); }, preload: RESUME ? { id: 'tpl-resume', url: RESUME.contentUrl } : undefined },
+        { label: 'about.txt', note: 'background & contact', run: function () { goTo(paintAbout); }, preload: { id: 'tpl-about', url: DATA!.aboutContentUrl } },
         { label: 'play', note: 'wireframe asteroids', run: function () { goTo(paintPlay); } },
-        { label: 'theme', note: 'hourly oklch & color theory lab', href: DATA!.themeUrl, run: function () { goTo(paintThemeLab); } },
+        { label: 'theme', note: 'hourly oklch & color theory lab', href: DATA!.themeUrl, run: function () { goTo(paintThemeLab); }, preload: { id: 'tpl-theme', url: DATA!.themeContentUrl } },
         { label: 'help', note: 'commands & shortcuts', run: function () { goTo(paintHelp); } }
       ].filter(function (it) { return it.label !== 'resume.md' || RESUME; })
     });
@@ -462,7 +513,7 @@ type MissingResolved = Extract<Resolved, { kind: 'missing' }>;
     menu = menus.posts || (menus.posts = {
       sel: 0,
       items: POSTS.map(function (p): MenuItem {
-        return { label: p.slug + '.md', note: p.title, href: p.url, run: function () { openDoc(p); } };
+        return { label: p.slug + '.md', note: p.title, href: p.url, run: function () { openDoc(p); }, preload: { id: 'tpl-' + p.slug, url: p.contentUrl } };
       }).concat([{ label: '..', note: 'back', run: goBack }])
     });
     clearScreen();
