@@ -1,7 +1,7 @@
 #!/bin/sh
 # Build command for Cloudflare Workers Builds. The Worker's build settings run
-# it as `sh scripts/cloudflare-build.sh`. It runs the same gate as
-# .github/workflows/hugo.yml, then the production build.
+# it as `sh scripts/cloudflare-build.sh`. It runs the typecheck and the unit
+# tests, then the production build.
 #
 # The build image takes its Hugo and Node versions from two build variables in
 # the Cloudflare dashboard: HUGO_VERSION and NODE_VERSION. The pins themselves
