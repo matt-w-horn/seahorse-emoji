@@ -14,5 +14,8 @@
   // No workers.dev address, for production or for previews: the site has one
   // public origin, and an unmerged branch is never published.
   "workers_dev": false,
-  "preview_urls": false
+  "preview_urls": false,
+  // The site's address. On deploy, Cloudflare points matthorn.io at this
+  // Worker and manages the DNS record and the certificate for it.
+  "routes": [{ "pattern": "matthorn.io", "custom_domain": true }]
 }
