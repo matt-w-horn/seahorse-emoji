@@ -43,8 +43,14 @@ const chrome = spawn(CHROME, [
   `--remote-debugging-port=${PORT}`, '--user-data-dir=/tmp/cdp-console-e2e', 'about:blank',
 ], { stdio: ['ignore', 'ignore', 'pipe'] });
 chrome.stderr.on('data', (d) => { if (chromeErr.length < 40) chromeErr.push(d.toString()); });
-chrome.on('error', (e) => chromeErr.push(`spawn failed: ${e.message}`));
+// A failed spawn (no such binary) fires 'error' and never 'exit', so it sets
+// chromeExit itself: the wait in main() stops as soon as chromeExit is set.
+chrome.on('error', (e) => { chromeErr.push(`spawn failed: ${e.message}`); chromeExit = 'spawn failed'; });
 chrome.on('exit', (code, signal) => { chromeExit = signal || code; });
+// How long main() waits for Chrome to open its debugging port. A cold Chrome
+// on a shared CI runner once needed more than 10 s, and the run failed with
+// Chrome still starting. A Chrome that has exited ends the wait at once.
+const CHROME_WAIT_MS = 60_000;
 
 let ws, msgId = 0;
 const pending = new Map();
@@ -97,7 +103,8 @@ function finish() {
 
 async function main() {
   let target;
-  for (let i = 0; i < 50; i++) {
+  const waitStart = Date.now();
+  while (Date.now() - waitStart < CHROME_WAIT_MS && chromeExit === null) {
     try {
       const list = await (await fetch(`http://127.0.0.1:${PORT}/json`)).json();
       target = list.find((t) => t.type === 'page');
@@ -106,7 +113,7 @@ async function main() {
     await sleep(200);
   }
   if (!target) throw new Error(
-    'no chrome page target after 10s\n' +
+    `no chrome page target after ${Math.round((Date.now() - waitStart) / 1000)}s\n` +
     `  binary: ${CHROME}\n` +
     `  chrome: ${chromeExit === null ? 'still running' : `exited with ${chromeExit}`}\n` +
     `  stderr: ${chromeErr.join('').trim() || '(nothing on stderr)'}`,
