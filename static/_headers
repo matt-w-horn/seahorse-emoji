@@ -7,12 +7,8 @@
 /*
   Content-Signal: search=yes, ai-input=yes, ai-train=no
 
-# Hugo puts a content hash in every file name under /js/ and /css/, so a
-# changed file gets a new URL and a browser can keep the old one.
-/js/*
-  ! Cache-Control
-  Cache-Control: public, max-age=31536000, immutable
-
-/css/*
-  ! Cache-Control
-  Cache-Control: public, max-age=31536000, immutable
+# No long cache lifetime for the hashed files under /js/ and /css/, on
+# purpose. Cloudflare applies a rule in this file to a 404 for a matching path
+# too. A browser that asks for a new file in the seconds before a deploy has
+# reached every Cloudflare location would keep that 404 for the whole
+# lifetime. With the default, the browser revalidates each file by its ETag.
