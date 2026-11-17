@@ -242,6 +242,13 @@ async function main() {
   check('URL became /posts/', await evalJs('location.pathname') === '/posts/');
   check('state name posts', (await evalJs('history.state.name')) === 'posts');
   check('posts rows readable and aligned', await postsReadable());
+  // Preload on move only. The list has a row selected when it appears, and
+  // nobody chose that row, so painting must fetch nothing. Moving the
+  // selection and resting there fetches that row's doc, once.
+  const fragFetches = () => netUrls.filter((u) => u.includes('index.fragment.html')).length;
+  check('painting the list preloads nothing', fragFetches() === 0, `fetches=${fragFetches()}`);
+  await evalJs('document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowDown",bubbles:true}))'); await sleep(500);
+  check('resting on a row preloads its doc once', fragFetches() === 1, `fetches=${fragFetches()}`);
   await evalJs('history.back()'); await sleep(500);
   check('Back returned to /resume/', await evalJs('location.pathname') === '/resume/');
   check('Back repainted resume body', /software engineer/i.test(await evalJs('document.getElementById("screen").innerText')));
@@ -260,6 +267,27 @@ async function main() {
   await evalJs('history.back()'); await sleep(400);
   await typeCmd('cat mythos'); await sleep(500);
   check('revisit served from cache (no 2nd fetch)', netUrls.filter((u) => u.includes(mythosFrag)).length === 0);
+
+  // A doc that is not cached yet paints in two steps. With the network slowed
+  // down, both halves of that are visible: while the fragment is on its way,
+  // nothing may sit below the place where the content will go (it would jump
+  // down when the content arrives), and "loading…" appears only when the wait
+  // gets long. The added latency is far above both thresholds, so a slow CI
+  // runner cannot move a check across one.
+  console.log('\n[3b] slow fragment: nothing below the content jumps, late "loading…"');
+  const belowContent = () => evalJs('(function(){var m=document.querySelector("#screen .mount-pending");var rows=document.querySelectorAll("#screen > .row");var last=rows[rows.length-1];return JSON.stringify({pending:!!m,lastRowShown:!!last&&getComputedStyle(last).visibility==="visible",loadingRow:/loading…/.test(document.getElementById("screen").innerText)});})()').then(JSON.parse);
+  await send('Network.emulateNetworkConditions', { offline: false, latency: 1500, downloadThroughput: -1, uploadThroughput: -1 });
+  await typeCmd('cat seahorse'); await sleep(60);
+  const early = await belowContent();
+  check('fetch in flight: the rows below the content are hidden', early.pending && !early.lastRowShown, JSON.stringify(early));
+  check('fetch in flight: no "loading…" yet', !early.loadingRow, JSON.stringify(early));
+  await sleep(600);
+  const mid = await belowContent();
+  check('fetch is slow: "loading…" shows', mid.pending && mid.loadingRow, JSON.stringify(mid));
+  let late = mid;
+  for (let i = 0; i < 40 && late.pending; i++) { await sleep(150); late = await belowContent(); }
+  check('content arrived: the rows below it show, "loading…" is gone', !late.pending && late.lastRowShown && !late.loadingRow, JSON.stringify(late));
+  await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
 
   console.log('\n[4] play -> lazy game import (ESM module, no global)');
   netUrls.length = 0;

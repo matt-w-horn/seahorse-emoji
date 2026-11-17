@@ -375,6 +375,9 @@ body:has(#gamecanvas)::after {
 .row.motd-kv { padding-left: 17ch; text-indent: -17ch; }
 .row.wrapcol { max-width: 63ch; }
 .gap { height: var(--line-height); }
+/* A doc's content is still loading (loadContent in tui.ts). Hide every element
+   after the mount, so nothing below the content jumps when it arrives. */
+.mount-pending ~ * { visibility: hidden; }
 .dim { color: var(--dim); }
 .err { color: var(--err); }
 .acc { color: var(--accent); }
