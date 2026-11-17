@@ -1,5 +1,5 @@
 # Response headers for Cloudflare Workers static assets. Cloudflare reads this
-# file from the build output and does not serve it. GitHub Pages ignores it.
+# file from the build output and does not serve it.
 
 # The same content signals as robots.txt. Cloudflare's Markdown for Agents
 # copies this header to its Markdown responses. Without it, Cloudflare sends

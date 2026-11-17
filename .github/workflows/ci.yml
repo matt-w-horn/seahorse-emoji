@@ -1,7 +1,8 @@
 name: CI
 
-# Gate PRs and re-check on merge to main. The deploy workflow (hugo.yml) runs
-# the fast typecheck + unit gate before publishing; the browser e2e lives here.
+# Gate PRs and re-check on merge to main. Cloudflare's build
+# (scripts/cloudflare-build.sh) runs the typecheck and the unit tests again
+# before it deploys; the browser e2e lives here.
 on:
   pull_request:
   push:

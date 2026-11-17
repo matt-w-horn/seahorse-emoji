@@ -1,5 +1,5 @@
 <link rel="icon" href="{{ "favicon.svg" | relURL }}" type="image/svg+xml">
-{{- /* GitHub Pages can't set response headers, so this meta CSP is the
-      enforceable subset. frame-ancestors, HSTS, and COOP need real headers
-      (i.e., a fronting CDN); they are deliberately absent here. */}}
+{{- /* The CSP is a meta tag, so a browser enforces it without a response
+      header. frame-ancestors, HSTS, and COOP need real headers. static/_headers
+      can send them, and none of the three is set there yet. */}}
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://raw.githubusercontent.com/matt-w-horn/; connect-src 'self'; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'; trusted-types tui-fragment">
