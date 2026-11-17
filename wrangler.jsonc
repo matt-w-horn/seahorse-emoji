@@ -18,8 +18,5 @@
   // The site's address. On deploy, Cloudflare points matthorn.io at this
   // Worker and manages the DNS record and the certificate for it.
   "routes": [{ "pattern": "matthorn.io", "custom_domain": true }],
-  // Workers Logs. Cloudflare turns this on for a Worker that is created in the
-  // dashboard, and a deploy sets it to what this file says. Without the key,
-  // the first deploy from this file turned the logs off.
   "observability": { "enabled": true }
 }
