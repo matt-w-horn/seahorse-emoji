@@ -7,7 +7,7 @@ description = "protonctl runs on your computer and lets Claude search and read P
 
 [protonctl](https://github.com/matt-w-horn/protonctl) is a local, read-only MCP server and command-line tool in Rust that lets Claude Code, Claude Desktop, and Cowork search and read your Proton Mail, Proton Drive, and Proton Calendar on macOS and Linux. It is an independent open-source project and is unaffiliated with Proton AG.
 
-You use Proton because your mail, files, and calendar are end-to-end encrypted on Proton's servers. The moment the agent loop calls a `protonctl` tool to read a message, event, or file, that content is decrypted on your machine and handed to the host app in plaintext. From there it leaves Proton's encryption boundary: the host writes it to local session transcripts on your disk and sends it to Anthropic's servers under your account's terms, and other tools in the same session (web search, a shell, or another connector) can pass it along. Reading an item through `protonctl` exposes it to the host model on the same terms as forwarding it in cleartext to a third party; use `[drive] exclude` in `config.toml` to keep sensitive Drive folders off-limits before any result is built.
+You use Proton because your mail, files, and calendar are end-to-end encrypted on Proton's servers. The moment the agent loop calls a `protonctl` tool to read a message, event, or file, that content is decrypted on your machine and handed to the host app in plaintext. From there it leaves Proton's encryption boundary: the host writes it to local session transcripts on your disk and sends it to its model provider (Anthropic, for the Claude apps) under your account's terms, and other tools in the same session (web search, a shell, or another connector) can pass it along. Reading an item through `protonctl` exposes it to the host model on the same terms as forwarding it in cleartext to a third party; use `[drive] exclude` in `config.toml` to keep sensitive Drive folders off-limits before any result is built.
 
 ## How it reads without your Proton password
 
@@ -31,7 +31,7 @@ So `protonctl` has no code that writes. It opens IMAP mailboxes read-only (`EXAM
 
 A read-only server doesn't help much if a parser bug or a shell tool can walk around it.
 
-Mail attachments and Drive files are often PDFs or Word, RTF, and OpenDocument files. When `protonctl` extracts text from one, it runs the document parser (`PDFKit` and `textutil` on macOS; `poppler` and `pandoc` on Linux) inside an OS sandbox (`sandbox-exec` on macOS; Landlock and `seccomp` on Linux). That sandbox can read system libraries, write nothing, reach no network, and read no Keychain item. Before it runs `proton-drive`, it copies the binary to a private folder and checks Proton's Apple Developer ID signature on that copy (or a pinned SHA-256 on Linux) right before exec, so nothing on `PATH` can swap the binary between check and use. `scripts/install.sh` builds `protonctl` with `#![forbid(unsafe_code)]` and signs it with the macOS hardened runtime so another user process can't inject a library with `DYLD_INSERT_LIBRARIES` and inherit its Keychain approval.
+Mail attachments and Drive files are often PDFs or Word, RTF, and OpenDocument files. When `protonctl` extracts text from one, it runs the document parser (`PDFKit` and `textutil` on macOS; `poppler` and `pandoc` on Linux) inside an OS sandbox (`sandbox-exec` on macOS; Landlock and `seccomp` on Linux). That sandbox can read system libraries, write nothing, reach no network, and read no Keychain item. Before it runs `proton-drive`, it copies the binary to a private folder and checks Proton's Apple Developer ID signature on that copy (or a pinned SHA-256 on Linux) right before exec, so nothing on `PATH` can swap the binary between check and use. `protonctl`'s own code has no `unsafe` blocks: `unsafe_code = "forbid"` in `Cargo.toml` makes the compiler reject any. On a Mac, `protonctl-sign` signs the installed binary with the hardened runtime, so that another process can't inject a library with `DYLD_INSERT_LIBRARIES` and inherit its Keychain approval.
 
 In Claude Code the model also has a shell. Without a fence, a bash command could read `~/Library/CloudStorage/ProtonDrive-*`, talk straight to Bridge's IMAP port, or edit `config.toml` to drop folder exclusions. These settings in `~/.claude/settings.json` close those paths for commands that the agent runs:
 
@@ -46,13 +46,22 @@ In Claude Code the model also has a shell. Without a fence, a bash command could
       "denyWrite": ["~/.config/protonctl"]
     },
     "network": {
+      "allowedDomains": [],
       "deniedDomains": ["proton.me", "*.proton.me"],
       "strictAllowlist": true,
       "allowLocalBinding": false
     }
+  },
+  "permissions": {
+    "deny": [
+      "Read(~/Library/CloudStorage/ProtonDrive-*/**)",
+      "Edit(~/.config/protonctl/**)"
+    ]
   }
 }
 ```
+
+The `sandbox` block applies to the commands that the agent runs. The agent's file tools (Read, Grep, Glob, Edit, and Write) run outside the sandbox, so the two `permissions.deny` rules stop those tools from reading the Drive folder and from editing the config. With `allowedDomains` empty, the sandbox refuses every host, so add the hosts that your own work needs.
 
 ## Why it doesn't redact names locally
 
@@ -61,6 +70,26 @@ I also considered having `protonctl` scrub names, organizations, and places with
 The problem is that a local entity model still misses a few percent of names, and even when every name is replaced, a model can usually tell who or what an email is about from the rest of the thread. A redaction mode that looks like a privacy shield while still leaking names and context makes it too easy to point the tool at mail you shouldn't expose at all.
 
 Leaving redaction out keeps the rule clear: anything `protonctl` reads goes to the host model in the clear, the same as forwarding it to a third party. For Drive folders you never want read, put them in `[drive] exclude` in `config.toml` so `protonctl` hides them before a result is built.
+
+## Install and connect
+
+With Homebrew:
+
+```sh
+brew install matt-w-horn/tap/protonctl
+protonctl-sign
+```
+
+On a Mac, `protonctl-sign` signs the installed binary with a certificate that it makes in your login keychain on its first run. macOS asks each time before the key signs. Choose **Allow**, never **Always Allow**, because any program can run `codesign`. Run `protonctl-sign` again after each `brew upgrade`. On Linux nothing is signed, so leave it out.
+
+Next, set up the services that you want: `protonctl setup calendar`, `protonctl setup mail`, and `protonctl setup drive`. The [README](https://github.com/matt-w-horn/protonctl#readme) has the steps for each one. Then connect an app:
+
+```sh
+protonctl connect claude-code
+protonctl connect claude-desktop
+```
+
+Quit Claude Desktop first, because `connect claude-desktop` refuses while the app runs. For Claude Code and Cowork there's also a plugin, and the README says how to add it. `protonctl doctor` checks the setup.
 
 The code, the RFC, and the threat model are at [matt-w-horn/protonctl](https://github.com/matt-w-horn/protonctl).
 
